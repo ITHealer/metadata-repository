@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+
+# Test and quality tools
+.coverage
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+build/test-results/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# IDE and operating system
+.DS_Store
+.idea/
+.vscode/

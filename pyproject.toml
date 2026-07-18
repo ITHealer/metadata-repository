@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68,<76", "wheel>=0.41,<1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metadata-pipeline-demo"
+version = "0.1.0"
+description = "ClickHouse metadata review loop demo for GitHub"
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+license = { text = "Proprietary" }
+authors = [{ name = "Metadata Pipeline Team" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "mypy==1.14.1",
+  "pytest==8.3.5",
+  "pytest-cov==6.0.0",
+  "ruff==0.9.10",
+]
+
+[project.scripts]
+metadata = "metadata_pipeline.cli:entrypoint"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["metadata_pipeline"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "SIM", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["metadata_pipeline"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+pretty = true
+show_error_codes = true
+files = ["src", "tests"]
