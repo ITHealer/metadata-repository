@@ -32,6 +32,9 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers -ra"
 testpaths = ["tests"]
+markers = [
+  "integration: tests that require the local Docker Compose ClickHouse fixture",
+]
 
 [tool.coverage.run]
 branch = true

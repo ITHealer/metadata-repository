@@ -63,3 +63,21 @@ jobs:
           name: unit-test-results
           path: build/test-results/unit.xml
           retention-days: 7
+
+  clickhouse-fixture:
+    name: ClickHouse fixture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --editable '.[dev]'
+      - run: make db-up db-check
+      - name: Show ClickHouse logs on failure
+        if: failure()
+        run: make db-logs
+      - name: Stop ClickHouse
+        if: always()
+        run: make db-down
