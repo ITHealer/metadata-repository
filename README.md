@@ -120,6 +120,25 @@ The wrapper below is also available for lightweight smoke checks:
 ./scripts/metadata doctor
 ```
 
+## Reviewer metadata contract
+
+Reviewer-owned metadata is stored as YAML under `metadata/review/commerce_demo`. Its shape is
+defined once in the Pydantic models and exported to `schemas/reviewer_metadata.schema.json` for
+editor/tooling support. The validator also performs checks JSON Schema cannot express by itself:
+every declared table, column, and relationship endpoint must exist in the raw tbls `schema.json`.
+
+```bash
+make review-schema    # Regenerate JSON Schema from Pydantic
+make review-validate  # Validate the three reviewer files against raw schema.json
+make review-check     # Run both; this is the GitHub Actions gate
+```
+
+Read [Guideline 1](./guidelines/reviewer_metadata_guideline.md) before changing reviewer content.
+[Guideline 2](./guidelines/llm_transformation_guideline.md) defines how a later publish step must
+merge validated review metadata with raw ClickHouse facts for chunking and retrieval.
+`make schema-doc` only regenerates raw technical documentation; it does not merge reviewer metadata
+or produce enriched output.
+
 ## GitHub setup
 
 The local repository can be developed and verified without a remote. To publish it while keeping

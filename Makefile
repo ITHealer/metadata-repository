@@ -10,7 +10,8 @@ COMPOSE ?= docker compose
 
 .PHONY: help install format lint typecheck test smoke verify clean \
 	db-up db-wait db-check db-reset db-down db-logs \
-	schema-doc schema-lint schema-diff schema-check
+	schema-doc schema-lint schema-diff schema-check \
+	review-schema review-validate review-check
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -38,7 +39,7 @@ smoke: ## Verify that the CLI starts and the local environment is supported
 	$(PYTHON) -m metadata_pipeline.cli --version
 	$(PYTHON) -m metadata_pipeline.cli doctor
 
-verify: lint typecheck test smoke ## Run all local quality gates
+verify: lint typecheck test smoke review-validate ## Run all local quality gates
 
 db-up: ## Start the ClickHouse demo fixture and wait until it is ready
 	$(COMPOSE) up -d clickhouse
@@ -71,6 +72,18 @@ schema-diff: db-wait ## Compare the live ClickHouse schema with committed raw do
 schema-check: schema-doc schema-lint ## Generate and validate the complete tbls contract
 	RUN_TBLS_INTEGRATION=1 $(VENV)/bin/pytest -m schema_integration \
 		tests/integration/test_tbls_extraction.py
+
+review-schema: ## Generate JSON Schema from the Pydantic reviewer contract
+	./scripts/metadata export-review-schema \
+		--output schemas/reviewer_metadata.schema.json
+
+review-validate: ## Validate reviewer YAML against the raw tbls schema
+	./scripts/metadata validate-review \
+		--schema schema/raw/commerce_demo/schema.json \
+		--review-dir metadata/review/commerce_demo \
+		--contract config/metadata_contract.yml
+
+review-check: review-schema review-validate ## Generate and validate the reviewer contract
 
 clean: ## Remove local build and test artifacts
 	rm -rf $(VENV) .mypy_cache .pytest_cache .ruff_cache .coverage htmlcov build dist

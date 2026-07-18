@@ -1,0 +1,4 @@
+contract_version: reviewer-v1
+review_guideline_version: reviewer-v1
+transformation_guideline_version: retrieval-v1
+source_scope: clickhouse

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
 import pytest
+import yaml
 
 from metadata_pipeline import __version__
 from metadata_pipeline.cli import main
@@ -27,3 +31,33 @@ def test_cli_doctor_accepts_supported_python(capsys: pytest.CaptureFixture[str])
 def test_cli_without_command_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert main([]) == 0
     assert "Manage the ClickHouse metadata review pipeline" in capsys.readouterr().out
+
+
+def test_validate_review_returns_failure_for_unknown_table(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    review_dir = tmp_path / "review"
+    review_dir.mkdir()
+    source = Path("metadata/review/commerce_demo/customers.yml")
+    payload: dict[str, Any] = yaml.safe_load(source.read_text(encoding="utf-8"))
+    payload["table"] = "customers_typo"
+    (review_dir / "customers.yml").write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "validate-review",
+            "--schema",
+            "schema/raw/commerce_demo/schema.json",
+            "--review-dir",
+            str(review_dir),
+            "--contract",
+            "config/metadata_contract.yml",
+        ]
+    )
+
+    assert exit_code == 1
+    assert "unknown_table" in capsys.readouterr().err
