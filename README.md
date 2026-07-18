@@ -82,6 +82,29 @@ If port `8123` or `9000` is already occupied, copy `.env.example` to `.env` and 
 `CLICKHOUSE_HTTP_PORT` or `CLICKHOUSE_NATIVE_PORT`. If startup fails, confirm Docker is running,
 use `make db-logs`, then run `make db-reset db-up` after correcting the issue.
 
+## Raw schema documentation with tbls
+
+The `tbls` tool reads ClickHouse table and column comments, adds the two logical relations that
+ClickHouse does not enforce, and writes generated-only artifacts to `schema/raw/commerce_demo`.
+The tool image is pinned to an exact version and digest; no host installation is required.
+
+```bash
+make db-up
+make schema-doc schema-lint
+make schema-diff
+```
+
+Use the complete live contract check before opening a Pull Request:
+
+```bash
+make schema-check
+```
+
+Expected output includes `README.md`, per-table Markdown with embedded Mermaid ER diagrams, and
+`schema.json`. Never edit files under `schema/raw/commerce_demo` manually. Update the database DDL
+or `.tbls.yml`, regenerate, inspect the diff, and commit source plus generated changes together.
+The generated directory must never contain credentials, a DSN, or database row data.
+
 ## CLI
 
 After `make install`:

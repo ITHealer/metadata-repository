@@ -34,6 +34,7 @@ addopts = "--strict-config --strict-markers -ra"
 testpaths = ["tests"]
 markers = [
   "integration: tests that require the local Docker Compose ClickHouse fixture",
+  "schema_integration: tests that require raw documentation generated from live ClickHouse",
 ]
 
 [tool.coverage.run]

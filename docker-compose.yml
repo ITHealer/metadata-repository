@@ -27,5 +27,19 @@ services:
       start_period: 5s
     stop_grace_period: 30s
 
+  tbls:
+    image: ghcr.io/k1low/tbls:v1.95.0@sha256:5d194e7baa9d14e740ee41f29985b8cb7601926fca019a4bb0c34b8c937bd8cb
+    profiles:
+      - tools
+    working_dir: /work
+    volumes:
+      - .:/work
+    environment:
+      TBLS_DSN: clickhouse://${CLICKHOUSE_USER:-demo}:${CLICKHOUSE_PASSWORD:-demo_password}@clickhouse:9000/${CLICKHOUSE_DB:-commerce_demo}
+      TBLS_DOC_PATH: ${TBLS_DOC_PATH:-schema/raw/commerce_demo}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
 volumes:
   clickhouse_data:

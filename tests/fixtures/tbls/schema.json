@@ -1,0 +1,48 @@
+{
+  "name": "contract_fixture",
+  "desc": "Small tbls contract fixture",
+  "tables": [
+    {
+      "name": "parents",
+      "type": "BASE TABLE",
+      "comment": "One row per parent.",
+      "columns": [
+        {
+          "name": "parent_id",
+          "type": "UUID",
+          "nullable": false,
+          "comment": "Parent identifier."
+        }
+      ]
+    },
+    {
+      "name": "children",
+      "type": "BASE TABLE",
+      "comment": "One row per child.",
+      "columns": [
+        {
+          "name": "child_id",
+          "type": "UUID",
+          "nullable": false,
+          "comment": "Child identifier."
+        },
+        {
+          "name": "parent_id",
+          "type": "UUID",
+          "nullable": false,
+          "comment": "Logical parent reference."
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "table": "children",
+      "columns": ["parent_id"],
+      "parent_table": "parents",
+      "parent_columns": ["parent_id"],
+      "def": "children.parent_id -> parents.parent_id",
+      "virtual": true
+    }
+  ]
+}
