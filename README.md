@@ -12,7 +12,7 @@ metadata generation, and indexing are added by later merge requests.
 - Python 3.9–3.12.
 - GNU Make.
 - Git.
-- Docker with Compose will be required starting from PR-02.
+- Docker Engine with the Compose plugin.
 
 ## Local development
 
@@ -33,6 +33,54 @@ make smoke      # Verify the CLI and Python runtime
 ```
 
 The development commands always use `.venv`; this keeps local and CI behavior predictable.
+
+## ClickHouse demo fixture
+
+PR-02 provides a deterministic `commerce_demo` database. Start from a clean volume and validate
+the complete fixture with:
+
+```bash
+make db-reset db-up db-check
+```
+
+The fixture contains only synthetic data:
+
+| Table | Grain | Rows | Covered cases |
+|---|---|---:|---|
+| `customers` | One row per customer | 5 | Three segments and `.test` email addresses |
+| `orders` | One row per order | 8 | Pending, paid, shipped, and cancelled orders |
+| `order_items` | One row per order line | 12 | Single-line and multi-line orders |
+
+UUIDs, timestamps, and values are fixed. Every table and column has a comment so PR-03 can prove
+that `tbls` preserves the database documentation. The ClickHouse image is pinned to both an exact
+version and a multi-platform digest for reproducible local and CI runs.
+
+Useful database commands:
+
+```bash
+make db-up       # Start ClickHouse and wait until it accepts queries
+make db-check    # Run the live integration assertions
+make db-logs     # Inspect the latest server logs
+make db-down     # Stop containers but retain the named volume
+make db-reset    # Stop containers and delete the named volume
+```
+
+To inspect the data directly:
+
+```bash
+docker compose exec clickhouse sh -ec \
+  'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" \
+  --database "$CLICKHOUSE_DB" --query "SHOW TABLES"'
+```
+
+Initialization scripts run automatically only when ClickHouse creates an empty data volume.
+`002_seed.sql` truncates and reloads the three demo tables, so manually rerunning the two scripts
+is deterministic but intentionally destructive inside `commerce_demo`. Never point these scripts
+at a real database.
+
+If port `8123` or `9000` is already occupied, copy `.env.example` to `.env` and change
+`CLICKHOUSE_HTTP_PORT` or `CLICKHOUSE_NATIVE_PORT`. If startup fails, confirm Docker is running,
+use `make db-logs`, then run `make db-reset db-up` after correcting the issue.
 
 ## CLI
 
