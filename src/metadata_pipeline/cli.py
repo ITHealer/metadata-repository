@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import platform
 import sys
 from collections.abc import Sequence
@@ -15,6 +16,12 @@ from metadata_pipeline.adapters.generator.openai_compatible import (
     OpenAICompatibleDocumentGenerator,
     OpenAICompatibleSettings,
 )
+from metadata_pipeline.adapters.git.changed_paths import (
+    GitDiffError,
+    read_changed_paths,
+    read_commit_changes,
+)
+from metadata_pipeline.application.classify_changes import classify_changed_paths
 from metadata_pipeline.application.create_drafts import (
     DraftAction,
     DraftGenerationError,
@@ -98,6 +105,13 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("build/chunks/commerce_demo.jsonl"),
     )
+    classify = commands.add_parser(
+        "classify-changes",
+        help="Classify PR and latest-commit paths for metadata CI.",
+    )
+    classify.add_argument("--base", required=True)
+    classify.add_argument("--head", required=True)
+    classify.add_argument("--github-output", type=Path)
     return parser
 
 
@@ -272,6 +286,24 @@ def run_chunk(
     return 0
 
 
+def run_classify_changes(base: str, head: str, github_output: Path | None) -> int:
+    """Classify PR-wide and latest-commit paths without embedding Git logic in CI YAML."""
+    try:
+        pr = classify_changed_paths(read_changed_paths(base, head))
+        latest = classify_changed_paths(read_commit_changes(head))
+    except GitDiffError as error:
+        print(f"change classification failed: {error}", file=sys.stderr)
+        return 1
+    outputs = {**pr.github_outputs("pr_"), **latest.github_outputs("latest_")}
+    if github_output is not None:
+        github_output.parent.mkdir(parents=True, exist_ok=True)
+        with github_output.open("a", encoding="utf-8", newline="\n") as stream:
+            for key, value in sorted(outputs.items()):
+                stream.write(f"{key}={value}\n")
+    print(json.dumps(outputs, sort_keys=True))
+    return 0
+
+
 def _generator(mode: str) -> DeterministicDocumentGenerator | OpenAICompatibleDocumentGenerator:
     if mode == "live":
         return OpenAICompatibleDocumentGenerator.from_settings(OpenAICompatibleSettings.from_env())
@@ -338,6 +370,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.mode,
             args.output,
         )
+    if args.command == "classify-changes":
+        return run_classify_changes(args.base, args.head, args.github_output)
 
     parser.print_help()
     return 0
