@@ -1,0 +1,37 @@
+requiredVersion: ">= 1.95, < 2"
+name: commerce_demo
+desc: Deterministic ClickHouse schema for the metadata review demo
+dsn: ${TBLS_DSN}
+docPath: ${TBLS_DOC_PATH}
+
+format:
+  sort: true
+  showOnlyFirstParagraph: true
+
+er:
+  format: mermaid
+  comment: true
+
+relations:
+  - table: orders
+    columns:
+      - customer_id
+    parentTable: customers
+    parentColumns:
+      - customer_id
+    def: orders.customer_id -> customers.customer_id
+  - table: order_items
+    columns:
+      - order_id
+    parentTable: orders
+    parentColumns:
+      - order_id
+    def: order_items.order_id -> orders.order_id
+
+lint:
+  requireTableComment:
+    enabled: true
+    allOrNothing: true
+  requireColumnComment:
+    enabled: true
+    allOrNothing: true

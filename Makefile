@@ -9,7 +9,8 @@ COMPOSE ?= docker compose
 .DEFAULT_GOAL := help
 
 .PHONY: help install format lint typecheck test smoke verify clean \
-	db-up db-wait db-check db-reset db-down db-logs
+	db-up db-wait db-check db-reset db-down db-logs \
+	schema-doc schema-lint schema-diff schema-check
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -31,7 +32,7 @@ typecheck: ## Run strict static type checking
 	$(VENV)/bin/mypy
 
 test: ## Run unit tests
-	$(VENV)/bin/pytest tests/unit
+	$(VENV)/bin/pytest tests/unit tests/contract
 
 smoke: ## Verify that the CLI starts and the local environment is supported
 	$(PYTHON) -m metadata_pipeline.cli --version
@@ -57,6 +58,19 @@ db-down: ## Stop ClickHouse while retaining its data volume
 
 db-logs: ## Show recent ClickHouse logs for troubleshooting
 	$(COMPOSE) logs --tail=100 clickhouse
+
+schema-doc: db-wait ## Generate raw Markdown, Mermaid ER, and schema.json with tbls
+	./scripts/extract_schema.sh doc
+
+schema-lint: db-wait ## Require comments for every ClickHouse table and column
+	./scripts/extract_schema.sh lint
+
+schema-diff: db-wait ## Compare the live ClickHouse schema with committed raw documentation
+	./scripts/extract_schema.sh diff
+
+schema-check: schema-doc schema-lint ## Generate and validate the complete tbls contract
+	RUN_TBLS_INTEGRATION=1 $(VENV)/bin/pytest -m schema_integration \
+		tests/integration/test_tbls_extraction.py
 
 clean: ## Remove local build and test artifacts
 	rm -rf $(VENV) .mypy_cache .pytest_cache .ruff_cache .coverage htmlcov build dist
