@@ -146,6 +146,58 @@ merge validated review metadata with raw ClickHouse facts for chunking and retri
 `make schema-doc` only regenerates raw technical documentation; it does not merge reviewer metadata
 or produce enriched output.
 
+## Publish metadata and build semantic chunks
+
+PR-06 defines provider-neutral `PublishedDocument` and `Chunk` contracts plus a
+`DocumentGenerator` port. The publish use case validates the entire raw/reviewer batch before it
+writes anything, then renders generated-only Markdown and builds chunks directly from the
+structured model. It never parses the Markdown back into business data.
+
+Run the deterministic, network-free path with:
+
+```bash
+make publish             # raw schema + reviewer YAML -> committed Markdown previews
+make published-validate  # fail when committed Markdown was edited or is stale
+make chunk-dry-run       # structured documents -> build/chunks/commerce_demo.jsonl
+make knowledge-check     # run all three steps in order
+```
+
+`SOURCE_REVIEW_COMMIT` defaults to the latest Git commit that changed the review directory. CI uses
+the same value. For a reproducibility check or a non-Git environment, pass it explicitly:
+
+```bash
+make knowledge-check SOURCE_REVIEW_COMMIT=<40-character-commit-sha>
+```
+
+Files under `knowledge/published/commerce_demo` are generated and committed so reviewers can see
+the exact output diff. Do not edit them manually. Change reviewer YAML, run `make knowledge-check`,
+inspect both input and output, then commit them together. The JSONL file under `build/chunks` is a
+local/CI artifact and is intentionally ignored by Git.
+
+Documents still marked `needs_review` are published as preview files with
+`index_eligible: false`. A document can become index-eligible only after its reviewer contract is
+valid and its status is `approved`; PR-06 does not write to an index.
+
+`DeterministicDocumentGenerator` is the factual baseline.
+`OpenAICompatibleDocumentGenerator` can call the OpenAI-compatible LiteLLM gateway, but currently
+allows the model to rewrite only the summary; identifiers, types, units, joins, evidence, ownership,
+and review status always come from the deterministic baseline. A live failure happens during
+preflight, before any published file is changed.
+
+The default model name is a gateway alias, not a provider-specific Bedrock identifier. Platform
+owners can remap the alias or developers can select another gateway model without changing code:
+
+```bash
+export OPENAI_BASE_URL=https://ai-gateway.dev/v1
+export OPENAI_API_KEY=<gateway-key>
+export OPENAI_MODEL=gpt-5.4-nano
+export OPENAI_RESPONSE_FORMAT=json_schema  # or json_object for a less capable model
+```
+
+Never commit the key. `.env.example` documents the supported variables, while `.env` is ignored.
+No live gateway request is part of the default test suite; mocked HTTP tests verify the endpoint,
+model routing, response format, structured parsing, and failure behavior without network access.
+
 ## GitHub setup
 
 The local repository can be developed and verified without a remote. To publish it while keeping

@@ -440,11 +440,15 @@ unit semantics; Data quality and caveats; Security; Evidence.
 - `PublishMetadata` xây `PublicationContext` bằng source precedence rồi gọi `DocumentGenerator`;
   generator chỉ được trả structured `PublishedDocument`, không merge prose trực tiếp.
 - `DeterministicDocumentGenerator` là baseline `--mode mock`: copy/normalize facts không network và
-  không được tạo claim mới. PR-10 thêm live adapter sau cùng port.
+  không được tạo claim mới.
+- `OpenAICompatibleDocumentGenerator` là vertical slice `--mode live` qua LiteLLM gateway: trong
+  PR-06 chỉ được viết lại `summary` bằng structured output; mọi technical/business field còn lại lấy
+  nguyên từ deterministic baseline. Model alias, base URL và response-format capability đều qua env.
 - `PublishedMarkdownRenderer` chỉ render structured model theo section order của Guideline 2.
 - `BuildChunks` nhận `PublishedDocument`, nhóm theo semantic unit và tạo `Chunk`; Markdown chỉ là
   presentation output, không phải input của business logic.
-- Không định nghĩa LLM-specific interface hoặc gọi live LLM trong PR này.
+- Port không phụ thuộc LLM/provider; unit tests của live adapter dùng mock HTTP transport và không
+  gọi network. Live smoke test cần gateway credential và được để explicit/manual.
 
 ### Tasks
 
@@ -454,6 +458,12 @@ unit semantics; Data quality and caveats; Security; Evidence.
   - Model reject extra field và giữ immutable như reviewer contract.
 - [ ] Định nghĩa `DocumentGenerator` port với structured `PublicationContext` input và
   `PublishedDocument` output; implement `DeterministicDocumentGenerator` cho mode `mock`.
+- [ ] Implement `OpenAICompatibleDocumentGenerator` summary-only:
+  - OpenAI Python SDK trỏ `OPENAI_BASE_URL` vào LiteLLM Proxy.
+  - Default gateway alias `OPENAI_MODEL=gpt-5.4-nano`; đổi Bedrock model bằng config, không sửa code.
+  - Hỗ trợ `json_schema` và `json_object` cho model capability khác nhau.
+  - Không log/persist key; map SDK/gateway/validation failure thành `DocumentGenerationError`.
+  - Chỉ merge structured summary response vào deterministic baseline.
 - [ ] Implement `PublishMetadata` use case:
   - Load raw schema, reviewer YAML và canonical contract.
   - Reuse review validation; promote `conflicting_evidence` thành blocking publish error kể cả khi
@@ -540,8 +550,9 @@ unit semantics; Data quality and caveats; Security; Evidence.
 
 ### Không thuộc PR
 
-- Live LLM wording, prompt/model API, token-aware splitting/overlap, bot commit/loop prevention,
-  GitHub workflow publish, retrieval ranking, index manifest, embedding và vector database.
+- Full-document live LLM wording, production live enablement/UAT, token-aware splitting/overlap, bot
+  commit/loop prevention, GitHub workflow publish, retrieval ranking, index manifest, embedding và
+  vector database.
 
 ## 10. PR-07 — Pull Request CI, bot commit và loop prevention
 
@@ -681,7 +692,8 @@ Thêm live provider sau khi toàn bộ deterministic path ổn định, chạy m
 
 ### Tasks
 
-- [ ] Implement `LiveLLMDocumentGenerator` theo `DocumentGenerator` port.
+- [ ] Mở rộng `OpenAICompatibleDocumentGenerator` từ summary-only thành full approved narrative theo
+  `DocumentGenerator` port mà không cho model override locked technical facts.
 - [ ] Dùng structured output/schema validation nếu provider hỗ trợ.
 - [ ] Tách provider configuration khỏi prompt/guideline version.
 - [ ] Thêm timeout, retry có giới hạn và actionable errors.

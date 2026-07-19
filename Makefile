@@ -5,13 +5,17 @@ VENV ?= .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 COMPOSE ?= docker compose
+SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- metadata/review/commerce_demo)
+PUBLISHED_DIR ?= knowledge/published/commerce_demo
+CHUNK_OUTPUT ?= build/chunks/commerce_demo.jsonl
 
 .DEFAULT_GOAL := help
 
 .PHONY: help install format lint typecheck test coverage smoke verify clean \
 	db-up db-wait db-check db-reset db-down db-logs \
 	schema-doc schema-lint schema-diff schema-check \
-	review-schema review-draft review-validate review-check
+	review-schema review-draft review-validate review-check \
+	publish published-validate chunk-dry-run knowledge-check
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -37,8 +41,10 @@ test: ## Run unit tests
 
 coverage: ## Enforce 85% coverage for domain, application, and validation core
 	$(VENV)/bin/pytest tests/unit tests/contract \
+		--cov=metadata_pipeline.adapters.generator \
 		--cov=metadata_pipeline.domain \
 		--cov=metadata_pipeline.application \
+		--cov=metadata_pipeline.ports.document_generator \
 		--cov=metadata_pipeline.validation \
 		--cov-report=term-missing --cov-fail-under=85 $(PYTEST_ARGS)
 
@@ -97,6 +103,34 @@ review-validate: ## Validate reviewer YAML against the raw tbls schema
 		--contract config/metadata_contract.yml
 
 review-check: review-schema review-validate ## Generate and validate the reviewer contract
+
+publish: ## Generate deterministic published Markdown from raw and reviewer metadata
+	./scripts/metadata publish \
+		--schema schema/raw/commerce_demo/schema.json \
+		--review-dir metadata/review/commerce_demo \
+		--contract config/metadata_contract.yml \
+		--published-dir $(PUBLISHED_DIR) \
+		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
+		--mode mock
+
+published-validate: ## Require committed published Markdown to match validated inputs
+	./scripts/metadata validate-published \
+		--schema schema/raw/commerce_demo/schema.json \
+		--review-dir metadata/review/commerce_demo \
+		--contract config/metadata_contract.yml \
+		--published-dir $(PUBLISHED_DIR) \
+		--source-review-commit $(SOURCE_REVIEW_COMMIT)
+
+chunk-dry-run: ## Build validated semantic chunk JSONL without indexing
+	./scripts/metadata chunk \
+		--schema schema/raw/commerce_demo/schema.json \
+		--review-dir metadata/review/commerce_demo \
+		--contract config/metadata_contract.yml \
+		--published-dir $(PUBLISHED_DIR) \
+		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
+		--mode mock --dry-run --output $(CHUNK_OUTPUT)
+
+knowledge-check: publish published-validate chunk-dry-run ## Verify publish and chunk contracts
 
 clean: ## Remove local build and test artifacts
 	rm -rf $(VENV) .mypy_cache .pytest_cache .ruff_cache .coverage htmlcov build dist

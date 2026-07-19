@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypeVar
@@ -12,6 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from metadata_pipeline.domain.review import ReviewContractConfig, ReviewDocument
+from metadata_pipeline.io.atomic_text import write_text_if_changed
 
 ModelT = TypeVar("ModelT", ReviewDocument, ReviewContractConfig)
 
@@ -64,33 +63,7 @@ def dump_review_document(review: ReviewDocument) -> str:
 
 def write_review_document(path: Path, review: ReviewDocument) -> bool:
     """Atomically write changed reviewer YAML and return whether bytes changed."""
-    content = dump_review_document(review)
-    try:
-        if path.read_text(encoding="utf-8") == content:
-            return False
-    except FileNotFoundError:
-        pass
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as temporary:
-            temporary.write(content)
-            temporary.flush()
-            os.fsync(temporary.fileno())
-            temporary_path = Path(temporary.name)
-        os.replace(temporary_path, path)
-    finally:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
-    return True
+    return write_text_if_changed(path, dump_review_document(review))
 
 
 def _load_model(path: Path, model_type: type[ModelT]) -> ModelT:
