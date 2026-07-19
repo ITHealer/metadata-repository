@@ -14,7 +14,7 @@
 | PR-07 | Merged | Metadata PR gate, safe bot commit, and loop prevention |
 | PR-08 | Merged | Manual-first schema sync and additive-change UAT |
 | PR-09 | Merged | Approved-only index manifest and ten-question retrieval smoke test |
-| PR-10 | In progress | Full approved narrative, E2E scenarios, live UAT gate, and operations hardening |
+| PR-10 | Implemented; external UAT pending | Full approved narrative, E2E scenarios, live UAT gate, and operations hardening |
 
 Code completion and external enablement are tracked separately. A real gateway run, bot-token PR,
 and approved-domain narrative run require repository secrets or human approval and must not be
