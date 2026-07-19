@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from shutil import copy2
 from typing import Any
@@ -154,6 +155,7 @@ def test_live_publish_requires_gateway_key(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     exit_code = main(
@@ -170,3 +172,64 @@ def test_live_publish_requires_gateway_key(
 
     assert exit_code == 1
     assert "OPENAI_API_KEY" in capsys.readouterr().err
+
+
+def test_publish_can_select_one_table_without_deleting_other_output(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    published_dir = tmp_path / "published"
+    published_dir.mkdir()
+    untouched = published_dir / "customers.md"
+    untouched.write_text("existing generated document\n", encoding="utf-8")
+    chunks = tmp_path / "orders.jsonl"
+
+    exit_code = main(
+        [
+            "publish",
+            "--published-dir",
+            str(published_dir),
+            "--source-review-commit",
+            "e" * 40,
+            "--mode",
+            "mock",
+            "--table",
+            "orders",
+            "--chunk-output",
+            str(chunks),
+        ]
+    )
+
+    assert exit_code == 0
+    assert "publication completed: 1 document(s)" in capsys.readouterr().out
+    assert untouched.read_text(encoding="utf-8") == "existing generated document\n"
+    assert (published_dir / "orders.md").exists()
+    assert not (published_dir / "order_items.md").exists()
+    assert {
+        json.loads(line)["table"] for line in chunks.read_text(encoding="utf-8").splitlines()
+    } == {"orders"}
+
+
+def test_publish_rejects_unknown_selected_table(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    published_dir = tmp_path / "published"
+
+    exit_code = main(
+        [
+            "publish",
+            "--published-dir",
+            str(published_dir),
+            "--source-review-commit",
+            "f" * 40,
+            "--mode",
+            "mock",
+            "--table",
+            "missing_table",
+        ]
+    )
+
+    assert exit_code == 1
+    assert "unknown_selected_table" in capsys.readouterr().err
+    assert not published_dir.exists()

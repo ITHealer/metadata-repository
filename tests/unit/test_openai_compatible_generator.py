@@ -46,6 +46,29 @@ def test_settings_reject_missing_key_without_exposing_a_secret() -> None:
         OpenAICompatibleSettings.from_env({"OPENAI_API_KEY": ""})
 
 
+def test_settings_load_local_dotenv_without_overriding_exported_values(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    (tmp_path / ".env").write_text(
+        "OPENAI_API_KEY=dotenv-test-key\nOPENAI_BASE_URL=https://dotenv-gateway.test/v1\n",
+        encoding="utf-8",
+    )
+
+    dotenv_settings = OpenAICompatibleSettings.from_env()
+
+    assert dotenv_settings.api_key == "dotenv-test-key"
+    assert dotenv_settings.base_url == "https://dotenv-gateway.test/v1"
+
+    monkeypatch.setenv("OPENAI_API_KEY", "exported-test-key")
+    exported_settings = OpenAICompatibleSettings.from_env()
+
+    assert exported_settings.api_key == "exported-test-key"
+
+
 @pytest.mark.parametrize("response_format", ["json_schema", "json_object"])
 def test_gateway_generates_only_summary_through_chat_completions(
     publication_context: PublicationContext,

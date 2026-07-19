@@ -218,11 +218,25 @@ model routing, response format, structured parsing, and failure behavior without
 Live output is deliberately isolated under `build/live`; it never overwrites committed previews:
 
 ```bash
-export OPENAI_BASE_URL=https://ai-gateway.dev/v1
-export OPENAI_API_KEY=<gateway-key>
-export OPENAI_MODEL=gpt-5.4-nano
+cp .env.example .env
+# Edit .env and set OPENAI_API_KEY; do not commit this file.
 make live-uat
 ```
+
+Local commands automatically read the nearest `.env`. Values already exported by the shell take
+precedence, which lets CI inject secrets without being overridden by a file. The `gh` command is the
+GitHub CLI and is needed only to configure or trigger GitHub Actions; it is not required for local
+`make live-uat`.
+
+During one-table review, avoid unnecessary model calls and preserve every other generated file:
+
+```bash
+make publish TABLE=orders               # deterministic canonical Markdown
+make live-uat TABLE=orders              # isolated LLM preview and chunks
+```
+
+`TABLE` must match a reviewer YAML table name. A selective publish never prunes other Markdown;
+the unfiltered full-batch command remains responsible for orphan cleanup.
 
 The same operation is available through the manual **Live LLM UAT** GitHub Actions workflow. Set
 repository variable `ENABLE_LIVE_LLM_UAT=true`, repository secret `OPENAI_API_KEY`, and optionally
@@ -238,6 +252,8 @@ review YAML and changes `document_status` through the normal Pull Request flow.
 See the [MVP UAT record](./docs/uat/metadata-mvp.md) and
 [operations runbook](./docs/runbooks/metadata-operations.md) for evidence, setup, failure recovery,
 token rotation, re-indexing, and guideline upgrades.
+The [one-table reviewer loop](./docs/runbooks/reviewer-loop.md) gives a command-by-command example
+from editing reviewer YAML through bot regeneration, approval, merge, and approved-only indexing.
 
 ## Metadata Pull Request automation
 

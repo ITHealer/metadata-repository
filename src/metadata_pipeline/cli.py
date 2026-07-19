@@ -99,6 +99,13 @@ def build_parser() -> argparse.ArgumentParser:
     _add_publication_paths(publish)
     _add_generator_arguments(publish)
     publish.add_argument("--chunk-output", type=Path)
+    publish.add_argument(
+        "--table",
+        action="append",
+        dest="tables",
+        default=[],
+        help="Publish only this table; repeat the option to select multiple tables.",
+    )
     validate_published = commands.add_parser(
         "validate-published",
         help="Require committed published Markdown to match deterministic sources.",
@@ -235,6 +242,7 @@ def run_publish(
     source_review_commit: str,
     mode: str,
     chunk_output: Path | None = None,
+    tables: tuple[str, ...] = (),
 ) -> int:
     """Preflight and write generated Markdown with CI-compatible errors."""
     try:
@@ -246,9 +254,10 @@ def run_publish(
             published_dir,
             source_review_commit,
             generator,
+            tables,
         )
         chunks = prepare_chunk_artifact(batch, chunk_output) if chunk_output else ()
-        results = publish_batch(batch, published_dir)
+        results = publish_batch(batch, published_dir, prune_orphans=not tables)
         chunk_changed = write_chunk_artifact(chunk_output, chunks) if chunk_output else False
     except (PublicationPreflightError, GatewayConfigurationError) as error:
         return _print_publication_error(error)
@@ -436,6 +445,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.source_review_commit,
             args.mode,
             args.chunk_output,
+            tuple(args.tables),
         )
     if args.command == "validate-published":
         return run_validate_published(

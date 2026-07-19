@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Annotated
 from urllib.parse import urlparse
 
+from dotenv import find_dotenv, load_dotenv
 from openai import (
     APIConnectionError,
     APIStatusError,
@@ -87,8 +88,8 @@ class OpenAICompatibleSettings:
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> OpenAICompatibleSettings:
-        """Load live settings without logging or persisting the gateway credential."""
-        values = os.environ if environ is None else environ
+        """Load live settings from exported variables or the nearest local .env file."""
+        values = _load_runtime_environment() if environ is None else environ
         api_key = values.get("OPENAI_API_KEY", "").strip()
         if not api_key:
             raise GatewayConfigurationError("OPENAI_API_KEY is required for live generation")
@@ -121,6 +122,14 @@ class OpenAICompatibleSettings:
             response_format=response_format,
             prompt_version=prompt_version,
         )
+
+
+def _load_runtime_environment() -> Mapping[str, str]:
+    """Load a local dotenv without replacing values supplied by the runtime or CI."""
+    dotenv_path = find_dotenv(usecwd=True)
+    if dotenv_path:
+        load_dotenv(dotenv_path=dotenv_path, override=False)
+    return os.environ
 
 
 @dataclass(frozen=True)
