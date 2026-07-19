@@ -1,0 +1,462 @@
+{
+  "$defs": {
+    "BusinessMetadata": {
+      "additionalProperties": false,
+      "description": "Business-level meaning and intended usage of a table.",
+      "properties": {
+        "aliases": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Aliases",
+          "type": "array"
+        },
+        "appropriate_use": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Appropriate Use",
+          "type": "array"
+        },
+        "caveats": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Caveats",
+          "type": "array"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "display_name": {
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "freshness": {
+          "default": "Unknown — needs confirmation",
+          "title": "Freshness",
+          "type": "string"
+        },
+        "grain": {
+          "minLength": 1,
+          "title": "Grain",
+          "type": "string"
+        },
+        "inappropriate_use": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Inappropriate Use",
+          "type": "array"
+        },
+        "purpose": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Purpose",
+          "type": "array"
+        }
+      },
+      "required": [
+        "display_name",
+        "description",
+        "grain",
+        "purpose",
+        "appropriate_use",
+        "inappropriate_use",
+        "evidence"
+      ],
+      "title": "BusinessMetadata",
+      "type": "object"
+    },
+    "BusinessRule": {
+      "additionalProperties": false,
+      "description": "Filter, formula, mapping, or usage rule supplied by a reviewer.",
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "evidence"
+      ],
+      "title": "BusinessRule",
+      "type": "object"
+    },
+    "ColumnReview": {
+      "additionalProperties": false,
+      "description": "Reviewer-owned business meaning for one technical column.",
+      "properties": {
+        "allowed_values": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Allowed Values",
+          "type": "object"
+        },
+        "business_name": {
+          "minLength": 1,
+          "title": "Business Name",
+          "type": "string"
+        },
+        "caveats": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Caveats",
+          "type": "array"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "nullable_meaning": {
+          "default": "not_applicable",
+          "title": "Nullable Meaning",
+          "type": "string"
+        },
+        "semantic_type": {
+          "minLength": 1,
+          "title": "Semantic Type",
+          "type": "string"
+        },
+        "sensitivity": {
+          "default": "internal",
+          "title": "Sensitivity",
+          "type": "string"
+        },
+        "unit": {
+          "default": "not_applicable",
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "business_name",
+        "description",
+        "semantic_type",
+        "evidence"
+      ],
+      "title": "ColumnReview",
+      "type": "object"
+    },
+    "DocumentStatus": {
+      "description": "Human review lifecycle state.",
+      "enum": [
+        "needs_review",
+        "approved"
+      ],
+      "title": "DocumentStatus",
+      "type": "string"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "Reference and confidence for one reviewer claim.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/EvidenceKind"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reference": {
+          "minLength": 1,
+          "title": "Reference",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/EvidenceStatus"
+        }
+      },
+      "required": [
+        "kind",
+        "reference",
+        "status"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "EvidenceKind": {
+      "description": "Auditable source supporting a metadata claim.",
+      "enum": [
+        "clickhouse_ddl",
+        "clickhouse_comment",
+        "tbls_relation",
+        "validation_query",
+        "dashboard",
+        "ticket",
+        "policy",
+        "owner_confirmation",
+        "unknown"
+      ],
+      "title": "EvidenceKind",
+      "type": "string"
+    },
+    "EvidenceStatus": {
+      "description": "Confidence attached to a reviewer claim.",
+      "enum": [
+        "confirmed",
+        "proposed",
+        "unknown",
+        "conflicting"
+      ],
+      "title": "EvidenceStatus",
+      "type": "string"
+    },
+    "RelationshipCardinality": {
+      "description": "Expected cardinality of a documented join.",
+      "enum": [
+        "one_to_one",
+        "one_to_many",
+        "many_to_one",
+        "many_to_many",
+        "unknown"
+      ],
+      "title": "RelationshipCardinality",
+      "type": "string"
+    },
+    "RelationshipReview": {
+      "additionalProperties": false,
+      "description": "Reviewer-owned join semantics between two ClickHouse tables.",
+      "properties": {
+        "cardinality": {
+          "$ref": "#/$defs/RelationshipCardinality"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "from_columns": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "From Columns",
+          "type": "array"
+        },
+        "join_condition": {
+          "minLength": 1,
+          "title": "Join Condition",
+          "type": "string"
+        },
+        "meaning": {
+          "minLength": 1,
+          "title": "Meaning",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "optional": {
+          "title": "Optional",
+          "type": "boolean"
+        },
+        "row_count_impact": {
+          "$ref": "#/$defs/RowCountImpact"
+        },
+        "to_columns": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "To Columns",
+          "type": "array"
+        },
+        "to_table": {
+          "minLength": 1,
+          "title": "To Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "from_columns",
+        "to_table",
+        "to_columns",
+        "join_condition",
+        "cardinality",
+        "optional",
+        "row_count_impact",
+        "meaning",
+        "evidence"
+      ],
+      "title": "RelationshipReview",
+      "type": "object"
+    },
+    "RowCountImpact": {
+      "description": "Expected effect of a join on the source row count.",
+      "enum": [
+        "preserves",
+        "may_increase",
+        "may_decrease",
+        "unknown"
+      ],
+      "title": "RowCountImpact",
+      "type": "string"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/ITHealer/metadata-repository/main/schemas/reviewer_metadata.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Complete reviewer contract for one ClickHouse table.",
+  "properties": {
+    "business": {
+      "$ref": "#/$defs/BusinessMetadata"
+    },
+    "business_rules": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/BusinessRule"
+      },
+      "title": "Business Rules",
+      "type": "array"
+    },
+    "columns": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ColumnReview"
+      },
+      "minProperties": 1,
+      "title": "Columns",
+      "type": "object"
+    },
+    "contract_version": {
+      "minLength": 1,
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "data_quality": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Data Quality",
+      "type": "array"
+    },
+    "database": {
+      "minLength": 1,
+      "title": "Database",
+      "type": "string"
+    },
+    "document_status": {
+      "$ref": "#/$defs/DocumentStatus"
+    },
+    "owner": {
+      "minLength": 1,
+      "title": "Owner",
+      "type": "string"
+    },
+    "relationships": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RelationshipReview"
+      },
+      "title": "Relationships",
+      "type": "array"
+    },
+    "review_guideline_version": {
+      "minLength": 1,
+      "title": "Review Guideline Version",
+      "type": "string"
+    },
+    "reviewer": {
+      "minLength": 1,
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "schema_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Schema Hash",
+      "type": "string"
+    },
+    "security": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Security",
+      "type": "array"
+    },
+    "source_scope": {
+      "const": "clickhouse",
+      "title": "Source Scope",
+      "type": "string"
+    },
+    "table": {
+      "minLength": 1,
+      "title": "Table",
+      "type": "string"
+    },
+    "transformation_guideline_version": {
+      "minLength": 1,
+      "title": "Transformation Guideline Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_version",
+    "review_guideline_version",
+    "transformation_guideline_version",
+    "source_scope",
+    "database",
+    "table",
+    "owner",
+    "reviewer",
+    "document_status",
+    "schema_hash",
+    "business",
+    "columns"
+  ],
+  "title": "ReviewDocument",
+  "type": "object"
+}

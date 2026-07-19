@@ -351,51 +351,53 @@ Tên file chi tiết phụ thuộc phiên bản/template `tbls`; pipeline không
 
 ## 8. Định dạng metadata review
 
-Mỗi table có một file, ví dụ `metadata/review/commerce_demo/orders.md`:
+Mỗi table có một YAML file, ví dụ `metadata/review/commerce_demo/orders.yml`:
 
-```markdown
----
+```yaml
+contract_version: reviewer-v1
+review_guideline_version: reviewer-v1
+transformation_guideline_version: retrieval-v1
+source_scope: clickhouse
 database: commerce_demo
 table: orders
 owner: commerce-analytics
 reviewer: unassigned
 document_status: needs_review
 schema_hash: <sha256-cua-table-schema>
-prompt_version: metadata-v1
-review_guideline_version: reviewer-v1
-transformation_guideline_version: retrieval-v1
----
-
-# orders
-
-## Mục đích nghiệp vụ
-
-Lưu trạng thái hiện tại của từng đơn hàng trong hệ thống commerce demo.
-
-## Grain
-
-Mỗi dòng đại diện cho một `order_id`.
-
-## Các trường quan trọng
-
-| Column | Ý nghĩa nghiệp vụ | Evidence |
-|---|---|---|
-| order_id | Mã định danh đơn hàng | DDL comment |
-| customer_id | Khách hàng đặt đơn | DDL comment + relation config |
-| total_amount | Tổng tiền VND sau giảm giá | Cần domain owner xác nhận |
-
-## Quy tắc sử dụng
-
-- Khi tính doanh thu hoàn tất, loại `order_status = 'cancelled'`.
-- Evidence: `domain-review-commit:<git-sha>`.
-
-## Quan hệ dữ liệu
-
-- `orders.customer_id` → `customers.customer_id` — quan hệ logic, không được ClickHouse enforce.
-
-## Caveats
-
-- `total_amount` chưa xác nhận có bao gồm phí vận chuyển hay không.
+business:
+  display_name: Orders
+  description: One technical row per order represented in the ClickHouse demo dataset.
+  grain: One row per order_id.
+  purpose: [Support order lifecycle analysis.]
+  appropriate_use: [Analyze order counts after status semantics are approved.]
+  inappropriate_use: [Calculate recognized revenue before business rules are confirmed.]
+  aliases: [order fact]
+  freshness: Unknown — needs confirmation
+  caveats: []
+  evidence:
+    - kind: clickhouse_comment
+      reference: schema/raw/commerce_demo/schema.json#tables.orders.comment
+      status: proposed
+      note: Requires reviewer confirmation.
+columns:
+  total_amount:
+    business_name: Order total amount
+    description: Order total recorded after discounts.
+    semantic_type: monetary_amount
+    unit: VND
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.total_amount
+        status: proposed
+        note: Requires reviewer confirmation.
+relationships: []
+business_rules: []
+data_quality: []
+security: []
 ```
 
 Quy tắc nội dung:
@@ -600,7 +602,7 @@ PR không chứa credential hoặc database data; chỉ chứa cấu trúc schem
 ### 9.2. Luồng reviewer feedback
 
 1. Reviewer đọc `guidelines/reviewer_metadata_guideline.md` từ link trong PR template.
-2. Reviewer mở `metadata/review/commerce_demo/orders.md`.
+2. Reviewer mở `metadata/review/commerce_demo/orders.yml`.
 3. Reviewer bổ sung purpose, grain, owner, business rule, alias, join/time/unit semantics, caveat và evidence phù hợp.
 4. Reviewer chạy checklist của Guideline 1 rồi commit: `docs(review): confirm orders business rules`.
 5. Commit mới trên source branch phát sinh sự kiện `pull_request.synchronize` và chạy workflow **Metadata PR**.
@@ -940,7 +942,7 @@ Acceptance criteria:
 2. Chạy `make schema-doc`; xác nhận raw docs.
 3. Chạy `make draft`; xác nhận ba review file.
 4. Push branch và mở PR.
-5. Sửa `orders.md`: owner, reviewer, rule doanh thu; đổi status thành `approved`.
+5. Sửa `orders.yml`: owner, reviewer, rule doanh thu; đổi status thành `approved`.
 6. Đối chiếu checklist Guideline 1 và commit/push.
 7. Quan sát bot commit published theo cấu trúc Guideline 2.
 8. Kiểm tra chunking dry-run giữ đủ rule doanh thu, unit và source evidence.

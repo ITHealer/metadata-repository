@@ -20,6 +20,7 @@
 - [ ] `make typecheck`
 - [ ] `make test`
 - [ ] `make smoke`
+- [ ] If reviewer metadata changed: follow the [Reviewer Metadata Guideline](https://github.com/ITHealer/metadata-repository/blob/main/guidelines/reviewer_metadata_guideline.md) and run `make review-validate`
 
 ## Test evidence
 
