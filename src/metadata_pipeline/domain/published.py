@@ -41,6 +41,7 @@ class Provenance(StrictModel):
     source_review_commit: str = Field(pattern=r"^[0-9a-f]{7,64}$")
     generator_mode: GeneratorMode
     generator_model: str = Field(min_length=1)
+    prompt_version: str = Field(min_length=1)
 
 
 class PublishedColumn(StrictModel):
@@ -153,6 +154,9 @@ class Chunk(StrictModel):
     transformation_guideline_version: str = Field(min_length=1)
     source_review_path: str = Field(min_length=1)
     source_review_commit: str = Field(pattern=r"^[0-9a-f]{7,64}$")
+    generator_mode: GeneratorMode
+    generator_model: str = Field(min_length=1)
+    prompt_version: str = Field(min_length=1)
     content: str = Field(min_length=1)
     evidence: tuple[Evidence, ...] = ()
 

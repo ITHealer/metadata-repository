@@ -73,6 +73,7 @@ class DeterministicDocumentGenerator:
                 source_review_commit=context.source_review_commit,
                 generator_mode=GeneratorMode.MOCK,
                 generator_model=self.model_name,
+                prompt_version="deterministic-v1",
             ),
             display_name=business.display_name,
             summary=f"{business.description} Grain: {business.grain}",

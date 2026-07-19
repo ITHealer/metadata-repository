@@ -5,6 +5,21 @@
 **Số PR dự kiến:** 10
 **Critical path:** PR-01 → PR-02 → PR-03 → PR-05 → PR-06 → PR-07 → PR-09 → PR-10
 
+## Implementation status
+
+| PR | Status | Delivered outcome |
+|---|---|---|
+| PR-01–PR-05 | Merged | Foundation, ClickHouse/tbls, reviewer contracts, drafts, validation core |
+| PR-06 | Merged | Deterministic publication, semantic chunks, and live adapter boundary |
+| PR-07 | Merged | Metadata PR gate, safe bot commit, and loop prevention |
+| PR-08 | Merged | Manual-first schema sync and additive-change UAT |
+| PR-09 | Merged | Approved-only index manifest and ten-question retrieval smoke test |
+| PR-10 | In progress | Full approved narrative, E2E scenarios, live UAT gate, and operations hardening |
+
+Code completion and external enablement are tracked separately. A real gateway run, bot-token PR,
+and approved-domain narrative run require repository secrets or human approval and must not be
+reported as passed until those prerequisites exist.
+
 Tài liệu này tinh chỉnh cấu trúc logic trong PRD thành package boundaries dùng khi code; nếu danh sách file giữa hai tài liệu khác nhau, kiến trúc tại mục 2 của PR plan là nguồn triển khai chi tiết.
 
 ## 1. Nguyên tắc chia PR
@@ -692,28 +707,28 @@ Thêm live provider sau khi toàn bộ deterministic path ổn định, chạy m
 
 ### Tasks
 
-- [ ] Mở rộng `OpenAICompatibleDocumentGenerator` từ summary-only thành full approved narrative theo
+- [x] Mở rộng `OpenAICompatibleDocumentGenerator` từ summary-only thành full approved narrative theo
   `DocumentGenerator` port mà không cho model override locked technical facts.
-- [ ] Dùng structured output/schema validation nếu provider hỗ trợ.
-- [ ] Tách provider configuration khỏi prompt/guideline version.
-- [ ] Thêm timeout, retry có giới hạn và actionable errors.
-- [ ] Không retry validation/business conflict lỗi.
-- [ ] Redact secret và PII khỏi logs/request fixtures.
-- [ ] Lưu model identifier, prompt version và guideline versions trong traceability.
-- [ ] Thêm `--mode live` chỉ qua manual/UAT gate ban đầu.
-- [ ] Chạy ba scenario trong PRD:
+- [x] Dùng structured output/schema validation nếu provider hỗ trợ.
+- [x] Tách provider configuration khỏi prompt/guideline version.
+- [x] Thêm timeout, retry có giới hạn và actionable errors.
+- [x] Không retry validation/business conflict lỗi.
+- [x] Redact secret và PII khỏi logs/request fixtures.
+- [x] Lưu model identifier, prompt version và guideline versions trong traceability.
+- [x] Thêm `--mode live` chỉ qua manual/UAT gate ban đầu.
+- [x] Chạy ba deterministic scenario trong PRD:
   - Happy path.
   - Schema change.
   - Invalid column/guardrail.
 - [ ] Chạy human commit → bot commit → re-approval → merge → index artifact.
-- [ ] Ghi UAT evidence trong `docs/uat/metadata-mvp.md`.
-- [ ] Hoàn thiện runbook:
+- [x] Ghi UAT evidence và external prerequisites trong `docs/uat/metadata-mvp.md`.
+- [x] Hoàn thiện runbook:
   - Bot token rotation.
   - Failed generation recovery.
   - Stuck PR check.
   - Re-index.
   - Guideline version upgrade.
-- [ ] Cập nhật README onboarding từ máy sạch.
+- [x] Cập nhật README onboarding từ máy sạch.
 
 ### Acceptance criteria
 

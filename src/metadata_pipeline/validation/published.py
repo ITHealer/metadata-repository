@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from metadata_pipeline.adapters.generator.deterministic import DeterministicDocumentGenerator
-from metadata_pipeline.domain.published import PublishedDocument
+from metadata_pipeline.domain.published import GeneratorMode, PublishedDocument
+from metadata_pipeline.domain.review import DocumentStatus
 from metadata_pipeline.ports.document_generator import DocumentGenerationError, PublicationContext
 from metadata_pipeline.validation.review import ValidationIssue
 
@@ -25,14 +26,53 @@ def validate_published_document(
         update={
             "generator_mode": document.provenance.generator_mode,
             "generator_model": document.provenance.generator_model,
+            "prompt_version": document.provenance.prompt_version,
         }
     )
-    expected = baseline.model_copy(
-        update={
-            "summary": document.summary,
-            "provenance": expected_provenance,
+    allowed_updates: dict[str, object] = {
+        "summary": document.summary,
+        "provenance": expected_provenance,
+    }
+    if (
+        document.provenance.generator_mode is GeneratorMode.LIVE
+        and document.document_status is DocumentStatus.APPROVED
+    ):
+        actual_columns = {column.name: column for column in document.columns}
+        actual_relationships = {
+            relationship.name: relationship for relationship in document.relationships
         }
-    )
+        actual_rules = {rule.name: rule for rule in document.business_rules}
+        allowed_updates.update(
+            {
+                "description": document.description,
+                "purpose": document.purpose,
+                "appropriate_use": document.appropriate_use,
+                "inappropriate_use": document.inappropriate_use,
+                "columns": tuple(
+                    column.model_copy(
+                        update={"description": actual_columns.get(column.name, column).description}
+                    )
+                    for column in baseline.columns
+                ),
+                "relationships": tuple(
+                    relationship.model_copy(
+                        update={
+                            "meaning": actual_relationships.get(
+                                relationship.name, relationship
+                            ).meaning
+                        }
+                    )
+                    for relationship in baseline.relationships
+                ),
+                "business_rules": tuple(
+                    rule.model_copy(
+                        update={"description": actual_rules.get(rule.name, rule).description}
+                    )
+                    for rule in baseline.business_rules
+                ),
+            }
+        )
+    expected = baseline.model_copy(update=allowed_updates)
     expected_payload = expected.model_dump(mode="json")
     actual_payload = document.model_dump(mode="json")
     issues: list[ValidationIssue] = []

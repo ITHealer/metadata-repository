@@ -16,6 +16,7 @@ source_review_path: metadata/review/commerce_demo/customers.yml
 source_review_commit: a21b31ecc02bc01fd55f0693996b8d6641ef64c0
 generator_mode: mock
 generator_model: deterministic-v1
+prompt_version: deterministic-v1
 ---
 
 # commerce_demo.customers — Customers
