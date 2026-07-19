@@ -1,0 +1,57 @@
+name: Index Manifest
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - knowledge/published/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: index-manifest-main
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  build-manifest:
+    name: build-manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: make install
+
+      - name: Build versioned approved-only manifest
+        run: |
+          make index-build \
+            INDEX_BASE=HEAD^ \
+            INDEX_HEAD=HEAD \
+            SOURCE_COMMIT="$GITHUB_SHA"
+
+      - name: Run golden retrieval smoke test
+        run: make retrieval-smoke
+
+      - name: Upload manifest and retrieval evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: metadata-index-${{ github.sha }}
+          path: |
+            build/index/manifest.json
+            build/index/actions.json
+            build/index/retrieval-report.json
+          if-no-files-found: error
+          retention-days: 30

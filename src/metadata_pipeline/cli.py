@@ -21,6 +21,7 @@ from metadata_pipeline.adapters.git.changed_paths import (
     read_changed_paths,
     read_commit_changes,
 )
+from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
 from metadata_pipeline.application.classify_changes import classify_changed_paths
 from metadata_pipeline.application.create_drafts import (
@@ -28,6 +29,7 @@ from metadata_pipeline.application.create_drafts import (
     DraftGenerationError,
     create_review_drafts,
 )
+from metadata_pipeline.application.index_changes import map_index_actions, reconcile_index
 from metadata_pipeline.application.publish_metadata import (
     PublicationPreflightError,
     prepare_chunk_artifact,
@@ -44,7 +46,10 @@ from metadata_pipeline.application.schema_sync_summary import (
     render_schema_sync_pr_body,
     summarize_schema_change,
 )
+from metadata_pipeline.io.atomic_text import write_text_if_changed
+from metadata_pipeline.io.chunk_jsonl import load_chunks
 from metadata_pipeline.io.review_yaml import ReviewFileError
+from metadata_pipeline.ports.index_store import IndexStoreError
 from metadata_pipeline.ports.schema_source import SchemaSourceError
 from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
 
@@ -124,6 +129,16 @@ def build_parser() -> argparse.ArgumentParser:
     schema_sync_summary.add_argument("--before", type=Path, required=True)
     schema_sync_summary.add_argument("--after", type=Path, required=True)
     schema_sync_summary.add_argument("--output", type=Path, required=True)
+    index_manifest = commands.add_parser(
+        "index-manifest",
+        help="Reconcile approved chunks into a versioned manifest and Git action report.",
+    )
+    index_manifest.add_argument("--chunks", type=Path, required=True)
+    index_manifest.add_argument("--manifest", type=Path, required=True)
+    index_manifest.add_argument("--source-commit", required=True)
+    index_manifest.add_argument("--base", required=True)
+    index_manifest.add_argument("--head", required=True)
+    index_manifest.add_argument("--actions-output", type=Path, required=True)
     return parser
 
 
@@ -336,6 +351,36 @@ def run_schema_sync_summary(before: Path, after: Path, output: Path) -> int:
     return 0
 
 
+def run_index_manifest(
+    chunks_path: Path,
+    manifest_path: Path,
+    source_commit: str,
+    base: str,
+    head: str,
+    actions_output: Path,
+) -> int:
+    """Build a full approved manifest and report document actions from Git."""
+    try:
+        chunks = load_chunks(chunks_path)
+        actions = map_index_actions(read_changed_paths(base, head))
+        update = reconcile_index(ManifestIndexStore(manifest_path), chunks, source_commit)
+    except (ValueError, GitDiffError, IndexStoreError) as error:
+        print(f"index manifest failed: {error}", file=sys.stderr)
+        return 1
+    action_payload = [action.model_dump(mode="json") for action in actions]
+    write_text_if_changed(
+        actions_output,
+        json.dumps(action_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    print(
+        f"index manifest {'updated' if update.changed else 'unchanged'}: "
+        f"{len(update.manifest.documents)} document(s), "
+        f"{len(update.deleted_chunk_ids)} delete(s), "
+        f"{len(update.upserted_chunk_ids)} upsert(s), {len(actions)} Git action(s)"
+    )
+    return 0
+
+
 def _generator(mode: str) -> DeterministicDocumentGenerator | OpenAICompatibleDocumentGenerator:
     if mode == "live":
         return OpenAICompatibleDocumentGenerator.from_settings(OpenAICompatibleSettings.from_env())
@@ -406,6 +451,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_classify_changes(args.base, args.head, args.github_output)
     if args.command == "schema-sync-summary":
         return run_schema_sync_summary(args.before, args.after, args.output)
+    if args.command == "index-manifest":
+        return run_index_manifest(
+            args.chunks,
+            args.manifest,
+            args.source_commit,
+            args.base,
+            args.head,
+            args.actions_output,
+        )
 
     parser.print_help()
     return 0
