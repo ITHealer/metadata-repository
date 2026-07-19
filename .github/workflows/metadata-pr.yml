@@ -1,0 +1,146 @@
+name: Metadata PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: metadata-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  pr-gate:
+    name: pr-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact PR head
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.METADATA_BOT_TOKEN || github.token }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: make install
+
+      - name: Classify PR and latest-commit paths
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          ./scripts/metadata classify-changes \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Select loop-safe action
+        id: decision
+        env:
+          ACTOR: ${{ github.actor }}
+          BOT_LOGIN: ${{ vars.METADATA_BOT_LOGIN }}
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          PR_HAS_INPUTS: ${{ steps.changes.outputs.pr_has_inputs }}
+          LATEST_HAS_PUBLISHED: ${{ steps.changes.outputs.latest_has_published }}
+          LATEST_ONLY_PUBLISHED: ${{ steps.changes.outputs.latest_only_published }}
+        run: |
+          mode=noop
+          if [[ "$LATEST_HAS_PUBLISHED" == "true" ]]; then
+            if [[ -n "$BOT_LOGIN" && "$ACTOR" == "$BOT_LOGIN" && \
+                  "$SAME_REPOSITORY" == "true" && "$LATEST_ONLY_PUBLISHED" == "true" ]]; then
+              mode=validate
+            else
+              mode=reject-published
+            fi
+          elif [[ "$PR_HAS_INPUTS" == "true" ]]; then
+            mode=generate
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "Metadata PR mode: $mode"
+
+      - name: Reject human or mixed published edits
+        if: steps.decision.outputs.mode == 'reject-published'
+        run: |
+          echo "knowledge/published/** is bot-owned generated output."
+          echo "Change raw/reviewer metadata and let the metadata bot regenerate it."
+          exit 1
+
+      - name: Validate reviewer metadata
+        if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate'
+        run: make review-validate
+
+      - name: Generate deterministic published output
+        if: steps.decision.outputs.mode == 'generate'
+        run: make publish
+
+      - name: Validate published output and chunks
+        if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate'
+        run: make published-validate chunk-dry-run
+
+      - name: Commit generated output
+        if: steps.decision.outputs.mode == 'generate'
+        env:
+          BOT_TOKEN: ${{ secrets.METADATA_BOT_TOKEN }}
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [[ -z "$(git status --porcelain -- knowledge/published)" ]]; then
+            echo "No published output changed."
+            exit 0
+          fi
+          if [[ "$SAME_REPOSITORY" != "true" ]]; then
+            echo "Fork PR validated without secrets, but the bot cannot push generated output."
+            exit 1
+          fi
+          if [[ -z "$BOT_TOKEN" ]]; then
+            echo "METADATA_BOT_TOKEN is required so the bot commit triggers latest-SHA CI."
+            exit 1
+          fi
+          unexpected="$(git status --porcelain | awk '$2 !~ /^knowledge\/published\// {print}')"
+          if [[ -n "$unexpected" ]]; then
+            echo "Generation changed files outside knowledge/published/**:"
+            echo "$unexpected"
+            exit 1
+          fi
+          git config user.name "metadata-bot"
+          git config user.email "metadata-bot@users.noreply.github.com"
+          git add knowledge/published
+          git commit -m "chore(metadata): regenerate published knowledge"
+          git push origin "HEAD:$HEAD_BRANCH"
+
+      - name: Write metadata gate summary
+        if: always()
+        env:
+          MODE: ${{ steps.decision.outputs.mode }}
+          PR_INPUTS: ${{ steps.changes.outputs.pr_input_count }}
+          PR_PUBLISHED: ${{ steps.changes.outputs.pr_published_count }}
+          PR_UNRELATED: ${{ steps.changes.outputs.pr_unrelated_count }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          {
+            echo "## Metadata PR gate"
+            echo
+            echo "- Mode: \`${MODE:-not-selected}\`"
+            echo "- PR head: \`$HEAD_SHA\`"
+            echo "- Metadata input changes: \`${PR_INPUTS:-0}\`"
+            echo "- Published output changes: \`${PR_PUBLISHED:-0}\`"
+            echo "- Unrelated changes: \`${PR_UNRELATED:-0}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

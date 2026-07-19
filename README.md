@@ -198,6 +198,34 @@ Never commit the key. `.env.example` documents the supported variables, while `.
 No live gateway request is part of the default test suite; mocked HTTP tests verify the endpoint,
 model routing, response format, structured parsing, and failure behavior without network access.
 
+## Metadata Pull Request automation
+
+After PR-07 is merged, every Pull Request into `main` receives the stable
+`Metadata PR / pr-gate` check. A normal metadata change follows this sequence:
+
+```text
+reviewer input commit
+  -> review validation
+  -> deterministic publish + chunk validation
+  -> bot-only generated Markdown commit
+  -> validation-only run on the latest bot SHA
+```
+
+The workflow classifies the full PR diff and the latest commit separately. This prevents a bot
+commit from starting another generation while still rejecting a human or mixed commit that changes
+`knowledge/published/**`. Unrelated PRs complete as a successful no-op instead of leaving a required
+check pending.
+
+The MVP requires repository secret `METADATA_BOT_TOKEN` and repository variable
+`METADATA_BOT_LOGIN`. Use a dedicated, expiring, fine-grained machine-user token with repository
+Contents write permission. A GitHub App installation token is the preferred production upgrade.
+GitHub's default token is not used for the bot loop because workflow-created events normally do not
+start another unrestricted workflow run. Fork PRs receive no bot secret and cannot push generated
+output.
+
+See [the metadata bot runbook](./docs/runbooks/metadata-pr-bot.md) for setup, path behavior,
+branch-protection rollout, and recovery steps.
+
 ## GitHub setup
 
 The local repository can be developed and verified without a remote. To publish it while keeping
