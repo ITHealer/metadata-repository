@@ -9,10 +9,24 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from metadata_pipeline import __version__
+from metadata_pipeline.adapters.generator.deterministic import DeterministicDocumentGenerator
+from metadata_pipeline.adapters.generator.openai_compatible import (
+    GatewayConfigurationError,
+    OpenAICompatibleDocumentGenerator,
+    OpenAICompatibleSettings,
+)
 from metadata_pipeline.application.create_drafts import (
     DraftAction,
     DraftGenerationError,
     create_review_drafts,
+)
+from metadata_pipeline.application.publish_metadata import (
+    PublicationPreflightError,
+    prepare_chunk_artifact,
+    prepare_publication,
+    publish_batch,
+    validate_published_directory,
+    write_chunk_artifact,
 )
 from metadata_pipeline.application.review_contract import (
     export_review_json_schema,
@@ -20,7 +34,7 @@ from metadata_pipeline.application.review_contract import (
 )
 from metadata_pipeline.io.review_yaml import ReviewFileError
 from metadata_pipeline.ports.schema_source import SchemaSourceError
-from metadata_pipeline.validation.review import IssueSeverity
+from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
 
 MINIMUM_PYTHON = (3, 9)
 
@@ -61,6 +75,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate reviewer metadata against raw tbls schema.json.",
     )
     _add_review_paths(validate_review)
+    publish = commands.add_parser(
+        "publish",
+        help="Merge raw and reviewer metadata into generated Markdown.",
+    )
+    _add_publication_paths(publish)
+    _add_generator_arguments(publish)
+    validate_published = commands.add_parser(
+        "validate-published",
+        help="Require committed published Markdown to match deterministic sources.",
+    )
+    _add_publication_paths(validate_published)
+    chunk = commands.add_parser(
+        "chunk",
+        help="Build a validated semantic chunk JSONL dry-run artifact.",
+    )
+    _add_publication_paths(chunk)
+    _add_generator_arguments(chunk)
+    chunk.add_argument("--dry-run", action="store_true", required=True)
+    chunk.add_argument(
+        "--output",
+        type=Path,
+        default=Path("build/chunks/commerce_demo.jsonl"),
+    )
     return parser
 
 
@@ -80,6 +117,20 @@ def _add_review_paths(parser: argparse.ArgumentParser) -> None:
         type=Path,
         default=Path("config/metadata_contract.yml"),
     )
+
+
+def _add_publication_paths(parser: argparse.ArgumentParser) -> None:
+    _add_review_paths(parser)
+    parser.add_argument(
+        "--published-dir",
+        type=Path,
+        default=Path("knowledge/published/commerce_demo"),
+    )
+    parser.add_argument("--source-review-commit", required=True)
+
+
+def _add_generator_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--mode", choices=("mock", "live"), default="mock")
 
 
 def run_doctor() -> int:
@@ -134,6 +185,117 @@ def run_create_drafts(schema: Path, review_dir: Path, contract: Path) -> int:
     return 0
 
 
+def run_publish(
+    schema: Path,
+    review_dir: Path,
+    contract: Path,
+    published_dir: Path,
+    source_review_commit: str,
+    mode: str,
+) -> int:
+    """Preflight and write generated Markdown with CI-compatible errors."""
+    try:
+        generator = _generator(mode)
+        batch = prepare_publication(
+            schema,
+            review_dir,
+            contract,
+            published_dir,
+            source_review_commit,
+            generator,
+        )
+        results = publish_batch(batch, published_dir)
+    except (PublicationPreflightError, GatewayConfigurationError) as error:
+        return _print_publication_error(error)
+    for warning in batch.warnings:
+        _print_issue(warning)
+    for result in results:
+        print(f"{result.action.value}: {result.path}")
+    print(f"publication completed: {len(batch.items)} document(s)")
+    return 0
+
+
+def run_validate_published(
+    schema: Path,
+    review_dir: Path,
+    contract: Path,
+    published_dir: Path,
+    source_review_commit: str,
+) -> int:
+    """Regenerate deterministic output in memory and compare committed bytes."""
+    try:
+        batch = prepare_publication(
+            schema,
+            review_dir,
+            contract,
+            published_dir,
+            source_review_commit,
+            DeterministicDocumentGenerator(),
+        )
+    except PublicationPreflightError as error:
+        return _print_publication_error(error)
+    issues = validate_published_directory(batch, published_dir)
+    for issue in issues:
+        _print_issue(issue)
+    if issues:
+        print(f"published validation failed: {len(issues)} issue(s)", file=sys.stderr)
+        return 1
+    print(f"published validation passed: {len(batch.items)} document(s)")
+    return 0
+
+
+def run_chunk(
+    schema: Path,
+    review_dir: Path,
+    contract: Path,
+    published_dir: Path,
+    source_review_commit: str,
+    mode: str,
+    output: Path,
+) -> int:
+    """Prepare documents and write validated semantic chunks as JSONL."""
+    try:
+        batch = prepare_publication(
+            schema,
+            review_dir,
+            contract,
+            published_dir,
+            source_review_commit,
+            _generator(mode),
+        )
+        chunks = prepare_chunk_artifact(batch, output)
+        changed = write_chunk_artifact(output, chunks)
+    except (PublicationPreflightError, GatewayConfigurationError) as error:
+        return _print_publication_error(error)
+    state = "updated" if changed else "unchanged"
+    print(f"chunk dry-run {state}: {output} ({len(chunks)} chunk(s))")
+    return 0
+
+
+def _generator(mode: str) -> DeterministicDocumentGenerator | OpenAICompatibleDocumentGenerator:
+    if mode == "live":
+        return OpenAICompatibleDocumentGenerator.from_settings(OpenAICompatibleSettings.from_env())
+    return DeterministicDocumentGenerator()
+
+
+def _print_publication_error(
+    error: PublicationPreflightError | GatewayConfigurationError,
+) -> int:
+    if isinstance(error, PublicationPreflightError):
+        for issue in error.issues:
+            _print_issue(issue)
+    else:
+        print(f"generator configuration error: {error}", file=sys.stderr)
+    return 1
+
+
+def _print_issue(issue: ValidationIssue) -> None:
+    print(
+        f"{issue.path}:{issue.field}: {issue.severity.value}: {issue.code}: {issue.message}",
+        file=sys.stderr,
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Execute the CLI and return an exit code without terminating the interpreter."""
     parser = build_parser()
@@ -149,6 +311,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_create_drafts(args.schema, args.review_dir, args.contract)
     if args.command == "validate-review":
         return run_validate_review(args.schema, args.review_dir, args.contract)
+    if args.command == "publish":
+        return run_publish(
+            args.schema,
+            args.review_dir,
+            args.contract,
+            args.published_dir,
+            args.source_review_commit,
+            args.mode,
+        )
+    if args.command == "validate-published":
+        return run_validate_published(
+            args.schema,
+            args.review_dir,
+            args.contract,
+            args.published_dir,
+            args.source_review_commit,
+        )
+    if args.command == "chunk":
+        return run_chunk(
+            args.schema,
+            args.review_dir,
+            args.contract,
+            args.published_dir,
+            args.source_review_commit,
+            args.mode,
+            args.output,
+        )
 
     parser.print_help()
     return 0

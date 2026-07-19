@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from shutil import copy2
 from typing import Any
 
 import pytest
@@ -86,3 +87,71 @@ def test_draft_cli_is_idempotent_and_warning_only_validation_passes(
     output = capsys.readouterr()
     assert "warning: missing_sensitivity_classification" in output.err
     assert "review metadata validation passed" in output.out
+
+
+def test_publish_validate_and_chunk_commands_share_one_contract(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    review_dir = tmp_path / "review"
+    review_dir.mkdir()
+    for source in Path("metadata/review/commerce_demo").glob("*.yml"):
+        copy2(source, review_dir / source.name)
+    published_dir = tmp_path / "published"
+    chunk_path = tmp_path / "chunks.jsonl"
+    common_arguments = [
+        "--schema",
+        "schema/raw/commerce_demo/schema.json",
+        "--review-dir",
+        str(review_dir),
+        "--contract",
+        "config/metadata_contract.yml",
+        "--published-dir",
+        str(published_dir),
+        "--source-review-commit",
+        "c" * 40,
+    ]
+
+    assert main(["publish", *common_arguments, "--mode", "mock"]) == 0
+    assert "publication completed: 3 document(s)" in capsys.readouterr().out
+    assert main(["validate-published", *common_arguments]) == 0
+    assert "published validation passed" in capsys.readouterr().out
+    assert (
+        main(
+            [
+                "chunk",
+                *common_arguments,
+                "--mode",
+                "mock",
+                "--dry-run",
+                "--output",
+                str(chunk_path),
+            ]
+        )
+        == 0
+    )
+    assert "26 chunk(s)" in capsys.readouterr().out
+    assert len(chunk_path.read_text(encoding="utf-8").splitlines()) == 26
+
+
+def test_live_publish_requires_gateway_key(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    exit_code = main(
+        [
+            "publish",
+            "--published-dir",
+            str(tmp_path / "published"),
+            "--source-review-commit",
+            "d" * 40,
+            "--mode",
+            "live",
+        ]
+    )
+
+    assert exit_code == 1
+    assert "OPENAI_API_KEY" in capsys.readouterr().err
