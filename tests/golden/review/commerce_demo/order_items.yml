@@ -1,0 +1,105 @@
+contract_version: reviewer-v1
+review_guideline_version: reviewer-v1
+transformation_guideline_version: retrieval-v1
+source_scope: clickhouse
+database: commerce_demo
+table: order_items
+owner: unassigned
+reviewer: unassigned
+document_status: needs_review
+schema_hash: 45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db
+business:
+  display_name: Order Items
+  description: Order detail fact at one row per order_id and line_number.
+  grain: Unknown — needs confirmation
+  purpose:
+    - Unknown — needs confirmation
+  appropriate_use:
+    - Unknown — needs confirmation
+  inappropriate_use:
+    - Unknown — needs confirmation
+  aliases: []
+  freshness: Unknown — needs confirmation
+  caveats:
+    - Business meaning requires domain reviewer confirmation.
+  evidence:
+    - kind: clickhouse_comment
+      reference: schema/raw/commerce_demo/schema.json#tables.order_items.comment
+      status: proposed
+      note: Generated from the ClickHouse comment; domain confirmation is required.
+columns:
+  line_number:
+    business_name: Line Number
+    description: One-based line position within an order
+    semantic_type: unknown
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.line_number
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  order_id:
+    business_name: Order Id
+    description: Parent order; logical join to orders.order_id
+    semantic_type: identifier
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.order_id
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  product_code:
+    business_name: Product Code
+    description: Synthetic product code captured when the order was placed
+    semantic_type: identifier
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.product_code
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  quantity:
+    business_name: Quantity
+    description: Number of product units on this order line
+    semantic_type: count
+    unit: Unknown — needs confirmation
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.quantity
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  unit_price:
+    business_name: Unit Price
+    description: Price per unit in VND when the order was placed
+    semantic_type: monetary_amount
+    unit: VND
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.unit_price
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+relationships: []
+business_rules: []
+data_quality:
+  - Data quality expectations require reviewer confirmation.
+security: []

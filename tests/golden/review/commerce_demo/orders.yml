@@ -1,0 +1,120 @@
+contract_version: reviewer-v1
+review_guideline_version: reviewer-v1
+transformation_guideline_version: retrieval-v1
+source_scope: clickhouse
+database: commerce_demo
+table: orders
+owner: unassigned
+reviewer: unassigned
+document_status: needs_review
+schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
+business:
+  display_name: Orders
+  description: Order fact at one row per order_id; cancelled orders remain in the table.
+  grain: Unknown — needs confirmation
+  purpose:
+    - Unknown — needs confirmation
+  appropriate_use:
+    - Unknown — needs confirmation
+  inappropriate_use:
+    - Unknown — needs confirmation
+  aliases: []
+  freshness: Unknown — needs confirmation
+  caveats:
+    - Business meaning requires domain reviewer confirmation.
+  evidence:
+    - kind: clickhouse_comment
+      reference: schema/raw/commerce_demo/schema.json#tables.orders.comment
+      status: proposed
+      note: Generated from the ClickHouse comment; domain confirmation is required.
+columns:
+  created_at:
+    business_name: Created At
+    description: UTC timestamp when the order was created
+    semantic_type: timestamp
+    unit: UTC
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.created_at
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  customer_id:
+    business_name: Customer Id
+    description: Customer that placed the order; logical join to customers.customer_id
+    semantic_type: identifier
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.customer_id
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  order_id:
+    business_name: Order Id
+    description: Stable identifier for one order
+    semantic_type: identifier
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.order_id
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  order_status:
+    business_name: Order Status
+    description: 'Current lifecycle state: pending, paid, shipped, or cancelled'
+    semantic_type: categorical
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats:
+      - Allowed values require reviewer confirmation.
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.order_status
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  total_amount:
+    business_name: Total Amount
+    description: Order total in VND after discounts
+    semantic_type: monetary_amount
+    unit: VND
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.total_amount
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  updated_at:
+    business_name: Updated At
+    description: UTC timestamp of the latest order update
+    semantic_type: timestamp
+    unit: UTC
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.updated_at
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+relationships: []
+business_rules: []
+data_quality:
+  - Data quality expectations require reviewer confirmation.
+security: []

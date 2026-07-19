@@ -75,18 +75,27 @@ make review-validate
 make review-check
 ```
 
+PR-05 adds deterministic draft creation and schema refresh:
+
+```bash
+# Create files for new tables; preserve human content when technical schema changes
+make review-draft
+```
+
+`make review-draft` may normalize YAML formatting when it refreshes a document. Store every durable
+review decision in a contract field such as `business`, `columns`, `relationships`, `rules`, or
+`evidence`; do not keep required information only in YAML comments because comments are not part of
+the Pydantic contract and are not preserved by the deterministic writer.
+
 The remaining planned workflow is:
 
 ```bash
-# PR-05: create or update reviewer drafts without overwriting human content
-./scripts/metadata draft
-
 # PR-06: merge raw schema + approved review metadata into published output
 ./scripts/metadata publish --mode mock
 ```
 
-The draft and publish subcommands are not implemented yet. There is currently no valid local command
-for producing enriched output; rerunning `make schema-doc` only regenerates raw tbls output.
+The publish subcommand is not implemented yet. There is currently no valid local command for
+producing enriched output; rerunning `make schema-doc` only regenerates raw tbls output.
 
 ## 5. Reviewer workflow
 

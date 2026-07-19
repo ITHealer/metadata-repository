@@ -42,6 +42,14 @@ def test_reviewer_cannot_declare_unknown_column() -> None:
     assert "unknown_column" in _issue_codes("customers.yml", columns=columns)
 
 
+def test_every_raw_column_requires_reviewer_metadata() -> None:
+    review = load_review_document(REVIEW_DIR / "customers.yml")
+    columns = dict(review.columns)
+    del columns["segment"]
+
+    assert "missing_column_review" in _issue_codes("customers.yml", columns=columns)
+
+
 def test_reviewer_cannot_declare_unknown_relationship_table() -> None:
     review = load_review_document(REVIEW_DIR / "orders.yml")
     relationship = review.relationships[0].model_copy(update={"to_table": "customer_typo"})

@@ -61,3 +61,28 @@ def test_validate_review_returns_failure_for_unknown_table(
 
     assert exit_code == 1
     assert "unknown_table" in capsys.readouterr().err
+
+
+def test_draft_cli_is_idempotent_and_warning_only_validation_passes(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    review_dir = tmp_path / "review"
+    common_arguments = [
+        "--schema",
+        "schema/raw/commerce_demo/schema.json",
+        "--review-dir",
+        str(review_dir),
+        "--contract",
+        "config/metadata_contract.yml",
+    ]
+
+    assert main(["draft", *common_arguments]) == 0
+    assert "customers: created" in capsys.readouterr().out
+    assert main(["draft", *common_arguments]) == 0
+    assert "customers: unchanged" in capsys.readouterr().out
+    assert main(["validate-review", *common_arguments]) == 0
+
+    output = capsys.readouterr()
+    assert "warning: missing_sensitivity_classification" in output.err
+    assert "review metadata validation passed" in output.out

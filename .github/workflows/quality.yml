@@ -54,9 +54,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: python -m pip install --editable '.[dev]'
+      - run: make install
       - run: mkdir -p build/test-results
-      - run: pytest tests/unit tests/contract --junitxml=build/test-results/unit.xml
+      - run: make coverage PYTEST_ARGS="--junitxml=build/test-results/unit.xml"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

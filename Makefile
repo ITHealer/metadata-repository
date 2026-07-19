@@ -8,10 +8,10 @@ COMPOSE ?= docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install format lint typecheck test smoke verify clean \
+.PHONY: help install format lint typecheck test coverage smoke verify clean \
 	db-up db-wait db-check db-reset db-down db-logs \
 	schema-doc schema-lint schema-diff schema-check \
-	review-schema review-validate review-check
+	review-schema review-draft review-validate review-check
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -35,11 +35,18 @@ typecheck: ## Run strict static type checking
 test: ## Run unit tests
 	$(VENV)/bin/pytest tests/unit tests/contract
 
+coverage: ## Enforce 85% coverage for domain, application, and validation core
+	$(VENV)/bin/pytest tests/unit tests/contract \
+		--cov=metadata_pipeline.domain \
+		--cov=metadata_pipeline.application \
+		--cov=metadata_pipeline.validation \
+		--cov-report=term-missing --cov-fail-under=85 $(PYTEST_ARGS)
+
 smoke: ## Verify that the CLI starts and the local environment is supported
 	$(PYTHON) -m metadata_pipeline.cli --version
 	$(PYTHON) -m metadata_pipeline.cli doctor
 
-verify: lint typecheck test smoke review-validate ## Run all local quality gates
+verify: lint typecheck coverage smoke review-validate ## Run all local quality gates
 
 db-up: ## Start the ClickHouse demo fixture and wait until it is ready
 	$(COMPOSE) up -d clickhouse
@@ -76,6 +83,12 @@ schema-check: schema-doc schema-lint ## Generate and validate the complete tbls 
 review-schema: ## Generate JSON Schema from the Pydantic reviewer contract
 	./scripts/metadata export-review-schema \
 		--output schemas/reviewer_metadata.schema.json
+
+review-draft: ## Create or refresh deterministic reviewer YAML drafts
+	./scripts/metadata draft \
+		--schema schema/raw/commerce_demo/schema.json \
+		--review-dir metadata/review/commerce_demo \
+		--contract config/metadata_contract.yml
 
 review-validate: ## Validate reviewer YAML against the raw tbls schema
 	./scripts/metadata validate-review \
