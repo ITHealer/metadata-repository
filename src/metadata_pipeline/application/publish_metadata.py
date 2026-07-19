@@ -82,6 +82,7 @@ def prepare_publication(
     output_dir: Path,
     source_review_commit: str,
     generator: DocumentGenerator,
+    selected_tables: tuple[str, ...] = (),
 ) -> PublicationBatch:
     """Validate every input and generated model before any output file is written."""
     review_issues = validate_review_directory(schema_path, review_dir, contract_path)
@@ -121,6 +122,25 @@ def prepare_publication(
                     "no reviewer YAML documents found",
                 ),
             )
+        )
+    requested_tables = set(selected_tables)
+    if requested_tables:
+        available_tables = {review.table for _, review in reviews}
+        missing_tables = sorted(requested_tables - available_tables)
+        if missing_tables:
+            raise PublicationPreflightError(
+                tuple(
+                    ValidationIssue(
+                        "unknown_selected_table",
+                        review_dir,
+                        "table",
+                        f"selected table {table!r} has no reviewer metadata file",
+                    )
+                    for table in missing_tables
+                )
+            )
+        reviews = tuple(
+            (path, review) for path, review in reviews if review.table in requested_tables
         )
     tables = {table.name: table for table in schema.tables}
     prepared: list[PreparedPublication] = []
@@ -178,7 +198,12 @@ def prepare_publication(
     return PublicationBatch(tuple(prepared), warnings)
 
 
-def publish_batch(batch: PublicationBatch, output_dir: Path) -> tuple[PublishResult, ...]:
+def publish_batch(
+    batch: PublicationBatch,
+    output_dir: Path,
+    *,
+    prune_orphans: bool = True,
+) -> tuple[PublishResult, ...]:
     """Write a preflighted batch and remove generated-only orphan Markdown files."""
     results: list[PublishResult] = []
     expected_paths = {item.output_path for item in batch.items}
@@ -190,9 +215,10 @@ def publish_batch(batch: PublicationBatch, output_dir: Path) -> tuple[PublishRes
         if changed:
             action = PublishAction.UPDATED if existed else PublishAction.CREATED
         results.append(PublishResult(item.output_path, action))
-    for orphan in sorted(existing_paths - expected_paths):
-        orphan.unlink()
-        results.append(PublishResult(orphan, PublishAction.DELETED))
+    if prune_orphans:
+        for orphan in sorted(existing_paths - expected_paths):
+            orphan.unlink()
+            results.append(PublishResult(orphan, PublishAction.DELETED))
     return tuple(results)
 
 

@@ -17,6 +17,7 @@ RETRIEVAL_REPORT ?= build/index/retrieval-report.json
 GENERATOR_MODE ?= mock
 LIVE_PUBLISHED_DIR ?= build/live/published/commerce_demo
 LIVE_CHUNK_OUTPUT ?= build/live/chunks/commerce_demo.jsonl
+TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 
 .DEFAULT_GOAL := help
 
@@ -123,7 +124,7 @@ publish: ## Generate deterministic published Markdown from raw and reviewer meta
 		--contract config/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
-		--mode $(GENERATOR_MODE)
+		--mode $(GENERATOR_MODE) $(TABLE_ARGS)
 
 published-validate: ## Require committed published Markdown to match validated inputs
 	./scripts/metadata validate-published \
@@ -163,7 +164,7 @@ live-uat: ## Manually call the configured gateway once per document and write is
 		--contract config/metadata_contract.yml \
 		--published-dir $(LIVE_PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
-		--mode live --chunk-output $(LIVE_CHUNK_OUTPUT)
+		--mode live --chunk-output $(LIVE_CHUNK_OUTPUT) $(TABLE_ARGS)
 
 clean: ## Remove local build and test artifacts
 	rm -rf $(VENV) .mypy_cache .pytest_cache .ruff_cache .coverage htmlcov build dist
