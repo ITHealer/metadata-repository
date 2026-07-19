@@ -9,10 +9,18 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from metadata_pipeline import __version__
+from metadata_pipeline.application.create_drafts import (
+    DraftAction,
+    DraftGenerationError,
+    create_review_drafts,
+)
 from metadata_pipeline.application.review_contract import (
     export_review_json_schema,
     validate_review_directory,
 )
+from metadata_pipeline.io.review_yaml import ReviewFileError
+from metadata_pipeline.ports.schema_source import SchemaSourceError
+from metadata_pipeline.validation.review import IssueSeverity
 
 MINIMUM_PYTHON = (3, 9)
 
@@ -43,26 +51,35 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("schemas/reviewer_metadata.schema.json"),
     )
+    draft = commands.add_parser(
+        "draft",
+        help="Create or refresh deterministic reviewer YAML drafts.",
+    )
+    _add_review_paths(draft)
     validate_review = commands.add_parser(
         "validate-review",
         help="Validate reviewer metadata against raw tbls schema.json.",
     )
-    validate_review.add_argument(
+    _add_review_paths(validate_review)
+    return parser
+
+
+def _add_review_paths(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
         "--schema",
         type=Path,
         default=Path("schema/raw/commerce_demo/schema.json"),
     )
-    validate_review.add_argument(
+    parser.add_argument(
         "--review-dir",
         type=Path,
         default=Path("metadata/review/commerce_demo"),
     )
-    validate_review.add_argument(
+    parser.add_argument(
         "--contract",
         type=Path,
         default=Path("config/metadata_contract.yml"),
     )
-    return parser
 
 
 def run_doctor() -> int:
@@ -81,13 +98,39 @@ def run_validate_review(schema: Path, review_dir: Path, contract: Path) -> int:
     issues = validate_review_directory(schema, review_dir, contract)
     for issue in issues:
         print(
-            f"{issue.path}:{issue.field}: {issue.code}: {issue.message}",
+            f"{issue.path}:{issue.field}: {issue.severity.value}: {issue.code}: {issue.message}",
             file=sys.stderr,
         )
-    if issues:
-        print(f"review metadata validation failed: {len(issues)} issue(s)", file=sys.stderr)
+    error_count = sum(issue.severity is IssueSeverity.ERROR for issue in issues)
+    warning_count = len(issues) - error_count
+    if error_count:
+        print(
+            f"review metadata validation failed: {error_count} error(s), "
+            f"{warning_count} warning(s)",
+            file=sys.stderr,
+        )
         return 1
-    print(f"review metadata validation passed: {review_dir}")
+    print(f"review metadata validation passed: {review_dir} ({warning_count} warning(s))")
+    return 0
+
+
+def run_create_drafts(schema: Path, review_dir: Path, contract: Path) -> int:
+    """Create drafts, format results, and fail when manual cleanup is required."""
+    try:
+        results = create_review_drafts(schema, review_dir, contract)
+    except (DraftGenerationError, ReviewFileError, SchemaSourceError) as error:
+        print(f"draft generation failed: {error}", file=sys.stderr)
+        return 1
+
+    requires_manual_review = False
+    for result in results:
+        details = f" ({', '.join(result.issue_codes)})" if result.issue_codes else ""
+        print(f"{result.table}: {result.action.value}: {result.path}{details}")
+        requires_manual_review |= result.action is DraftAction.REQUIRES_MANUAL_REVIEW
+    if requires_manual_review:
+        print("draft generation requires manual review", file=sys.stderr)
+        return 1
+    print(f"draft generation completed: {len(results)} table(s)")
     return 0
 
 
@@ -102,6 +145,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         export_review_json_schema(args.output)
         print(f"review JSON Schema written: {args.output}")
         return 0
+    if args.command == "draft":
+        return run_create_drafts(args.schema, args.review_dir, args.contract)
     if args.command == "validate-review":
         return run_validate_review(args.schema, args.review_dir, args.contract)
 

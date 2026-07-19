@@ -29,6 +29,7 @@ make format     # Apply Ruff fixes and formatting
 make lint       # Check lint and formatting
 make typecheck  # Run strict mypy checks
 make test       # Run unit tests
+make coverage   # Enforce coverage for domain/application/validation core
 make smoke      # Verify the CLI and Python runtime
 ```
 
@@ -129,9 +130,15 @@ every declared table, column, and relationship endpoint must exist in the raw tb
 
 ```bash
 make review-schema    # Regenerate JSON Schema from Pydantic
+make review-draft     # Create/refresh drafts without overwriting human metadata
 make review-validate  # Validate the three reviewer files against raw schema.json
 make review-check     # Run both; this is the GitHub Actions gate
 ```
+
+`make review-draft` is deterministic: unchanged schema produces no file rewrite. A new column is
+added as a `proposed` draft, while existing purpose, grain, ownership, rules, and evidence are
+preserved. Technical changes update `schema_hash` and return the document to `needs_review`.
+Removed tables or columns require explicit reviewer cleanup and are never deleted silently.
 
 Read [Guideline 1](./guidelines/reviewer_metadata_guideline.md) before changing reviewer content.
 [Guideline 2](./guidelines/llm_transformation_guideline.md) defines how a later publish step must

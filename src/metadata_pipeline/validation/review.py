@@ -3,21 +3,36 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 from metadata_pipeline.domain.hashing import table_schema_hash
-from metadata_pipeline.domain.review import ReviewContractConfig, ReviewDocument
+from metadata_pipeline.domain.review import (
+    DocumentStatus,
+    Evidence,
+    EvidenceStatus,
+    ReviewContractConfig,
+    ReviewDocument,
+)
 from metadata_pipeline.ports.schema_source import DatabaseSchema, TableSchema
+
+
+class IssueSeverity(str, Enum):
+    """Whether an issue blocks CI or only requires reviewer attention."""
+
+    ERROR = "error"
+    WARNING = "warning"
 
 
 @dataclass(frozen=True)
 class ValidationIssue:
-    """One deterministic, actionable metadata validation failure."""
+    """One deterministic, actionable metadata validation result."""
 
     code: str
     path: Path
     field: str
     message: str
+    severity: IssueSeverity = IssueSeverity.ERROR
 
 
 def validate_review_document(
@@ -77,7 +92,8 @@ def validate_review_document(
 
     _validate_schema_hash(issues, path, schema, table, review.schema_hash)
     available_columns = {column.name for column in table.columns}
-    for column_name in review.columns:
+    reviewed_columns = set(review.columns)
+    for column_name in reviewed_columns:
         if column_name not in available_columns:
             issues.append(
                 ValidationIssue(
@@ -87,6 +103,15 @@ def validate_review_document(
                     f"column {column_name!r} does not exist in table {review.table!r}",
                 )
             )
+    for column_name in sorted(available_columns - reviewed_columns):
+        issues.append(
+            ValidationIssue(
+                "missing_column_review",
+                path,
+                f"columns.{column_name}",
+                f"table {review.table!r} column {column_name!r} has no reviewer metadata",
+            )
+        )
 
     for index, relationship in enumerate(review.relationships):
         relationship_path = f"relationships.{index}"
@@ -118,7 +143,151 @@ def validate_review_document(
             relationship.to_table,
         )
 
+    _validate_review_semantics(issues, path, table, review)
+
     return tuple(issues)
+
+
+def _validate_review_semantics(
+    issues: list[ValidationIssue],
+    path: Path,
+    table: TableSchema,
+    review: ReviewDocument,
+) -> None:
+    severity = _approval_severity(review)
+    _validate_evidence(issues, path, "business.evidence", review.business.evidence, review)
+    raw_columns = {column.name: column for column in table.columns}
+    for column_name, column_review in review.columns.items():
+        raw_column = raw_columns.get(column_name)
+        if raw_column is None:
+            continue
+        field = f"columns.{column_name}"
+        semantic_type = column_review.semantic_type.lower()
+        unit = column_review.unit.strip().lower()
+        if _is_timestamp(raw_column.data_type) and _is_unknown_unit(unit):
+            issues.append(
+                ValidationIssue(
+                    "missing_time_semantics",
+                    path,
+                    f"{field}.unit",
+                    "timestamp column requires an explicit timezone or time unit",
+                    severity,
+                )
+            )
+        if semantic_type in {
+            "monetary_amount",
+            "measure",
+            "count",
+            "percentage",
+            "duration",
+        } and _is_unknown_unit(unit):
+            issues.append(
+                ValidationIssue(
+                    "missing_measure_unit",
+                    path,
+                    f"{field}.unit",
+                    f"semantic type {column_review.semantic_type!r} requires an explicit unit",
+                    severity,
+                )
+            )
+        if (
+            semantic_type in {"categorical", "status", "code"}
+            and not column_review.allowed_values
+            and not column_review.caveats
+        ):
+            issues.append(
+                ValidationIssue(
+                    "missing_allowed_values",
+                    path,
+                    f"{field}.allowed_values",
+                    "categorical column requires allowed values or an explicit caveat",
+                    severity,
+                )
+            )
+        if semantic_type in {"email", "person_name", "phone", "address"} and (
+            column_review.sensitivity.strip().lower()
+            in {"", "internal", "unknown", "not_applicable"}
+        ):
+            issues.append(
+                ValidationIssue(
+                    "missing_sensitivity_classification",
+                    path,
+                    f"{field}.sensitivity",
+                    f"PII-like semantic type {column_review.semantic_type!r} "
+                    "requires classification",
+                    severity,
+                )
+            )
+        _validate_evidence(
+            issues,
+            path,
+            f"{field}.evidence",
+            column_review.evidence,
+            review,
+        )
+
+    for index, relationship in enumerate(review.relationships):
+        _validate_evidence(
+            issues,
+            path,
+            f"relationships.{index}.evidence",
+            relationship.evidence,
+            review,
+        )
+    for index, rule in enumerate(review.business_rules):
+        _validate_evidence(
+            issues,
+            path,
+            f"business_rules.{index}.evidence",
+            rule.evidence,
+            review,
+        )
+
+
+def _validate_evidence(
+    issues: list[ValidationIssue],
+    path: Path,
+    field: str,
+    evidence: tuple[Evidence, ...],
+    review: ReviewDocument,
+) -> None:
+    severity = _approval_severity(review)
+    if any(item.status is EvidenceStatus.CONFLICTING for item in evidence):
+        issues.append(
+            ValidationIssue(
+                "conflicting_evidence",
+                path,
+                field,
+                "conflicting evidence must be resolved before approval",
+                severity,
+            )
+        )
+    if review.document_status is DocumentStatus.APPROVED and not any(
+        item.status is EvidenceStatus.CONFIRMED for item in evidence
+    ):
+        issues.append(
+            ValidationIssue(
+                "approved_without_confirmed_evidence",
+                path,
+                field,
+                "approved metadata requires at least one confirmed evidence item",
+            )
+        )
+
+
+def _approval_severity(review: ReviewDocument) -> IssueSeverity:
+    if review.document_status is DocumentStatus.APPROVED:
+        return IssueSeverity.ERROR
+    return IssueSeverity.WARNING
+
+
+def _is_timestamp(data_type: str) -> bool:
+    normalized = data_type.lower()
+    return "datetime" in normalized or normalized.startswith("date")
+
+
+def _is_unknown_unit(unit: str) -> bool:
+    return unit in {"", "not_applicable", "unknown", "unknown — needs confirmation"}
 
 
 def _validate_schema_hash(
