@@ -1,0 +1,155 @@
+name: Schema Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Schema source used for a manual UAT run
+        type: choice
+        required: true
+        default: baseline
+        options:
+          - baseline
+          - additive_test
+  schedule:
+    - cron: "17 2 * * 1-5"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: schema-sync
+  cancel-in-progress: false
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  sync:
+    name: schema-sync
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_SCHEMA_SYNC == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.METADATA_BOT_TOKEN || github.token }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: make install
+
+      - name: Preserve the committed schema for the PR summary
+        run: |
+          mkdir -p build
+          git show HEAD:schema/raw/commerce_demo/schema.json > build/schema-before.json
+
+      - name: Start the reproducible ClickHouse source
+        run: make db-up
+
+      - name: Apply selected UAT schema scenario
+        env:
+          SCENARIO: ${{ github.event.inputs.scenario || 'baseline' }}
+        run: ./scripts/apply_schema_sync_fixture.sh "$SCENARIO"
+
+      - name: Extract and lint the live schema
+        run: make schema-doc schema-lint
+
+      - name: Refresh reviewer drafts and report validation
+        id: review
+        run: |
+          set +e
+          make review-draft 2>&1 | tee build/review-draft.log
+          draft_status=${PIPESTATUS[0]}
+          make review-validate 2>&1 | tee build/review-validate.log
+          validate_status=${PIPESTATUS[0]}
+          set -e
+          echo "draft_status=$draft_status" >> "$GITHUB_OUTPUT"
+          echo "validate_status=$validate_status" >> "$GITHUB_OUTPUT"
+
+      - name: Detect synchronized source changes
+        id: diff
+        run: |
+          if [[ -z "$(git status --porcelain -- schema/raw metadata/review)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Schema is already synchronized."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build draft Pull Request description
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          ./scripts/metadata schema-sync-summary \
+            --before build/schema-before.json \
+            --after schema/raw/commerce_demo/schema.json \
+            --output build/schema-sync-pr.md
+          {
+            echo "## Automation validation"
+            echo
+            echo "- Draft refresh exit code: \`${{ steps.review.outputs.draft_status }}\`"
+            echo "- Review validation exit code: \`${{ steps.review.outputs.validate_status }}\`"
+            echo
+            echo "A non-zero value is expected when a deletion requires manual reviewer cleanup."
+          } >> build/schema-sync-pr.md
+
+      - name: Create schema sync branch and Draft PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          BOT_TOKEN: ${{ secrets.METADATA_BOT_TOKEN }}
+          GH_TOKEN: ${{ secrets.METADATA_BOT_TOKEN }}
+        run: |
+          if [[ -z "$BOT_TOKEN" ]]; then
+            echo "METADATA_BOT_TOKEN is required to publish the schema sync Draft PR."
+            exit 1
+          fi
+          unexpected="$(git status --porcelain | awk '$2 !~ /^(schema\/raw|metadata\/review)\// {print}')"
+          if [[ -n "$unexpected" ]]; then
+            echo "Schema sync changed files outside its allowlist:"
+            echo "$unexpected"
+            exit 1
+          fi
+          branch="automation/schema-sync-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -c "$branch"
+          git config user.name "metadata-bot"
+          git config user.email "metadata-bot@users.noreply.github.com"
+          git add schema/raw metadata/review
+          git commit -m "chore(schema): synchronize ClickHouse metadata"
+          git push origin "HEAD:$branch"
+          gh pr create \
+            --draft \
+            --base main \
+            --head "$branch" \
+            --title "chore(schema): synchronize ClickHouse metadata" \
+            --body-file build/schema-sync-pr.md
+
+      - name: Write schema sync summary
+        if: always()
+        env:
+          CHANGED: ${{ steps.diff.outputs.changed }}
+          DRAFT_STATUS: ${{ steps.review.outputs.draft_status }}
+          VALIDATE_STATUS: ${{ steps.review.outputs.validate_status }}
+          SCENARIO: ${{ github.event.inputs.scenario || 'baseline' }}
+        run: |
+          {
+            echo "## Schema Sync"
+            echo
+            echo "- Scenario: \`$SCENARIO\`"
+            echo "- Source diff: \`${CHANGED:-unknown}\`"
+            echo "- Draft refresh exit: \`${DRAFT_STATUS:-not-run}\`"
+            echo "- Review validation exit: \`${VALIDATE_STATUS:-not-run}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show ClickHouse logs on failure
+        if: failure()
+        run: make db-logs
+
+      - name: Stop ClickHouse
+        if: always()
+        run: make db-down

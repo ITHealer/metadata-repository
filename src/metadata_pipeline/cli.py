@@ -21,6 +21,7 @@ from metadata_pipeline.adapters.git.changed_paths import (
     read_changed_paths,
     read_commit_changes,
 )
+from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
 from metadata_pipeline.application.classify_changes import classify_changed_paths
 from metadata_pipeline.application.create_drafts import (
     DraftAction,
@@ -38,6 +39,10 @@ from metadata_pipeline.application.publish_metadata import (
 from metadata_pipeline.application.review_contract import (
     export_review_json_schema,
     validate_review_directory,
+)
+from metadata_pipeline.application.schema_sync_summary import (
+    render_schema_sync_pr_body,
+    summarize_schema_change,
 )
 from metadata_pipeline.io.review_yaml import ReviewFileError
 from metadata_pipeline.ports.schema_source import SchemaSourceError
@@ -112,6 +117,13 @@ def build_parser() -> argparse.ArgumentParser:
     classify.add_argument("--base", required=True)
     classify.add_argument("--head", required=True)
     classify.add_argument("--github-output", type=Path)
+    schema_sync_summary = commands.add_parser(
+        "schema-sync-summary",
+        help="Compare two tbls schema files and render a draft PR body.",
+    )
+    schema_sync_summary.add_argument("--before", type=Path, required=True)
+    schema_sync_summary.add_argument("--after", type=Path, required=True)
+    schema_sync_summary.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -304,6 +316,26 @@ def run_classify_changes(base: str, head: str, github_output: Path | None) -> in
     return 0
 
 
+def run_schema_sync_summary(before: Path, after: Path, output: Path) -> int:
+    """Write a deterministic table-level schema drift summary."""
+    try:
+        summary = summarize_schema_change(
+            TblsSchemaSource(before).load(),
+            TblsSchemaSource(after).load(),
+        )
+    except SchemaSourceError as error:
+        print(f"schema sync summary failed: {error}", file=sys.stderr)
+        return 1
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_schema_sync_pr_body(summary), encoding="utf-8")
+    print(
+        f"schema sync summary written: {output} "
+        f"({len(summary.added)} added, {len(summary.modified)} modified, "
+        f"{len(summary.deleted)} deleted)"
+    )
+    return 0
+
+
 def _generator(mode: str) -> DeterministicDocumentGenerator | OpenAICompatibleDocumentGenerator:
     if mode == "live":
         return OpenAICompatibleDocumentGenerator.from_settings(OpenAICompatibleSettings.from_env())
@@ -372,6 +404,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "classify-changes":
         return run_classify_changes(args.base, args.head, args.github_output)
+    if args.command == "schema-sync-summary":
+        return run_schema_sync_summary(args.before, args.after, args.output)
 
     parser.print_help()
     return 0
