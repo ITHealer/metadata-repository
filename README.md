@@ -247,6 +247,26 @@ The workflow can commit only `schema/raw/**` and `metadata/review/**`; it never 
 from a changed run also needs `METADATA_BOT_TOKEN`. See the
 [schema sync runbook](./docs/runbooks/schema-sync.md) for rollout and review steps.
 
+## Index manifest and retrieval smoke test
+
+PR-09 adds a post-merge `Index Manifest` workflow. It rebuilds a complete, versioned manifest from
+structured chunks whenever `knowledge/published/**` changes on `main`, maps Git add/modify/delete/
+rename changes into audit actions, and uploads the manifest plus retrieval report as artifacts.
+
+```bash
+make index-build      # writes build/index/manifest.json and actions.json
+make retrieval-smoke # evaluates 10 golden questions and required facts
+```
+
+Only `approved` chunks enter the manifest. The three committed demo reviews remain `needs_review`,
+so the real demo manifest is currently empty by design. Retrieval CI uses the same metadata with an
+in-memory approved test status; it never modifies reviewer-owned YAML. The deterministic lexical
+smoke test requires at least 90% top-3 document accuracy and all required facts in the retrieved
+chunks.
+
+See [the index manifest runbook](./docs/runbooks/index-manifest.md) for lifecycle, version
+replacement, report interpretation, and recovery.
+
 ## GitHub setup
 
 The local repository can be developed and verified without a remote. To publish it while keeping

@@ -8,6 +8,12 @@ COMPOSE ?= docker compose
 SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- metadata/review/commerce_demo)
 PUBLISHED_DIR ?= knowledge/published/commerce_demo
 CHUNK_OUTPUT ?= build/chunks/commerce_demo.jsonl
+INDEX_MANIFEST ?= build/index/manifest.json
+INDEX_ACTIONS ?= build/index/actions.json
+INDEX_BASE ?= HEAD^
+INDEX_HEAD ?= HEAD
+SOURCE_COMMIT ?= $(shell git rev-parse HEAD)
+RETRIEVAL_REPORT ?= build/index/retrieval-report.json
 
 .DEFAULT_GOAL := help
 
@@ -15,7 +21,8 @@ CHUNK_OUTPUT ?= build/chunks/commerce_demo.jsonl
 	db-up db-wait db-check db-reset db-down db-logs \
 	schema-doc schema-lint schema-diff schema-check \
 	review-schema review-draft review-validate review-check \
-	publish published-validate chunk-dry-run knowledge-check
+	publish published-validate chunk-dry-run knowledge-check \
+	index-build retrieval-smoke
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -36,15 +43,17 @@ lint: ## Check lint rules and formatting without changing files
 typecheck: ## Run strict static type checking
 	$(VENV)/bin/mypy
 
-test: ## Run unit tests
-	$(VENV)/bin/pytest tests/unit tests/contract
+test: ## Run unit, contract, and retrieval smoke tests
+	$(VENV)/bin/pytest tests/unit tests/contract tests/retrieval
 
 coverage: ## Enforce 85% coverage for domain, application, and validation core
-	$(VENV)/bin/pytest tests/unit tests/contract \
+	$(VENV)/bin/pytest tests/unit tests/contract tests/retrieval \
 		--cov=metadata_pipeline.adapters.generator \
+		--cov=metadata_pipeline.adapters.index \
 		--cov=metadata_pipeline.domain \
 		--cov=metadata_pipeline.application \
 		--cov=metadata_pipeline.ports.document_generator \
+		--cov=metadata_pipeline.ports.index_store \
 		--cov=metadata_pipeline.validation \
 		--cov-report=term-missing --cov-fail-under=85 $(PYTEST_ARGS)
 
@@ -131,6 +140,18 @@ chunk-dry-run: ## Build validated semantic chunk JSONL without indexing
 		--mode mock --dry-run --output $(CHUNK_OUTPUT)
 
 knowledge-check: publish published-validate chunk-dry-run ## Verify publish and chunk contracts
+
+index-build: chunk-dry-run ## Reconcile approved chunks into a deterministic manifest artifact
+	./scripts/metadata index-manifest \
+		--chunks $(CHUNK_OUTPUT) \
+		--manifest $(INDEX_MANIFEST) \
+		--source-commit $(SOURCE_COMMIT) \
+		--base $(INDEX_BASE) --head $(INDEX_HEAD) \
+		--actions-output $(INDEX_ACTIONS)
+
+retrieval-smoke: ## Run 10 golden questions against an approved in-memory fixture
+	RETRIEVAL_REPORT=$(RETRIEVAL_REPORT) \
+		$(VENV)/bin/pytest tests/retrieval/test_golden_retrieval.py
 
 clean: ## Remove local build and test artifacts
 	rm -rf $(VENV) .mypy_cache .pytest_cache .ruff_cache .coverage htmlcov build dist

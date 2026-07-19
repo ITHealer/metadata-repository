@@ -93,7 +93,7 @@ jobs:
 
       - name: Validate published output and chunks
         if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate'
-        run: make published-validate chunk-dry-run
+        run: make published-validate chunk-dry-run retrieval-smoke
 
       - name: Commit generated output
         if: steps.decision.outputs.mode == 'generate'

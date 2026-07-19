@@ -1,0 +1,78 @@
+- question_id: customer_grain
+  question: What is the grain of commerce_demo customers by customer identifier?
+  expected_documents:
+    - commerce_demo.customers
+  required_facts:
+    - "Grain: One row per customer_id."
+
+- question_id: customer_email_safety
+  question: Is the customer email real contact data or synthetic test data?
+  expected_documents:
+    - commerce_demo.customers
+  required_facts:
+    - "Synthetic contact email using the .test domain in this demo."
+    - "Demo-only synthetic value; do not use for contacting a person."
+
+- question_id: customer_segments
+  question: Which retail premium and enterprise customer segment values are available?
+  expected_documents:
+    - commerce_demo.customers
+  required_facts:
+    - "retail=Retail segment."
+    - "premium=Premium segment."
+    - "enterprise=Enterprise segment."
+
+- question_id: order_grain
+  question: What is the grain of commerce_demo orders by order id?
+  expected_documents:
+    - commerce_demo.orders
+  required_facts:
+    - "Grain: One row per order_id."
+
+- question_id: cancelled_orders
+  question: Are cancelled orders deleted or do cancelled order rows remain present?
+  expected_documents:
+    - commerce_demo.orders
+  required_facts:
+    - "A cancelled status does not imply that the order row is deleted."
+
+- question_id: order_amount_unit
+  question: What currency unit and type does orders total_amount use?
+  expected_documents:
+    - commerce_demo.orders
+  required_facts:
+    - "Technical type: Decimal(18, 2)"
+    - "unit/timezone: VND"
+
+- question_id: orders_customer_join
+  question: How should orders join customers and what is the cardinality and row count risk?
+  expected_documents:
+    - commerce_demo.orders
+  required_facts:
+    - "orders.customer_id = customers.customer_id"
+    - "Cardinality: many_to_one"
+    - "Row-count/duplicate risk: unknown"
+
+- question_id: order_item_grain
+  question: What is the grain that identifies one commerce_demo order item line?
+  expected_documents:
+    - commerce_demo.order_items
+  required_facts:
+    - "Grain: One row per order_id and line_number."
+
+- question_id: order_item_price
+  question: What unit and meaning does order_items unit_price have?
+  expected_documents:
+    - commerce_demo.order_items
+  required_facts:
+    - "Price per product unit captured when the order was placed."
+    - "unit/timezone: VND"
+
+- question_id: order_items_order_join
+  question: How do order_items join their parent orders and what duplicate risk applies?
+  expected_documents:
+    - commerce_demo.order_items
+  required_facts:
+    - "order_items.order_id = orders.order_id"
+    - "Associates each order line with its parent order identifier."
+    - "Row-count/duplicate risk: unknown"
