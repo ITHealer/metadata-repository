@@ -226,6 +226,27 @@ output.
 See [the metadata bot runbook](./docs/runbooks/metadata-pr-bot.md) for setup, path behavior,
 branch-protection rollout, and recovery steps.
 
+## Automated schema synchronization
+
+The `Schema Sync` workflow is manual-first and uses only the disposable ClickHouse fixture in this
+MVP. A baseline run exits without creating an empty PR. The `additive_test` UAT scenario adds
+`orders.channel` and `order_events`, regenerates tbls output, refreshes reviewer drafts, and opens a
+Draft PR containing a table-level impact summary.
+
+```text
+workflow_dispatch / gated schedule
+  -> disposable ClickHouse
+  -> tbls doc + lint
+  -> deterministic reviewer draft refresh
+  -> source diff allowlist
+  -> timestamped branch + Draft PR
+```
+
+The workflow can commit only `schema/raw/**` and `metadata/review/**`; it never pushes directly to
+`main`. Set `ENABLE_SCHEMA_SYNC=true` only after baseline and additive manual UAT pass. Publishing
+from a changed run also needs `METADATA_BOT_TOKEN`. See the
+[schema sync runbook](./docs/runbooks/schema-sync.md) for rollout and review steps.
+
 ## GitHub setup
 
 The local repository can be developed and verified without a remote. To publish it while keeping
