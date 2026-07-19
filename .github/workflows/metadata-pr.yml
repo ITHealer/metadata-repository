@@ -59,6 +59,7 @@ jobs:
           BOT_LOGIN: ${{ vars.METADATA_BOT_LOGIN }}
           SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           PR_HAS_INPUTS: ${{ steps.changes.outputs.pr_has_inputs }}
+          PR_HAS_GENERATION_SOURCES: ${{ steps.changes.outputs.pr_has_generation_sources }}
           LATEST_HAS_PUBLISHED: ${{ steps.changes.outputs.latest_has_published }}
           LATEST_ONLY_PUBLISHED: ${{ steps.changes.outputs.latest_only_published }}
         run: |
@@ -67,6 +68,8 @@ jobs:
             if [[ -n "$BOT_LOGIN" && "$ACTOR" == "$BOT_LOGIN" && \
                   "$SAME_REPOSITORY" == "true" && "$LATEST_ONLY_PUBLISHED" == "true" ]]; then
               mode=validate
+            elif [[ "$PR_HAS_GENERATION_SOURCES" == "true" ]]; then
+              mode=validate-migration
             else
               mode=reject-published
             fi
@@ -84,7 +87,7 @@ jobs:
           exit 1
 
       - name: Validate reviewer metadata
-        if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate'
+        if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate' || steps.decision.outputs.mode == 'validate-migration'
         run: make review-validate
 
       - name: Generate deterministic published output
@@ -92,7 +95,7 @@ jobs:
         run: make publish
 
       - name: Validate published output and chunks
-        if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate'
+        if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate' || steps.decision.outputs.mode == 'validate-migration'
         run: make published-validate chunk-dry-run retrieval-smoke
 
       - name: Commit generated output
@@ -131,6 +134,7 @@ jobs:
         env:
           MODE: ${{ steps.decision.outputs.mode }}
           PR_INPUTS: ${{ steps.changes.outputs.pr_input_count }}
+          PR_GENERATION_SOURCES: ${{ steps.changes.outputs.pr_generation_source_count }}
           PR_PUBLISHED: ${{ steps.changes.outputs.pr_published_count }}
           PR_UNRELATED: ${{ steps.changes.outputs.pr_unrelated_count }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -141,6 +145,7 @@ jobs:
             echo "- Mode: \`${MODE:-not-selected}\`"
             echo "- PR head: \`$HEAD_SHA\`"
             echo "- Metadata input changes: \`${PR_INPUTS:-0}\`"
+            echo "- Generation contract changes: \`${PR_GENERATION_SOURCES:-0}\`"
             echo "- Published output changes: \`${PR_PUBLISHED:-0}\`"
             echo "- Unrelated changes: \`${PR_UNRELATED:-0}\`"
           } >> "$GITHUB_STEP_SUMMARY"

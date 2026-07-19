@@ -48,6 +48,9 @@ def test_chunk_requires_stable_identity_and_status(
         transformation_guideline_version=published_document.transformation_guideline_version,
         source_review_path=published_document.provenance.source_review_path,
         source_review_commit=published_document.provenance.source_review_commit,
+        generator_mode=published_document.provenance.generator_mode,
+        generator_model=published_document.provenance.generator_model,
+        prompt_version=published_document.provenance.prompt_version,
         content=published_document.summary,
         evidence=published_document.business_evidence,
     )

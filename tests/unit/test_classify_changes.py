@@ -18,12 +18,15 @@ def test_path_matrix_classifies_inputs_outputs_and_unrelated_changes() -> None:
             ChangedPath("M", "metadata/review/commerce_demo/orders.yml"),
             ChangedPath("A", "schema/raw/commerce_demo/order_events.md"),
             ChangedPath("M", "knowledge/published/commerce_demo/orders.md"),
+            ChangedPath("M", "src/metadata_pipeline/domain/published.py"),
             ChangedPath("M", "README.md"),
         )
     )
 
-    assert classification.total == 4
-    assert classification.input_count == 2
+    assert classification.total == 5
+    assert classification.input_count == 3
+    assert classification.generation_source_count == 1
+    assert classification.has_generation_sources is True
     assert classification.published_count == 1
     assert classification.unrelated_count == 1
     assert classification.has_inputs is True
@@ -94,5 +97,6 @@ def test_classify_changes_cli_writes_github_outputs(
 
     values = dict(line.split("=", 1) for line in output.read_text(encoding="utf-8").splitlines())
     assert values["pr_has_inputs"] == "true"
+    assert values["pr_has_generation_sources"] == "false"
     assert values["latest_only_published"] == "true"
     assert '"latest_only_published": "true"' in capsys.readouterr().out

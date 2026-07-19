@@ -165,6 +165,9 @@ def _chunk(
         transformation_guideline_version=document.transformation_guideline_version,
         source_review_path=provenance.source_review_path,
         source_review_commit=provenance.source_review_commit,
+        generator_mode=provenance.generator_mode,
+        generator_model=provenance.generator_model,
+        prompt_version=provenance.prompt_version,
         content=content,
         evidence=evidence,
     )

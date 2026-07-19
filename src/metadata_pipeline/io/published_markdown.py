@@ -31,6 +31,7 @@ def render_published_document(document: PublishedDocument) -> str:
         "source_review_commit": document.provenance.source_review_commit,
         "generator_mode": document.provenance.generator_mode.value,
         "generator_model": document.provenance.generator_model,
+        "prompt_version": document.provenance.prompt_version,
     }
     parts = [
         "---",

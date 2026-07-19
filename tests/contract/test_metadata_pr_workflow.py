@@ -23,6 +23,8 @@ def test_workflow_guards_bot_output_and_fork_secrets() -> None:
     assert "secrets.METADATA_BOT_TOKEN || github.token" in content
     assert "github.event.pull_request.head.repo.full_name == github.repository" in content
     assert "steps.changes.outputs.latest_only_published" in content
+    assert "steps.changes.outputs.pr_has_generation_sources" in content
+    assert "mode=validate-migration" in content
     assert "steps.decision.outputs.mode == 'reject-published'" in content
     assert 'unexpected="$(git status --porcelain' in content
     assert 'git push origin "HEAD:$HEAD_BRANCH"' in content

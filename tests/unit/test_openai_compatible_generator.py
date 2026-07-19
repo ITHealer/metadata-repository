@@ -1,6 +1,7 @@
 """Unit tests for the LiteLLM/OpenAI-compatible document adapter."""
 
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -15,10 +16,12 @@ from metadata_pipeline.adapters.generator.openai_compatible import (
     ResponseFormatMode,
 )
 from metadata_pipeline.domain.published import GeneratorMode
+from metadata_pipeline.domain.review import DocumentStatus
 from metadata_pipeline.ports.document_generator import (
     DocumentGenerationError,
     PublicationContext,
 )
+from metadata_pipeline.validation.published import validate_published_document
 
 
 def test_settings_use_gateway_defaults_and_allow_model_override() -> None:
@@ -103,6 +106,7 @@ def test_gateway_generates_only_summary_through_chat_completions(
     assert document.summary == "Orders support lifecycle analysis at order grain."
     assert document.provenance.generator_mode is GeneratorMode.LIVE
     assert document.provenance.generator_model == "gpt-5.4-nano"
+    assert document.provenance.prompt_version == "approved-narrative-v1"
     total_amount = next(column for column in document.columns if column.name == "total_amount")
     assert total_amount.unit == "VND"
 
@@ -136,7 +140,177 @@ def test_gateway_rejects_invalid_structured_response(
         http_client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
     try:
-        with pytest.raises(DocumentGenerationError, match="valid structured summary"):
+        with pytest.raises(DocumentGenerationError, match="structured output contract"):
             OpenAICompatibleDocumentGenerator(settings, client).generate(publication_context)
     finally:
         client.close()
+
+
+def test_approved_document_rewrites_full_narrative_but_locks_facts(
+    publication_context: PublicationContext,
+) -> None:
+    approved_review = publication_context.review.model_copy(
+        update={
+            "owner": "commerce-owner",
+            "reviewer": "analytics-reviewer",
+            "document_status": DocumentStatus.APPROVED,
+        }
+    )
+    approved_context = PublicationContext(
+        schema=publication_context.schema,
+        table=publication_context.table,
+        review=approved_review,
+        source_schema_path=publication_context.source_schema_path,
+        source_review_path=publication_context.source_review_path,
+        source_review_commit=publication_context.source_review_commit,
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "chatcmpl-approved",
+                "object": "chat.completion",
+                "created": 1,
+                "model": "gpt-5.4-nano",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": json.dumps(
+                                {
+                                    "summary": "Each row represents one reviewed order.",
+                                    "description": "Reviewed order facts for lifecycle analysis.",
+                                    "purpose": ["Analyze order lifecycle and value."],
+                                    "appropriate_use": [
+                                        "Aggregate values with documented status rules.",
+                                        "Join orders to customers using customer_id.",
+                                    ],
+                                    "inappropriate_use": [
+                                        "Do not assume cancelled rows are deleted."
+                                    ],
+                                    "column_descriptions": {
+                                        "created_at": "UTC creation timestamp for the order.",
+                                        "customer_id": (
+                                            "Customer identifier used by the logical join."
+                                        ),
+                                        "order_id": "Stable identifier for one order.",
+                                        "order_status": "Current recorded lifecycle status.",
+                                        "total_amount": "Order total in VND after discounts.",
+                                        "updated_at": "UTC timestamp of the latest update.",
+                                    },
+                                    "relationship_meanings": {
+                                        "orders_to_customers": "Links each order to its customer."
+                                    },
+                                    "rule_descriptions": {
+                                        "Cancelled orders remain present": (
+                                            "Cancelled status does not delete the row."
+                                        )
+                                    },
+                                }
+                            ),
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    settings = OpenAICompatibleSettings(api_key="gateway-test-key", max_retries=0)
+    client = OpenAI(
+        api_key=settings.api_key,
+        base_url=settings.base_url,
+        max_retries=0,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    try:
+        document = OpenAICompatibleDocumentGenerator(settings, client).generate(approved_context)
+    finally:
+        client.close()
+
+    assert document.summary == "Each row represents one reviewed order."
+    assert document.columns[0].description != (
+        approved_context.review.columns["created_at"].description
+    )
+    total_amount = next(column for column in document.columns if column.name == "total_amount")
+    assert total_amount.data_type == "Decimal(18, 2)"
+    assert total_amount.unit == "VND"
+    assert document.relationships[0].join_condition == (
+        "orders.customer_id = customers.customer_id"
+    )
+    assert document.relationships[0].cardinality.value == "many_to_one"
+    assert not validate_published_document(
+        approved_context,
+        document,
+        Path("knowledge/published/commerce_demo/orders.md"),
+    )
+
+
+def test_structured_contract_failure_is_not_retried(
+    publication_context: PublicationContext,
+) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            200,
+            json={
+                "id": "chatcmpl-invalid",
+                "object": "chat.completion",
+                "created": 1,
+                "model": "gpt-5.4-nano",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {"role": "assistant", "content": "{}"},
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    settings = OpenAICompatibleSettings(api_key="gateway-test-key", max_retries=2)
+    client = OpenAI(
+        api_key=settings.api_key,
+        base_url=settings.base_url,
+        max_retries=2,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    try:
+        with pytest.raises(DocumentGenerationError, match="structured output contract"):
+            OpenAICompatibleDocumentGenerator(settings, client).generate(publication_context)
+    finally:
+        client.close()
+    assert calls == 1
+
+
+def test_rate_limit_uses_bounded_sdk_retry_and_actionable_error(
+    publication_context: PublicationContext,
+) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            429,
+            headers={"retry-after": "0"},
+            json={"error": {"message": "limited", "type": "rate_limit_error"}},
+        )
+
+    settings = OpenAICompatibleSettings(api_key="gateway-test-key", max_retries=1)
+    client = OpenAI(
+        api_key=settings.api_key,
+        base_url=settings.base_url,
+        max_retries=1,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    try:
+        with pytest.raises(DocumentGenerationError, match="rate limit persisted after 1"):
+            OpenAICompatibleDocumentGenerator(settings, client).generate(publication_context)
+    finally:
+        client.close()
+    assert calls == 2

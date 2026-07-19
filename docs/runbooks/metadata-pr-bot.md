@@ -1,5 +1,10 @@
 # Metadata Pull Request bot runbook
 
+Generated Markdown normally belongs to the bot. The only human-commit exception is a deterministic
+generation-contract migration that changes an allowlisted generator/domain/renderer source file in
+the same PR. That path runs `validate-migration`: committed Markdown must be byte-identical to fresh
+generation. Merely changing reviewer input alongside Markdown remains rejected.
+
 ## Purpose
 
 The `Metadata PR / pr-gate` workflow implements this loop:

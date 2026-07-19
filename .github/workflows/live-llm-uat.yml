@@ -1,0 +1,72 @@
+name: Live LLM UAT
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: LiteLLM gateway model alias
+        required: true
+        default: gpt-5.4-nano
+        type: string
+      response_format:
+        description: Structured output capability exposed by the selected model
+        required: true
+        default: json_schema
+        type: choice
+        options:
+          - json_schema
+          - json_object
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-llm-uat
+  cancel-in-progress: false
+
+jobs:
+  gateway-uat:
+    name: gateway-uat
+    if: vars.ENABLE_LIVE_LLM_UAT == 'true'
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || 'https://ai-gateway.dev/v1' }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ inputs.model }}
+      OPENAI_RESPONSE_FORMAT: ${{ inputs.response_format }}
+      OPENAI_TIMEOUT_SECONDS: "60"
+      OPENAI_MAX_RETRIES: "2"
+      OPENAI_PROMPT_VERSION: approved-narrative-v1
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: make install
+
+      - name: Run deterministic guardrails and E2E scenarios
+        run: make verify
+
+      - name: Generate isolated live documents and chunks
+        run: make live-uat
+
+      - name: Re-run retrieval quality gate
+        run: make retrieval-smoke
+
+      - name: Upload auditable UAT artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-metadata-uat-${{ github.run_id }}
+          path: |
+            build/live/published/commerce_demo
+            build/live/chunks/commerce_demo.jsonl
+            build/index/retrieval-report.json
+          if-no-files-found: error
+          retention-days: 14

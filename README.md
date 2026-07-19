@@ -16,10 +16,22 @@ metadata generation, and indexing are added by later merge requests.
 
 ## Local development
 
+From a clean checkout:
+
 ```bash
+git clone git@github.com:ITHealer/metadata-repository.git
+cd metadata-repository
 make install
 make verify
+make knowledge-check
+make index-build
+make retrieval-smoke
 ```
+
+The first two commands install an isolated Python environment and run the offline quality gates.
+The remaining commands prove that published Markdown, semantic chunks, the approved-only index
+manifest, and the ten golden retrieval questions still satisfy the same contracts. Docker is needed
+only for the live ClickHouse/tbls integration path described below.
 
 Useful commands:
 
@@ -179,10 +191,13 @@ Documents still marked `needs_review` are published as preview files with
 valid and its status is `approved`; PR-06 does not write to an index.
 
 `DeterministicDocumentGenerator` is the factual baseline.
-`OpenAICompatibleDocumentGenerator` can call the OpenAI-compatible LiteLLM gateway, but currently
-allows the model to rewrite only the summary; identifiers, types, units, joins, evidence, ownership,
-and review status always come from the deterministic baseline. A live failure happens during
-preflight, before any published file is changed.
+`OpenAICompatibleDocumentGenerator` calls an OpenAI-compatible LiteLLM gateway. A `needs_review`
+document permits only a summary rewrite. An `approved` document permits structured narrative
+rewrites for purpose/use guidance, descriptions, relationships, and business rules. Identifiers,
+types, nullability, units, joins, cardinality, evidence, ownership, versions, and review status stay
+locked to the deterministic baseline. Every live result passes the same published-document and
+chunk validators. A generation or validation failure happens during preflight, before any published
+file or chunk artifact is changed.
 
 The default model name is a gateway alias, not a provider-specific Bedrock identifier. Platform
 owners can remap the alias or developers can select another gateway model without changing code:
@@ -197,6 +212,32 @@ export OPENAI_RESPONSE_FORMAT=json_schema  # or json_object for a less capable m
 Never commit the key. `.env.example` documents the supported variables, while `.env` is ignored.
 No live gateway request is part of the default test suite; mocked HTTP tests verify the endpoint,
 model routing, response format, structured parsing, and failure behavior without network access.
+
+## Manual live LLM UAT
+
+Live output is deliberately isolated under `build/live`; it never overwrites committed previews:
+
+```bash
+export OPENAI_BASE_URL=https://ai-gateway.dev/v1
+export OPENAI_API_KEY=<gateway-key>
+export OPENAI_MODEL=gpt-5.4-nano
+make live-uat
+```
+
+The same operation is available through the manual **Live LLM UAT** GitHub Actions workflow. Set
+repository variable `ENABLE_LIVE_LLM_UAT=true`, repository secret `OPENAI_API_KEY`, and optionally
+repository variable `OPENAI_BASE_URL`, then dispatch the workflow with the desired gateway alias.
+The job uploads the live Markdown, chunks, and retrieval report for 14 days. It has read-only
+repository permissions and does not commit or publish an index.
+
+The committed demo reviews intentionally remain `needs_review`; a maintainer must not promote them
+only to exercise a model. Full approved-narrative behavior is covered offline by a structured mock
+gateway contract test. Run a real approved live UAT only after the domain reviewer confirms the
+review YAML and changes `document_status` through the normal Pull Request flow.
+
+See the [MVP UAT record](./docs/uat/metadata-mvp.md) and
+[operations runbook](./docs/runbooks/metadata-operations.md) for evidence, setup, failure recovery,
+token rotation, re-indexing, and guideline upgrades.
 
 ## Metadata Pull Request automation
 

@@ -98,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_publication_paths(publish)
     _add_generator_arguments(publish)
+    publish.add_argument("--chunk-output", type=Path)
     validate_published = commands.add_parser(
         "validate-published",
         help="Require committed published Markdown to match deterministic sources.",
@@ -233,6 +234,7 @@ def run_publish(
     published_dir: Path,
     source_review_commit: str,
     mode: str,
+    chunk_output: Path | None = None,
 ) -> int:
     """Preflight and write generated Markdown with CI-compatible errors."""
     try:
@@ -245,13 +247,18 @@ def run_publish(
             source_review_commit,
             generator,
         )
+        chunks = prepare_chunk_artifact(batch, chunk_output) if chunk_output else ()
         results = publish_batch(batch, published_dir)
+        chunk_changed = write_chunk_artifact(chunk_output, chunks) if chunk_output else False
     except (PublicationPreflightError, GatewayConfigurationError) as error:
         return _print_publication_error(error)
     for warning in batch.warnings:
         _print_issue(warning)
     for result in results:
         print(f"{result.action.value}: {result.path}")
+    if chunk_output:
+        state = "updated" if chunk_changed else "unchanged"
+        print(f"chunk artifact {state}: {chunk_output} ({len(chunks)} chunk(s))")
     print(f"publication completed: {len(batch.items)} document(s)")
     return 0
 
@@ -428,6 +435,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.published_dir,
             args.source_review_commit,
             args.mode,
+            args.chunk_output,
         )
     if args.command == "validate-published":
         return run_validate_published(

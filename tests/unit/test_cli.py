@@ -112,8 +112,23 @@ def test_publish_validate_and_chunk_commands_share_one_contract(
         "c" * 40,
     ]
 
-    assert main(["publish", *common_arguments, "--mode", "mock"]) == 0
-    assert "publication completed: 3 document(s)" in capsys.readouterr().out
+    assert (
+        main(
+            [
+                "publish",
+                *common_arguments,
+                "--mode",
+                "mock",
+                "--chunk-output",
+                str(chunk_path),
+            ]
+        )
+        == 0
+    )
+    publish_output = capsys.readouterr().out
+    assert "publication completed: 3 document(s)" in publish_output
+    assert "chunk artifact updated" in publish_output
+    assert len(chunk_path.read_text(encoding="utf-8").splitlines()) == 26
     assert main(["validate-published", *common_arguments]) == 0
     assert "published validation passed" in capsys.readouterr().out
     assert (
