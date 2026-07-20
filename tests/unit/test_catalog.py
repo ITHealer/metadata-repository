@@ -75,13 +75,50 @@ def test_discovers_only_database_profile_directories(tmp_path: Path) -> None:
     (profiles / "b").mkdir(parents=True)
     (profiles / "a").mkdir()
     (profiles / "ignored").mkdir()
-    (profiles / "a/database.yml").touch()
-    (profiles / "b/database.yml").touch()
+    profile = (
+        "enabled: true\nkey: {key}\ndisplay_name: Example\nclickhouse_database: example\n"
+        "description: Test profile\ntables: [events]\n"
+    )
+    (profiles / "a/database.yml").write_text(profile.format(key="a"), encoding="utf-8")
+    (profiles / "b/database.yml").write_text(profile.format(key="b"), encoding="utf-8")
 
     assert discover_database_keys(tmp_path) == ("a", "b")
+
+
+def test_database_discovery_can_exclude_disabled_profiles(tmp_path: Path) -> None:
+    profiles = tmp_path / "config/databases"
+    (profiles / "enabled").mkdir(parents=True)
+    (profiles / "disabled").mkdir()
+    (profiles / "enabled/database.yml").write_text(
+        "enabled: true\nkey: enabled\ndisplay_name: Enabled\n"
+        "clickhouse_database: enabled\ndescription: Enabled profile\ntables: [events]\n",
+        encoding="utf-8",
+    )
+    (profiles / "disabled/database.yml").write_text(
+        "enabled: false\nkey: disabled\ndisplay_name: Disabled\n"
+        "clickhouse_database: Disabled\ndescription: Pending profile\ntables: []\n",
+        encoding="utf-8",
+    )
+
+    assert discover_database_keys(tmp_path, enabled_only=True) == ("enabled",)
 
 
 def test_layout_keeps_build_artifacts_database_scoped(tmp_path: Path) -> None:
     layout = CatalogLayout(tmp_path, "urcard")
 
     assert layout.chunk_output == tmp_path / "build/chunks/urcard.jsonl"
+
+
+def test_disabled_onboarding_profile_can_have_no_tables(tmp_path: Path) -> None:
+    profile_dir = tmp_path / "config/databases/urgift"
+    profile_dir.mkdir(parents=True)
+    profile_dir.joinpath("database.yml").write_text(
+        "enabled: false\nkey: urgift\ndisplay_name: UrGift\n"
+        "clickhouse_database: UrGift\ndescription: Pending onboarding\ntables: []\n",
+        encoding="utf-8",
+    )
+
+    context = load_catalog_context("urgift", tmp_path)
+
+    assert context.profile.enabled is False
+    assert context.profile.tables == ()

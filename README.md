@@ -113,6 +113,11 @@ not need to assemble paths manually. `catalog-check` fails if tbls returned an u
 an allowlisted table is missing, or the raw database name differs from the profile. Production
 profiles should use the exact table list supplied by the data owner rather than a wildcard.
 
+UrGift is currently committed as a safe pending profile: `enabled: false` and `tables: []`. It is
+visible in `catalog-check-all` but excluded from reviewer/generator automation. Follow the
+[database onboarding checklist](./config/databases/README.md) after the real table allowlist and
+read-only ClickHouse connection are supplied; do not infer production tables from the demo.
+
 ## Raw schema documentation with tbls
 
 The `tbls` tool reads ClickHouse table and column comments, adds the two logical relations that

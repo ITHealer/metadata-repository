@@ -1,0 +1,8 @@
+enabled: false
+key: urgift
+display_name: UrGift
+clickhouse_database: UrGift
+description: >-
+  Pending production onboarding. Enable only after the data owner supplies the exact ClickHouse
+  table allowlist and the developer commits a matching tbls.yml configuration and raw schema.
+tables: []
