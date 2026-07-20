@@ -208,6 +208,18 @@ Documents still marked `needs_review` are published as preview files with
 `index_eligible: false`. A document can become index-eligible only after its reviewer contract is
 valid and its status is `approved`; PR-06 does not write to an index.
 
+Generated review candidates have a separate machine-readable source under
+`catalog/<database>/generated/structured/<table>.json`. Each candidate stores hashes for the raw
+schema, reviewer content excluding `document_status`, contract, transformation guideline, model,
+and prompt. A status-only change from `needs_review` to `approved` therefore keeps the same input
+fingerprint. Any simultaneous business-content change makes the candidate stale and blocks
+promotion with `approval_without_reviewed_candidate`.
+
+Promotion has no `DocumentGenerator` dependency and cannot call the LLM. It changes only approval
+metadata (`document_status`, `index_eligible`, and source commit); the Markdown body beginning at
+`## Summary` must retain the exact hash the reviewer saw. This turns approval into an auditable
+state transition instead of a second non-deterministic generation request.
+
 `DeterministicDocumentGenerator` is the factual baseline.
 `OpenAICompatibleDocumentGenerator` calls an OpenAI-compatible LiteLLM gateway. A `needs_review`
 document permits only a summary rewrite. An `approved` document permits structured narrative
