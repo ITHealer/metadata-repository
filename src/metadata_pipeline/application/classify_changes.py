@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 
 GENERATION_SOURCE_PATTERNS = (
+    "src/metadata_pipeline/application/publish_metadata.py",
     "src/metadata_pipeline/adapters/generator/deterministic.py",
     "src/metadata_pipeline/domain/published.py",
     "src/metadata_pipeline/io/published_markdown.py",

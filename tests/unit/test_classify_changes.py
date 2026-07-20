@@ -34,6 +34,25 @@ def test_path_matrix_classifies_inputs_outputs_and_unrelated_changes() -> None:
     assert classification.only_published is False
 
 
+def test_publish_orchestration_is_a_generation_source() -> None:
+    classification = classify_changed_paths(
+        (
+            ChangedPath(
+                "M",
+                "src/metadata_pipeline/application/publish_metadata.py",
+            ),
+            ChangedPath(
+                "M",
+                "catalog/commerce_demo/generated/published/orders.md",
+            ),
+        )
+    )
+
+    assert classification.has_inputs is True
+    assert classification.has_generation_sources is True
+    assert classification.has_published is True
+
+
 def test_only_published_requires_nonempty_allowlisted_change_set() -> None:
     empty = classify_changed_paths(())
     published = classify_changed_paths(
