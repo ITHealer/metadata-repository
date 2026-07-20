@@ -16,7 +16,7 @@ from metadata_pipeline.validation.review import (
 )
 
 SCHEMA = TblsSchemaSource(Path("schema/raw/commerce_demo/schema.json")).load()
-CONTRACT = load_review_contract(Path("config/metadata_contract.yml"))
+CONTRACT = load_review_contract(Path("contracts/metadata_contract.yml"))
 REVIEW_DIR = Path("metadata/review/commerce_demo")
 
 

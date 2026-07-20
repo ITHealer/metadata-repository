@@ -15,7 +15,7 @@ from metadata_pipeline.validation.review import validate_review_document
 
 SCHEMA_PATH = Path("schema/raw/commerce_demo/schema.json")
 REVIEW_DIR = Path("metadata/review/commerce_demo")
-CONTRACT_PATH = Path("config/metadata_contract.yml")
+CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 
 
 def _issue_codes(review_file: str, **updates: object) -> set[str]:

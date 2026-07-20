@@ -50,7 +50,7 @@ Nguyên tắc bắt buộc:
 - Một lệnh có thể dựng ClickHouse local và seed dữ liệu giả.
 - `tbls` sinh được Markdown, ER diagram và `schema.json` từ ClickHouse.
 - Chứng minh comment của table/column trong ClickHouse xuất hiện trong tài liệu `tbls`.
-- Chứng minh quan hệ logic giữa các bảng có thể khai báo trong `.tbls.yml` dù ClickHouse không enforce foreign key.
+- Chứng minh quan hệ logic giữa các bảng có thể khai báo trong `config/databases/commerce_demo/tbls.yml` dù ClickHouse không enforce foreign key.
 - Có PR workflow hai vòng: human commit → bot commit → human review lại.
 - Không có vòng lặp bot commit vô hạn.
 - Có validation ngăn metadata sai schema hoặc chưa được duyệt.
@@ -132,7 +132,7 @@ metadata-demo/
 ├── tests/
 │   ├── fixtures/
 │   └── test_validation.py
-├── .tbls.yml
+├── config/databases/commerce_demo/tbls.yml
 ├── docker-compose.yml
 ├── Makefile
 ├── pyproject.toml
@@ -275,11 +275,11 @@ clickhouse://<user>:<password>@<host>:9000/<database>
 Mô tả có hai nguồn:
 
 1. `COMMENT` trong DDL của table/column — ưu tiên cho sự thật kỹ thuật nằm gần database.
-2. `comments:` trong `.tbls.yml` — dùng khi không muốn hoặc không thể `ALTER TABLE`; giá trị tại đây có thể override comment đọc từ schema.
+2. `comments:` trong `config/databases/commerce_demo/tbls.yml` — dùng khi không muốn hoặc không thể `ALTER TABLE`; giá trị tại đây có thể override comment đọc từ schema.
 
 `tbls` không tự biết business purpose, grain, owner hay rule lọc đã được domain xác nhận. Những phần đó thuộc `metadata/review/**`, không viết trực tiếp vào tài liệu do `tbls` quản lý.
 
-### 7.2. Cấu hình `.tbls.yml`
+### 7.2. Cấu hình `config/databases/commerce_demo/tbls.yml`
 
 ```yaml
 requiredVersion: ">= 1.94, < 2"
@@ -852,7 +852,7 @@ Việc dismiss stale approval là có chủ đích: sau khi bot đổi published
 /.github/                             @your-org/platform-team
 /prompts/                             @your-org/ai-team
 /scripts/                             @your-org/ai-team @your-org/data-team
-/.tbls.yml                            @your-org/data-team
+/config/databases/*/tbls.yml         @your-org/data-team
 ```
 
 Thay team bằng GitHub users/teams thực tế và bảo đảm target branch được protect để Code Owner approval có hiệu lực.
@@ -970,7 +970,7 @@ Acceptance criteria:
 ### Ngày 1 — Local fixture
 
 - Docker Compose, init SQL, seed deterministic.
-- `.tbls.yml`, Makefile và README local commands.
+- `config/databases/commerce_demo/tbls.yml`, Makefile và README local commands.
 - Verify docs, comments, relations và schema JSON.
 
 ### Ngày 2 — Metadata scripts

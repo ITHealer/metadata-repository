@@ -101,19 +101,19 @@ schema-check: schema-doc schema-lint ## Generate and validate the complete tbls 
 
 review-schema: ## Generate JSON Schema from the Pydantic reviewer contract
 	./scripts/metadata export-review-schema \
-		--output schemas/reviewer_metadata.schema.json
+		--output contracts/reviewer_metadata.schema.json
 
 review-draft: ## Create or refresh deterministic reviewer YAML drafts
 	./scripts/metadata draft \
 		--schema schema/raw/commerce_demo/schema.json \
 		--review-dir metadata/review/commerce_demo \
-		--contract config/metadata_contract.yml
+		--contract contracts/metadata_contract.yml
 
 review-validate: ## Validate reviewer YAML against the raw tbls schema
 	./scripts/metadata validate-review \
 		--schema schema/raw/commerce_demo/schema.json \
 		--review-dir metadata/review/commerce_demo \
-		--contract config/metadata_contract.yml
+		--contract contracts/metadata_contract.yml
 
 review-check: review-schema review-validate ## Generate and validate the reviewer contract
 
@@ -121,7 +121,7 @@ publish: ## Generate deterministic published Markdown from raw and reviewer meta
 	./scripts/metadata publish \
 		--schema schema/raw/commerce_demo/schema.json \
 		--review-dir metadata/review/commerce_demo \
-		--contract config/metadata_contract.yml \
+		--contract contracts/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode $(GENERATOR_MODE) $(TABLE_ARGS)
@@ -130,7 +130,7 @@ published-validate: ## Require committed published Markdown to match validated i
 	./scripts/metadata validate-published \
 		--schema schema/raw/commerce_demo/schema.json \
 		--review-dir metadata/review/commerce_demo \
-		--contract config/metadata_contract.yml \
+		--contract contracts/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT)
 
@@ -138,7 +138,7 @@ chunk-dry-run: ## Build validated semantic chunk JSONL without indexing
 	./scripts/metadata chunk \
 		--schema schema/raw/commerce_demo/schema.json \
 		--review-dir metadata/review/commerce_demo \
-		--contract config/metadata_contract.yml \
+		--contract contracts/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode $(GENERATOR_MODE) --dry-run --output $(CHUNK_OUTPUT)
@@ -161,7 +161,7 @@ live-uat: ## Manually call the configured gateway once per document and write is
 	./scripts/metadata publish \
 		--schema schema/raw/commerce_demo/schema.json \
 		--review-dir metadata/review/commerce_demo \
-		--contract config/metadata_contract.yml \
+		--contract contracts/metadata_contract.yml \
 		--published-dir $(LIVE_PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode live --chunk-output $(LIVE_CHUNK_OUTPUT) $(TABLE_ARGS)

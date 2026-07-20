@@ -57,7 +57,7 @@ def test_validate_review_returns_failure_for_unknown_table(
             "--review-dir",
             str(review_dir),
             "--contract",
-            "config/metadata_contract.yml",
+            "contracts/metadata_contract.yml",
         ]
     )
 
@@ -76,7 +76,7 @@ def test_draft_cli_is_idempotent_and_warning_only_validation_passes(
         "--review-dir",
         str(review_dir),
         "--contract",
-        "config/metadata_contract.yml",
+        "contracts/metadata_contract.yml",
     ]
 
     assert main(["draft", *common_arguments]) == 0
@@ -106,7 +106,7 @@ def test_publish_validate_and_chunk_commands_share_one_contract(
         "--review-dir",
         str(review_dir),
         "--contract",
-        "config/metadata_contract.yml",
+        "contracts/metadata_contract.yml",
         "--published-dir",
         str(published_dir),
         "--source-review-commit",

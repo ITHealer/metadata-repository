@@ -10,17 +10,17 @@ cd "${REPOSITORY_ROOT}"
 
 case "${ACTION}" in
   doc)
-    "${TBLS_COMMAND[@]}" doc --config .tbls.yml --rm-dist
+    "${TBLS_COMMAND[@]}" doc --config config/databases/commerce_demo/tbls.yml --rm-dist
     if [[ ! -s "${DOC_PATH}/schema.json" ]]; then
       printf 'tbls did not create %s/schema.json.\n' "${DOC_PATH}" >&2
       exit 1
     fi
     ;;
   lint)
-    "${TBLS_COMMAND[@]}" lint --config .tbls.yml
+    "${TBLS_COMMAND[@]}" lint --config config/databases/commerce_demo/tbls.yml
     ;;
   diff)
-    "${TBLS_COMMAND[@]}" diff --config .tbls.yml
+    "${TBLS_COMMAND[@]}" diff --config config/databases/commerce_demo/tbls.yml
     ;;
   *)
     printf 'Usage: %s {doc|lint|diff}\n' "$0" >&2

@@ -22,7 +22,7 @@ def export_review_json_schema(output: Path) -> None:
     schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     schema["$id"] = (
         "https://raw.githubusercontent.com/ITHealer/metadata-repository/"
-        "main/schemas/reviewer_metadata.schema.json"
+        "main/contracts/reviewer_metadata.schema.json"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(

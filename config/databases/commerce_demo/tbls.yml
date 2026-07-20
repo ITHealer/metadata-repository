@@ -4,6 +4,13 @@ desc: Deterministic ClickHouse schema for the metadata review demo
 dsn: ${TBLS_DSN}
 docPath: ${TBLS_DOC_PATH}
 
+# Production profiles must explicitly allowlist tables. This avoids documenting
+# every table when a ClickHouse database contains out-of-scope or sensitive data.
+include:
+  - customers
+  - order_items
+  - orders
+
 format:
   sort: true
   showOnlyFirstParagraph: true
