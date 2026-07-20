@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 
+from pydantic import BaseModel
+
 from metadata_pipeline.ports.schema_source import DatabaseSchema, TableSchema
 
 
@@ -55,3 +57,16 @@ def table_schema_hash(schema: DatabaseSchema, table: TableSchema) -> str:
     }
     canonical = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def canonical_sha256(value: object) -> str:
+    """Hash JSON-compatible data using one stable canonical representation."""
+    if isinstance(value, BaseModel):
+        value = value.model_dump(mode="json")
+    canonical = json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def bytes_sha256(value: bytes) -> str:
+    """Hash exact artifact bytes for auditable input fingerprints."""
+    return hashlib.sha256(value).hexdigest()
