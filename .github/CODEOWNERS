@@ -1,5 +1,6 @@
 # Temporary MVP ownership. Replace with domain and data/AI teams when those GitHub teams exist.
 /guidelines/ @ITHealer
+/docs/reviewer/ @ITHealer
 /config/databases/ @ITHealer
 /contracts/metadata_contract.yml @ITHealer
 /catalog/*/review/ @ITHealer
