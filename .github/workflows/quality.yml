@@ -93,8 +93,7 @@ jobs:
       - run: make catalog-check-all
       - name: Validate committed candidates without LLM access
         run: |
-          for profile in config/databases/*/database.yml; do
-            database="$(basename "$(dirname "$profile")")"
+          for database in $(./scripts/metadata list-databases); do
             make candidate-validate DATABASE="$database"
           done
       - name: Verify candidate validation is read-only

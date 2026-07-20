@@ -79,7 +79,7 @@ def load_catalog_context(database: str, repository_root: Path = Path(".")) -> Ca
         raise CatalogConfigurationError(
             f"database profile key {profile.key!r} does not match directory {database!r}"
         )
-    if not layout.tbls_config_path.is_file():
+    if profile.enabled and not layout.tbls_config_path.is_file():
         raise CatalogConfigurationError(f"tbls config not found: {layout.tbls_config_path}")
     return CatalogContext(profile, layout)
 
@@ -108,10 +108,12 @@ def validate_database_scope(profile: DatabaseProfile, schema_path: Path) -> None
         raise CatalogConfigurationError("; ".join(messages))
 
 
-def discover_database_keys(repository_root: Path = Path(".")) -> tuple[str, ...]:
+def discover_database_keys(
+    repository_root: Path = Path("."), *, enabled_only: bool = False
+) -> tuple[str, ...]:
     """Return configured database directory names in deterministic order."""
     profiles_root = repository_root.resolve() / "config" / "databases"
-    return (
+    keys = (
         tuple(
             path.name
             for path in sorted(profiles_root.iterdir())
@@ -119,4 +121,9 @@ def discover_database_keys(repository_root: Path = Path(".")) -> tuple[str, ...]
         )
         if profiles_root.is_dir()
         else ()
+    )
+    if not enabled_only:
+        return keys
+    return tuple(
+        key for key in keys if load_database_profile(profiles_root / key / "database.yml").enabled
     )

@@ -102,6 +102,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate every configured database profile.",
     )
     catalog_check_all.add_argument("--repository-root", type=Path, default=Path("."))
+    list_databases = commands.add_parser(
+        "list-databases",
+        help="Print configured database keys for shell-safe automation loops.",
+    )
+    list_databases.add_argument("--repository-root", type=Path, default=Path("."))
+    list_databases.add_argument("--include-disabled", action="store_true")
     export_schema = commands.add_parser(
         "export-review-schema",
         help="Generate JSON Schema from the Pydantic reviewer contract.",
@@ -264,6 +270,9 @@ def run_doctor() -> int:
 
 def run_catalog_check(context: CatalogContext, schema_path: Path) -> int:
     """Validate one database boundary and print a concise operator result."""
+    if not context.profile.enabled:
+        print(f"catalog validation skipped: {context.profile.key} (onboarding disabled)")
+        return 0
     try:
         validate_database_scope(context.profile, schema_path)
     except CatalogConfigurationError as error:
@@ -605,6 +614,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_doctor()
     if args.command == "catalog-check-all":
         return run_catalog_check_all(args.repository_root)
+    if args.command == "list-databases":
+        for database in discover_database_keys(
+            args.repository_root, enabled_only=not args.include_disabled
+        ):
+            print(database)
+        return 0
     if args.command == "catalog-check":
         context = _load_catalog_context(args.database, args.repository_root)
         if context is None:
@@ -751,6 +766,13 @@ def _resolve_catalog_paths(
     """Resolve optional CLI path overrides against one validated database layout."""
     context = _load_catalog_context(args.database, args.repository_root)
     if context is None:
+        return None
+    if not context.profile.enabled:
+        print(
+            f"catalog configuration error: database {args.database!r} is disabled; "
+            "complete its table allowlist and tbls configuration before running metadata commands",
+            file=sys.stderr,
+        )
         return None
     root = context.layout.repository_root
     return (
