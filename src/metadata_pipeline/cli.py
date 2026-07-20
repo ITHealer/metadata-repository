@@ -24,6 +24,10 @@ from metadata_pipeline.adapters.git.changed_paths import (
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
 from metadata_pipeline.application.candidate_state import CandidateStateError
+from metadata_pipeline.application.candidate_summary import (
+    CandidateSummaryError,
+    render_candidate_summary,
+)
 from metadata_pipeline.application.catalog import (
     CatalogConfigurationError,
     CatalogContext,
@@ -150,6 +154,16 @@ def build_parser() -> argparse.ArgumentParser:
         dest="tables",
         default=[],
         help="Sync only this table; repeat to select multiple tables.",
+    )
+    candidate_summary = commands.add_parser(
+        "candidate-summary",
+        help="Render reviewer-facing links, states, and candidate hashes.",
+    )
+    _add_database_context(candidate_summary)
+    candidate_summary.add_argument(
+        "--repository-url",
+        default="",
+        help="Optional GitHub blob URL prefix including the commit SHA.",
     )
     sync_candidates.add_argument(
         "--validate-only",
@@ -596,6 +610,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         if context is None:
             return 1
         return run_catalog_check(context, args.schema or context.layout.schema_path)
+    if args.command == "candidate-summary":
+        context = _load_catalog_context(args.database, args.repository_root)
+        if context is None:
+            return 1
+        try:
+            print(
+                render_candidate_summary(
+                    repository_root=context.layout.repository_root,
+                    database=context.profile.key,
+                    review_dir=context.layout.review_dir,
+                    structured_dir=context.layout.structured_dir,
+                    published_dir=context.layout.published_dir,
+                    repository_url=args.repository_url,
+                ),
+                end="",
+            )
+        except CandidateSummaryError as error:
+            print(f"candidate summary error: {error}", file=sys.stderr)
+            return 1
+        return 0
     if args.command == "export-review-schema":
         export_review_json_schema(args.output)
         print(f"review JSON Schema written: {args.output}")

@@ -20,7 +20,13 @@
 - [ ] `make typecheck`
 - [ ] `make test`
 - [ ] `make smoke`
-- [ ] If reviewer metadata changed: follow the [Reviewer Metadata Guideline](https://github.com/ITHealer/metadata-repository/blob/main/guidelines/reviewer_metadata_guideline.md) and run `make review-validate`
+- [ ] Developer change: relevant local checks were run.
+- [ ] Reviewer-only change: only `catalog/<database>/review/<table>.yml` was edited.
+- [ ] Reviewer read the bot-generated Markdown linked by `Metadata PR / pr-gate`.
+- [ ] `document_status: approved` was committed separately from business-content changes.
+
+Reviewer: no local command, API key, Docker, Python, or repository clone is required. Follow the
+[zero-tool review guide](https://github.com/ITHealer/metadata-repository/blob/main/docs/reviewer/README.md).
 
 ## Test evidence
 

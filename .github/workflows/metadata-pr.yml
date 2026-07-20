@@ -140,7 +140,7 @@ jobs:
           fi
           unexpected="$(git status --porcelain | awk '$2 !~ /^catalog\/[^/]+\/generated\/(structured|published)\// {print}')"
           if [[ -n "$unexpected" ]]; then
-            echo "Generation changed files outside catalog/*/generated/published/**:"
+            echo "Generation changed files outside bot-owned structured/published directories:"
             echo "$unexpected"
             exit 1
           fi
@@ -170,3 +170,10 @@ jobs:
             echo "- Published output changes: \`${PR_PUBLISHED:-0}\`"
             echo "- Unrelated changes: \`${PR_UNRELATED:-0}\`"
           } >> "$GITHUB_STEP_SUMMARY"
+          repository_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
+          for profile in config/databases/*/database.yml; do
+            database="$(basename "$(dirname "$profile")")"
+            ./scripts/metadata candidate-summary \
+              --database "$database" \
+              --repository-url "$repository_url" >> "$GITHUB_STEP_SUMMARY" || true
+          done
