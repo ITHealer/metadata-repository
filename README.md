@@ -113,8 +113,9 @@ not need to assemble paths manually. `catalog-check` fails if tbls returned an u
 an allowlisted table is missing, or the raw database name differs from the profile. Production
 profiles should use the exact table list supplied by the data owner rather than a wildcard.
 
-UrGift is currently committed as a safe pending profile: `enabled: false` and `tables: []`. It is
-visible in `catalog-check-all` but excluded from reviewer/generator automation. Follow the
+UrGift and UrCard are currently committed as safe pending profiles: `enabled: false` and
+`tables: []`. They are visible in `catalog-check-all` but excluded from reviewer/generator
+automation. Follow the
 [database onboarding checklist](./config/databases/README.md) after the real table allowlist and
 read-only ClickHouse connection are supplied; do not infer production tables from the demo.
 
@@ -224,6 +225,12 @@ Promotion has no `DocumentGenerator` dependency and cannot call the LLM. It chan
 metadata (`document_status`, `index_eligible`, and source commit); the Markdown body beginning at
 `## Summary` must retain the exact hash the reviewer saw. This turns approval into an auditable
 state transition instead of a second non-deterministic generation request.
+
+Post-merge indexing runs `make catalog-chunks`. It loads structured candidates from every enabled
+database, verifies their hashes, ignores candidates still in review, and chunks only promoted
+documents. Chunk IDs include the exact ClickHouse database and table name, so the same table name in
+UrGift and UrCard cannot collide. The network-free multi-database UAT creates ephemeral schemas for
+this isolation test; those fixtures are not claims about real UrGift or UrCard tables.
 
 `DeterministicDocumentGenerator` is the factual baseline.
 `OpenAICompatibleDocumentGenerator` calls an OpenAI-compatible LiteLLM gateway. A `needs_review`

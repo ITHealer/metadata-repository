@@ -81,6 +81,11 @@ def validate_candidate(
             "stale_candidate",
             "candidate inputs changed after generation; generate and review a new candidate",
         )
+    validate_candidate_integrity(candidate)
+
+
+def validate_candidate_integrity(candidate: GeneratedCandidate) -> None:
+    """Validate persisted structured/Markdown hashes without loading source inputs."""
     if candidate.candidate_hash != _candidate_hash(candidate.document):
         raise CandidateStateError(
             "tampered_candidate", "candidate structured document does not match candidate_hash"

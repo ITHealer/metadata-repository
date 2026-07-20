@@ -10,6 +10,7 @@ def test_index_workflow_runs_only_after_main_published_changes() -> None:
 
     assert "  push:\n    branches:\n      - main" in content
     assert "      - catalog/*/generated/published/**" in content
+    assert "      - catalog/*/generated/structured/**" in content
     assert "pull_request:" not in content
     assert "  contents: read" in content
     assert "make index-build" in content

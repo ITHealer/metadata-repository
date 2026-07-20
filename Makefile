@@ -11,6 +11,7 @@ REVIEW_DIR ?= $(CATALOG_DIR)/review
 SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- $(REVIEW_DIR))
 PUBLISHED_DIR ?= $(CATALOG_DIR)/generated/published
 CHUNK_OUTPUT ?= build/chunks/$(DATABASE).jsonl
+CATALOG_CHUNK_OUTPUT ?= build/chunks/catalog.jsonl
 INDEX_MANIFEST ?= build/index/manifest.json
 INDEX_ACTIONS ?= build/index/actions.json
 INDEX_BASE ?= HEAD^
@@ -30,7 +31,7 @@ TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 	review-schema review-draft review-validate review-check \
 	publish published-validate chunk-dry-run knowledge-check \
 	index-build retrieval-smoke live-uat catalog-check catalog-check-all \
-	candidate-sync candidate-validate
+	candidate-sync candidate-validate catalog-chunks
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -159,9 +160,12 @@ candidate-validate: ## Validate persisted candidates without creating an LLM cli
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode $(GENERATOR_MODE) --validate-only $(TABLE_ARGS)
 
-index-build: chunk-dry-run ## Reconcile approved chunks into a deterministic manifest artifact
+catalog-chunks: ## Build approved-only chunks from all enabled database candidates
+	./scripts/metadata chunk-catalog --output $(CATALOG_CHUNK_OUTPUT)
+
+index-build: catalog-chunks ## Reconcile approved candidate chunks into a deterministic manifest
 	./scripts/metadata index-manifest \
-		--chunks $(CHUNK_OUTPUT) \
+		--chunks $(CATALOG_CHUNK_OUTPUT) \
 		--manifest $(INDEX_MANIFEST) \
 		--source-commit $(SOURCE_COMMIT) \
 		--base $(INDEX_BASE) --head $(INDEX_HEAD) \
