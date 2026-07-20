@@ -23,6 +23,13 @@ from metadata_pipeline.adapters.git.changed_paths import (
 )
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
+from metadata_pipeline.application.catalog import (
+    CatalogConfigurationError,
+    CatalogContext,
+    discover_database_keys,
+    load_catalog_context,
+    validate_database_scope,
+)
 from metadata_pipeline.application.classify_changes import classify_changed_paths
 from metadata_pipeline.application.create_drafts import (
     DraftAction,
@@ -73,6 +80,17 @@ def build_parser() -> argparse.ArgumentParser:
         "doctor",
         help="Check whether the local runtime meets project requirements.",
     )
+    catalog_check = commands.add_parser(
+        "catalog-check",
+        help="Validate one database profile, tbls config, and raw schema allowlist.",
+    )
+    _add_database_context(catalog_check)
+    catalog_check.add_argument("--schema", type=Path)
+    catalog_check_all = commands.add_parser(
+        "catalog-check-all",
+        help="Validate every configured database profile.",
+    )
+    catalog_check_all.add_argument("--repository-root", type=Path, default=Path("."))
     export_schema = commands.add_parser(
         "export-review-schema",
         help="Generate JSON Schema from the Pydantic reviewer contract.",
@@ -121,7 +139,6 @@ def build_parser() -> argparse.ArgumentParser:
     chunk.add_argument(
         "--output",
         type=Path,
-        default=Path("build/chunks/commerce_demo.jsonl"),
     )
     classify = commands.add_parser(
         "classify-changes",
@@ -151,20 +168,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _add_review_paths(parser: argparse.ArgumentParser) -> None:
+    _add_database_context(parser)
     parser.add_argument(
         "--schema",
         type=Path,
-        default=Path("catalog/commerce_demo/generated/raw/schema.json"),
     )
     parser.add_argument(
         "--review-dir",
         type=Path,
-        default=Path("catalog/commerce_demo/review"),
     )
     parser.add_argument(
         "--contract",
         type=Path,
-        default=Path("contracts/metadata_contract.yml"),
     )
 
 
@@ -173,13 +188,26 @@ def _add_publication_paths(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--published-dir",
         type=Path,
-        default=Path("catalog/commerce_demo/generated/published"),
     )
     parser.add_argument("--source-review-commit", required=True)
 
 
 def _add_generator_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mode", choices=("mock", "live"), default="mock")
+
+
+def _add_database_context(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--database",
+        default="commerce_demo",
+        help="Lowercase repository database key configured under config/databases/.",
+    )
+    parser.add_argument(
+        "--repository-root",
+        type=Path,
+        default=Path("."),
+        help="Repository root used to resolve database-aware default paths.",
+    )
 
 
 def run_doctor() -> int:
@@ -191,6 +219,35 @@ def run_doctor() -> int:
 
     print(f"python={platform.python_version()} status={status} minimum={minimum}")
     return 0 if supported else 1
+
+
+def run_catalog_check(context: CatalogContext, schema_path: Path) -> int:
+    """Validate one database boundary and print a concise operator result."""
+    try:
+        validate_database_scope(context.profile, schema_path)
+    except CatalogConfigurationError as error:
+        print(f"catalog configuration error: {error}", file=sys.stderr)
+        return 1
+    print(
+        f"catalog validation passed: {context.profile.key} ({len(context.profile.tables)} table(s))"
+    )
+    return 0
+
+
+def run_catalog_check_all(repository_root: Path) -> int:
+    """Validate all configured databases without stopping at the first profile."""
+    database_keys = discover_database_keys(repository_root)
+    if not database_keys:
+        print("catalog configuration error: no database profiles found", file=sys.stderr)
+        return 1
+    failed = False
+    for database in database_keys:
+        context = _load_catalog_context(database, repository_root)
+        if context is None:
+            failed = True
+            continue
+        failed |= run_catalog_check(context, context.layout.schema_path) != 0
+    return 1 if failed else 0
 
 
 def run_validate_review(schema: Path, review_dir: Path, contract: Path) -> int:
@@ -428,42 +485,79 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "doctor":
         return run_doctor()
+    if args.command == "catalog-check-all":
+        return run_catalog_check_all(args.repository_root)
+    if args.command == "catalog-check":
+        context = _load_catalog_context(args.database, args.repository_root)
+        if context is None:
+            return 1
+        return run_catalog_check(context, args.schema or context.layout.schema_path)
     if args.command == "export-review-schema":
         export_review_json_schema(args.output)
         print(f"review JSON Schema written: {args.output}")
         return 0
     if args.command == "draft":
-        return run_create_drafts(args.schema, args.review_dir, args.contract)
+        resolved = _resolve_catalog_paths(args)
+        if resolved is None:
+            return 1
+        context, schema, review_dir, contract, _ = resolved
+        if run_catalog_check(context, schema):
+            return 1
+        return run_create_drafts(schema, review_dir, contract)
     if args.command == "validate-review":
-        return run_validate_review(args.schema, args.review_dir, args.contract)
+        resolved = _resolve_catalog_paths(args)
+        if resolved is None:
+            return 1
+        context, schema, review_dir, contract, _ = resolved
+        if run_catalog_check(context, schema):
+            return 1
+        return run_validate_review(schema, review_dir, contract)
     if args.command == "publish":
+        resolved = _resolve_catalog_paths(args)
+        if resolved is None:
+            return 1
+        context, schema, review_dir, contract, published_dir = resolved
+        if run_catalog_check(context, schema):
+            return 1
         return run_publish(
-            args.schema,
-            args.review_dir,
-            args.contract,
-            args.published_dir,
+            schema,
+            review_dir,
+            contract,
+            published_dir,
             args.source_review_commit,
             args.mode,
             args.chunk_output,
             tuple(args.tables),
         )
     if args.command == "validate-published":
+        resolved = _resolve_catalog_paths(args)
+        if resolved is None:
+            return 1
+        context, schema, review_dir, contract, published_dir = resolved
+        if run_catalog_check(context, schema):
+            return 1
         return run_validate_published(
-            args.schema,
-            args.review_dir,
-            args.contract,
-            args.published_dir,
+            schema,
+            review_dir,
+            contract,
+            published_dir,
             args.source_review_commit,
         )
     if args.command == "chunk":
+        resolved = _resolve_catalog_paths(args)
+        if resolved is None:
+            return 1
+        context, schema, review_dir, contract, published_dir = resolved
+        if run_catalog_check(context, schema):
+            return 1
         return run_chunk(
-            args.schema,
-            args.review_dir,
-            args.contract,
-            args.published_dir,
+            schema,
+            review_dir,
+            contract,
+            published_dir,
             args.source_review_commit,
             args.mode,
-            args.output,
+            args.output or context.layout.chunk_output,
         )
     if args.command == "classify-changes":
         return run_classify_changes(args.base, args.head, args.github_output)
@@ -481,6 +575,31 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser.print_help()
     return 0
+
+
+def _load_catalog_context(database: str, repository_root: Path) -> CatalogContext | None:
+    try:
+        return load_catalog_context(database, repository_root)
+    except (CatalogConfigurationError, ValueError) as error:
+        print(f"catalog configuration error: {error}", file=sys.stderr)
+        return None
+
+
+def _resolve_catalog_paths(
+    args: argparse.Namespace,
+) -> tuple[CatalogContext, Path, Path, Path, Path] | None:
+    """Resolve optional CLI path overrides against one validated database layout."""
+    context = _load_catalog_context(args.database, args.repository_root)
+    if context is None:
+        return None
+    root = context.layout.repository_root
+    return (
+        context,
+        args.schema or context.layout.schema_path,
+        args.review_dir or context.layout.review_dir,
+        args.contract or root / "contracts" / "metadata_contract.yml",
+        getattr(args, "published_dir", None) or context.layout.published_dir,
+    )
 
 
 def entrypoint() -> None:

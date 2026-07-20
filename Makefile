@@ -5,9 +5,12 @@ VENV ?= .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 COMPOSE ?= docker compose
-SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- catalog/commerce_demo/review)
-PUBLISHED_DIR ?= catalog/commerce_demo/generated/published
-CHUNK_OUTPUT ?= build/chunks/commerce_demo.jsonl
+DATABASE ?= commerce_demo
+CATALOG_DIR ?= catalog/$(DATABASE)
+REVIEW_DIR ?= $(CATALOG_DIR)/review
+SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- $(REVIEW_DIR))
+PUBLISHED_DIR ?= $(CATALOG_DIR)/generated/published
+CHUNK_OUTPUT ?= build/chunks/$(DATABASE).jsonl
 INDEX_MANIFEST ?= build/index/manifest.json
 INDEX_ACTIONS ?= build/index/actions.json
 INDEX_BASE ?= HEAD^
@@ -15,8 +18,8 @@ INDEX_HEAD ?= HEAD
 SOURCE_COMMIT ?= $(shell git rev-parse HEAD)
 RETRIEVAL_REPORT ?= build/index/retrieval-report.json
 GENERATOR_MODE ?= mock
-LIVE_PUBLISHED_DIR ?= build/live/published/commerce_demo
-LIVE_CHUNK_OUTPUT ?= build/live/chunks/commerce_demo.jsonl
+LIVE_PUBLISHED_DIR ?= build/live/published/$(DATABASE)
+LIVE_CHUNK_OUTPUT ?= build/live/chunks/$(DATABASE).jsonl
 TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 
 .DEFAULT_GOAL := help
@@ -26,7 +29,7 @@ TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 	schema-doc schema-lint schema-diff schema-check \
 	review-schema review-draft review-validate review-check \
 	publish published-validate chunk-dry-run knowledge-check \
-	index-build retrieval-smoke live-uat
+	index-build retrieval-smoke live-uat catalog-check catalog-check-all
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -87,13 +90,13 @@ db-logs: ## Show recent ClickHouse logs for troubleshooting
 	$(COMPOSE) logs --tail=100 clickhouse
 
 schema-doc: db-wait ## Generate raw Markdown, Mermaid ER, and schema.json with tbls
-	./scripts/extract_schema.sh doc
+	DATABASE=$(DATABASE) ./scripts/extract_schema.sh doc
 
 schema-lint: db-wait ## Require comments for every ClickHouse table and column
-	./scripts/extract_schema.sh lint
+	DATABASE=$(DATABASE) ./scripts/extract_schema.sh lint
 
 schema-diff: db-wait ## Compare the live ClickHouse schema with committed raw documentation
-	./scripts/extract_schema.sh diff
+	DATABASE=$(DATABASE) ./scripts/extract_schema.sh diff
 
 schema-check: schema-doc schema-lint ## Generate and validate the complete tbls contract
 	RUN_TBLS_INTEGRATION=1 $(VENV)/bin/pytest -m schema_integration \
@@ -105,40 +108,36 @@ review-schema: ## Generate JSON Schema from the Pydantic reviewer contract
 
 review-draft: ## Create or refresh deterministic reviewer YAML drafts
 	./scripts/metadata draft \
-		--schema catalog/commerce_demo/generated/raw/schema.json \
-		--review-dir catalog/commerce_demo/review \
-		--contract contracts/metadata_contract.yml
+		--database $(DATABASE)
 
 review-validate: ## Validate reviewer YAML against the raw tbls schema
 	./scripts/metadata validate-review \
-		--schema catalog/commerce_demo/generated/raw/schema.json \
-		--review-dir catalog/commerce_demo/review \
-		--contract contracts/metadata_contract.yml
+		--database $(DATABASE)
 
 review-check: review-schema review-validate ## Generate and validate the reviewer contract
 
+catalog-check: ## Validate the selected database profile and table allowlist
+	./scripts/metadata catalog-check --database $(DATABASE)
+
+catalog-check-all: ## Validate every configured database profile and raw schema
+	./scripts/metadata catalog-check-all
+
 publish: ## Generate deterministic published Markdown from raw and reviewer metadata
 	./scripts/metadata publish \
-		--schema catalog/commerce_demo/generated/raw/schema.json \
-		--review-dir catalog/commerce_demo/review \
-		--contract contracts/metadata_contract.yml \
+		--database $(DATABASE) \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode $(GENERATOR_MODE) $(TABLE_ARGS)
 
 published-validate: ## Require committed published Markdown to match validated inputs
 	./scripts/metadata validate-published \
-		--schema catalog/commerce_demo/generated/raw/schema.json \
-		--review-dir catalog/commerce_demo/review \
-		--contract contracts/metadata_contract.yml \
+		--database $(DATABASE) \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT)
 
 chunk-dry-run: ## Build validated semantic chunk JSONL without indexing
 	./scripts/metadata chunk \
-		--schema catalog/commerce_demo/generated/raw/schema.json \
-		--review-dir catalog/commerce_demo/review \
-		--contract contracts/metadata_contract.yml \
+		--database $(DATABASE) \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode $(GENERATOR_MODE) --dry-run --output $(CHUNK_OUTPUT)
@@ -159,9 +158,7 @@ retrieval-smoke: ## Run 10 golden questions against an approved in-memory fixtur
 
 live-uat: ## Manually call the configured gateway once per document and write isolated artifacts
 	./scripts/metadata publish \
-		--schema catalog/commerce_demo/generated/raw/schema.json \
-		--review-dir catalog/commerce_demo/review \
-		--contract contracts/metadata_contract.yml \
+		--database $(DATABASE) \
 		--published-dir $(LIVE_PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
 		--mode live --chunk-output $(LIVE_CHUNK_OUTPUT) $(TABLE_ARGS)

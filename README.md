@@ -95,6 +95,24 @@ If port `8123` or `9000` is already occupied, copy `.env.example` to `.env` and 
 `CLICKHOUSE_HTTP_PORT` or `CLICKHOUSE_NATIVE_PORT`. If startup fails, confirm Docker is running,
 use `make db-logs`, then run `make db-reset db-up` after correcting the issue.
 
+## Database profiles and catalog scope
+
+Every database is selected by a lowercase repository key such as `commerce_demo`, `urgift`, or
+`urcard`. Its profile under `config/databases/<database>/database.yml` maps that key to the exact
+ClickHouse database name and explicitly allowlists the tables this repository may document.
+
+```bash
+make catalog-check DATABASE=commerce_demo
+make review-validate DATABASE=commerce_demo
+make publish DATABASE=commerce_demo
+make catalog-check-all
+```
+
+The CLI derives raw, review, structured, published, and chunk paths from `--database`; callers do
+not need to assemble paths manually. `catalog-check` fails if tbls returned an unexpected table,
+an allowlisted table is missing, or the raw database name differs from the profile. Production
+profiles should use the exact table list supplied by the data owner rather than a wildcard.
+
 ## Raw schema documentation with tbls
 
 The `tbls` tool reads ClickHouse table and column comments, adds the two logical relations that

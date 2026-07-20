@@ -13,6 +13,8 @@ import yaml
 from metadata_pipeline import __version__
 from metadata_pipeline.cli import main
 
+ROOT = Path(__file__).resolve().parents[2]
+
 
 def test_cli_shows_version(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as error:
@@ -161,6 +163,8 @@ def test_live_publish_requires_gateway_key(
     exit_code = main(
         [
             "publish",
+            "--repository-root",
+            str(ROOT),
             "--published-dir",
             str(tmp_path / "published"),
             "--source-review-commit",
