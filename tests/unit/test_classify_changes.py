@@ -18,16 +18,17 @@ def test_path_matrix_classifies_inputs_outputs_and_unrelated_changes() -> None:
             ChangedPath("M", "catalog/commerce_demo/review/orders.yml"),
             ChangedPath("A", "catalog/commerce_demo/generated/raw/order_events.md"),
             ChangedPath("M", "catalog/commerce_demo/generated/published/orders.md"),
+            ChangedPath("M", "catalog/commerce_demo/generated/structured/orders.json"),
             ChangedPath("M", "src/metadata_pipeline/domain/published.py"),
             ChangedPath("M", "README.md"),
         )
     )
 
-    assert classification.total == 5
+    assert classification.total == 6
     assert classification.input_count == 3
     assert classification.generation_source_count == 1
     assert classification.has_generation_sources is True
-    assert classification.published_count == 1
+    assert classification.published_count == 2
     assert classification.unrelated_count == 1
     assert classification.has_inputs is True
     assert classification.has_published is True

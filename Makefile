@@ -29,7 +29,8 @@ TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 	schema-doc schema-lint schema-diff schema-check \
 	review-schema review-draft review-validate review-check \
 	publish published-validate chunk-dry-run knowledge-check \
-	index-build retrieval-smoke live-uat catalog-check catalog-check-all
+	index-build retrieval-smoke live-uat catalog-check catalog-check-all \
+	candidate-sync candidate-validate
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -143,6 +144,20 @@ chunk-dry-run: ## Build validated semantic chunk JSONL without indexing
 		--mode $(GENERATOR_MODE) --dry-run --output $(CHUNK_OUTPUT)
 
 knowledge-check: publish published-validate chunk-dry-run ## Verify publish and chunk contracts
+
+candidate-sync: ## Generate, validate, or promote persisted candidates for one database
+	./scripts/metadata sync-candidates \
+		--database $(DATABASE) \
+		--published-dir $(PUBLISHED_DIR) \
+		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
+		--mode $(GENERATOR_MODE) $(TABLE_ARGS)
+
+candidate-validate: ## Validate persisted candidates without creating an LLM client
+	./scripts/metadata sync-candidates \
+		--database $(DATABASE) \
+		--published-dir $(PUBLISHED_DIR) \
+		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
+		--mode $(GENERATOR_MODE) --validate-only $(TABLE_ARGS)
 
 index-build: chunk-dry-run ## Reconcile approved chunks into a deterministic manifest artifact
 	./scripts/metadata index-manifest \

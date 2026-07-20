@@ -6,7 +6,7 @@ import argparse
 import json
 import platform
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from metadata_pipeline import __version__
@@ -23,6 +23,7 @@ from metadata_pipeline.adapters.git.changed_paths import (
 )
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
+from metadata_pipeline.application.candidate_state import CandidateStateError
 from metadata_pipeline.application.catalog import (
     CatalogConfigurationError,
     CatalogContext,
@@ -53,9 +54,15 @@ from metadata_pipeline.application.schema_sync_summary import (
     render_schema_sync_pr_body,
     summarize_schema_change,
 )
+from metadata_pipeline.application.sync_candidates import (
+    GeneratorIdentity,
+    prepare_candidate_sync,
+    write_candidate_sync,
+)
 from metadata_pipeline.io.atomic_text import write_text_if_changed
 from metadata_pipeline.io.chunk_jsonl import load_chunks
 from metadata_pipeline.io.review_yaml import ReviewFileError
+from metadata_pipeline.ports.document_generator import DocumentGenerator
 from metadata_pipeline.ports.index_store import IndexStoreError
 from metadata_pipeline.ports.schema_source import SchemaSourceError
 from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
@@ -129,6 +136,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Require committed published Markdown to match deterministic sources.",
     )
     _add_publication_paths(validate_published)
+    sync_candidates = commands.add_parser(
+        "sync-candidates",
+        help="Generate, validate, or promote persistent candidates and Markdown.",
+    )
+    _add_publication_paths(sync_candidates)
+    _add_generator_arguments(sync_candidates)
+    sync_candidates.add_argument("--structured-dir", type=Path)
+    sync_candidates.add_argument("--guideline", type=Path)
+    sync_candidates.add_argument(
+        "--table",
+        action="append",
+        dest="tables",
+        default=[],
+        help="Sync only this table; repeat to select multiple tables.",
+    )
+    sync_candidates.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="Validate existing artifacts without creating a generator or writing files.",
+    )
     chunk = commands.add_parser(
         "chunk",
         help="Build a validated semantic chunk JSONL dry-run artifact.",
@@ -386,6 +413,83 @@ def run_chunk(
     return 0
 
 
+def run_sync_candidates(
+    *,
+    schema: Path,
+    review_dir: Path,
+    contract: Path,
+    guideline: Path,
+    structured_dir: Path,
+    published_dir: Path,
+    source_review_commit: str,
+    mode: str,
+    tables: tuple[str, ...],
+    validate_only: bool,
+) -> int:
+    """Synchronize candidate state while keeping approval independent from the LLM."""
+    settings_cache: list[OpenAICompatibleSettings] = []
+
+    def live_settings() -> OpenAICompatibleSettings:
+        if not settings_cache:
+            settings_cache.append(OpenAICompatibleSettings.from_env())
+        return settings_cache[0]
+
+    identity_factory: Callable[[], GeneratorIdentity] | None = None
+    generator_factory: Callable[[], DocumentGenerator] | None = None
+    if not validate_only and mode == "live":
+
+        def live_identity() -> GeneratorIdentity:
+            settings = live_settings()
+            return GeneratorIdentity(settings.model, settings.prompt_version)
+
+        def live_generator() -> DocumentGenerator:
+            return OpenAICompatibleDocumentGenerator.from_settings(live_settings())
+
+        identity_factory = live_identity
+        generator_factory = live_generator
+    elif not validate_only:
+        baseline = DeterministicDocumentGenerator()
+
+        def mock_identity() -> GeneratorIdentity:
+            return GeneratorIdentity(baseline.model_name, "deterministic-v1")
+
+        def mock_generator() -> DocumentGenerator:
+            return baseline
+
+        identity_factory = mock_identity
+        generator_factory = mock_generator
+    try:
+        batch = prepare_candidate_sync(
+            schema_path=schema,
+            review_dir=review_dir,
+            contract_path=contract,
+            guideline_path=guideline,
+            structured_dir=structured_dir,
+            published_dir=published_dir,
+            source_review_commit=source_review_commit,
+            selected_tables=tables,
+            identity_factory=identity_factory,
+            generator_factory=generator_factory,
+        )
+        results = () if validate_only else write_candidate_sync(batch)
+    except CandidateStateError as error:
+        print(f"candidate sync error: {error.code}: {error}", file=sys.stderr)
+        return 1
+    except (PublicationPreflightError, GatewayConfigurationError) as error:
+        return _print_publication_error(error)
+    if validate_only:
+        print(f"candidate validation passed: {len(batch.items)} document(s)")
+        return 0
+    for result in results:
+        print(
+            f"{result.action.value}: {result.table}: "
+            f"candidate_changed={str(result.candidate_changed).lower()} "
+            f"markdown_changed={str(result.markdown_changed).lower()}"
+        )
+    print(f"candidate sync completed: {len(results)} document(s)")
+    return 0
+
+
 def run_classify_changes(base: str, head: str, github_output: Path | None) -> int:
     """Classify PR-wide and latest-commit paths without embedding Git logic in CI YAML."""
     try:
@@ -542,6 +646,28 @@ def main(argv: Sequence[str] | None = None) -> int:
             contract,
             published_dir,
             args.source_review_commit,
+        )
+    if args.command == "sync-candidates":
+        resolved = _resolve_catalog_paths(args)
+        if resolved is None:
+            return 1
+        context, schema, review_dir, contract, published_dir = resolved
+        if run_catalog_check(context, schema):
+            return 1
+        return run_sync_candidates(
+            schema=schema,
+            review_dir=review_dir,
+            contract=contract,
+            guideline=(
+                args.guideline
+                or context.layout.repository_root / "guidelines" / "llm_transformation_guideline.md"
+            ),
+            structured_dir=args.structured_dir or context.layout.structured_dir,
+            published_dir=published_dir,
+            source_review_commit=args.source_review_commit,
+            mode=args.mode,
+            tables=tuple(args.tables),
+            validate_only=args.validate_only,
         )
     if args.command == "chunk":
         resolved = _resolve_catalog_paths(args)

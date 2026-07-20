@@ -18,7 +18,10 @@ INPUT_PATTERNS = (
     "contracts/metadata_contract.yml",
     *GENERATION_SOURCE_PATTERNS,
 )
-PUBLISHED_PATTERN = "catalog/*/generated/published/**"
+GENERATED_OUTPUT_PATTERNS = (
+    "catalog/*/generated/structured/**",
+    "catalog/*/generated/published/**",
+)
 
 
 @dataclass(frozen=True)
@@ -84,7 +87,9 @@ def classify_changed_paths(changes: tuple[ChangedPath, ...]) -> ChangeClassifica
     unrelated_count = 0
     for change in changes:
         paths = change.all_paths
-        if any(_matches(path, PUBLISHED_PATTERN) for path in paths):
+        if any(
+            any(_matches(path, pattern) for pattern in GENERATED_OUTPUT_PATTERNS) for path in paths
+        ):
             published_count += 1
         elif any(any(_matches(path, pattern) for pattern in INPUT_PATTERNS) for path in paths):
             input_count += 1

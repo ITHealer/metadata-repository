@@ -27,4 +27,10 @@ def test_workflow_guards_bot_output_and_fork_secrets() -> None:
     assert "mode=validate-migration" in content
     assert "steps.decision.outputs.mode == 'reject-published'" in content
     assert 'unexpected="$(git status --porcelain' in content
+    assert "make candidate-sync" in content
+    assert "make candidate-validate" in content
+    assert "secrets.OPENAI_API_KEY" in content
+    assert "vars.OPENAI_MODEL" in content
+    assert "catalog/*/generated/structured" in content
+    assert "git add 'catalog/*/generated/structured' 'catalog/*/generated/published'" in content
     assert 'git push origin "HEAD:$HEAD_BRANCH"' in content
