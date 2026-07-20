@@ -10,16 +10,15 @@ document_status: needs_review
 schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 business:
   display_name: Orders
-  description: Order fact at one row per order_id; cancelled orders remain in the table.
-  grain: Unknown — needs confirmation
+  description: One row represents one customer order.
+  grain: One row per order_id.
   purpose:
-    - Unknown — needs confirmation
+    - Analyze order volume and revenue.
   appropriate_use:
-    - Unknown — needs confirmation
+    - Daily order reporting.
   inappropriate_use:
-    - Unknown — needs confirmation
-  aliases: []
-  freshness: Unknown — needs confirmation
+    - Do not use as a payment settlement source.
+  freshness: Updated near real time.
   caveats:
     - Business meaning requires domain reviewer confirmation.
   evidence:
