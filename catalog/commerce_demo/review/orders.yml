@@ -10,29 +10,27 @@ document_status: needs_review
 schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 business:
   display_name: Orders
-  description: One technical row per order represented in the ClickHouse demo dataset.
-  grain: One row per order_id.
+  description: Order fact at one row per order_id; cancelled orders remain in the table.
+  grain: Unknown — needs confirmation
   purpose:
-    - Support order lifecycle and value analysis in the demo dataset.
+    - Unknown — needs confirmation
   appropriate_use:
-    - Aggregate order totals after applying the documented status rules.
-    - Join an order to customers by customer_id.
+    - Unknown — needs confirmation
   inappropriate_use:
-    - Assume cancelled orders are removed from the table.
-  aliases:
-    - order fact
+    - Unknown — needs confirmation
+  aliases: []
   freshness: Unknown — needs confirmation
   caveats:
-    - Business ownership and refresh expectations require reviewer confirmation.
+    - Business meaning requires domain reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
       reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
       status: proposed
-      note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
+      note: Generated from the ClickHouse comment; domain confirmation is required.
 columns:
   created_at:
-    business_name: Order created time
-    description: UTC timestamp recorded when the order was created.
+    business_name: Created At
+    description: UTC timestamp when the order was created
     semantic_type: timestamp
     unit: UTC
     nullable_meaning: not_applicable
@@ -43,25 +41,24 @@ columns:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   customer_id:
-    business_name: Customer identifier
-    description: Identifier used for the logical join to customers.customer_id.
-    semantic_type: foreign_identifier
+    business_name: Customer Id
+    description: Customer that placed the order; logical join to customers.customer_id
+    semantic_type: identifier
     unit: not_applicable
     nullable_meaning: not_applicable
     sensitivity: internal
     allowed_values: {}
-    caveats:
-      - The ClickHouse relation is logical and is not treated as an enforced foreign key.
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   order_id:
-    business_name: Order identifier
-    description: Stable technical identifier for one order.
+    business_name: Order Id
+    description: Stable identifier for one order
     semantic_type: identifier
     unit: not_applicable
     nullable_meaning: not_applicable
@@ -72,44 +69,39 @@ columns:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   order_status:
-    business_name: Order status
-    description: Current lifecycle state recorded for the order.
+    business_name: Order Status
+    description: 'Current lifecycle state: pending, paid, shipped, or cancelled'
     semantic_type: categorical
     unit: not_applicable
     nullable_meaning: not_applicable
     sensitivity: internal
-    allowed_values:
-      pending: Order is pending.
-      paid: Order has been paid.
-      shipped: Order has been shipped.
-      cancelled: Order has been cancelled but remains in the table.
+    allowed_values: {}
     caveats:
-      - Transition rules require reviewer confirmation.
+      - Allowed values require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status
         status: proposed
-        note: Values are listed in the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   total_amount:
-    business_name: Order total amount
-    description: Order total recorded after discounts.
+    business_name: Total Amount
+    description: Order total in VND after discounts
     semantic_type: monetary_amount
     unit: VND
     nullable_meaning: not_applicable
     sensitivity: internal
     allowed_values: {}
-    caveats:
-      - Tax, shipping, refund, and cancellation treatment require reviewer confirmation.
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   updated_at:
-    business_name: Order updated time
-    description: UTC timestamp of the latest recorded order update.
+    business_name: Updated At
+    description: UTC timestamp of the latest order update
     semantic_type: timestamp
     unit: UTC
     nullable_meaning: not_applicable
@@ -120,32 +112,9 @@ columns:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at
         status: proposed
-        note: Derived from the ClickHouse column comment.
-relationships:
-  - name: orders_to_customers
-    from_columns:
-      - customer_id
-    to_table: customers
-    to_columns:
-      - customer_id
-    join_condition: orders.customer_id = customers.customer_id
-    cardinality: many_to_one
-    optional: false
-    row_count_impact: unknown
-    meaning: Associates each order with the customer identifier that placed it.
-    evidence:
-      - kind: tbls_relation
-        reference: catalog/commerce_demo/generated/raw/schema.json#relations.orders_to_customers
-        status: proposed
-        note: Logical relation configured for tbls; cardinality requires data validation.
-business_rules:
-  - name: Cancelled orders remain present
-    description: A cancelled status does not imply that the order row is deleted.
-    evidence:
-      - kind: clickhouse_comment
-        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
-        status: proposed
-        note: Derived from the ClickHouse table comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+relationships: []
+business_rules: []
 data_quality:
-  - Confirm order_id uniqueness before relying on one-row-per-order grain.
+  - Data quality expectations require reviewer confirmation.
 security: []

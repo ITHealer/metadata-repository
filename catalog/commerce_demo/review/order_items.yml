@@ -9,32 +9,29 @@ reviewer: unassigned
 document_status: needs_review
 schema_hash: 45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db
 business:
-  display_name: Order items
-  description: One technical row per order line represented in the ClickHouse demo dataset.
-  grain: One row per order_id and line_number.
+  display_name: Order Items
+  description: Order detail fact at one row per order_id and line_number.
+  grain: Unknown — needs confirmation
   purpose:
-    - Support product quantity and order-line value analysis in the demo dataset.
+    - Unknown — needs confirmation
   appropriate_use:
-    - Join order lines to orders by order_id.
-    - Calculate a technical line amount as quantity multiplied by unit_price.
+    - Unknown — needs confirmation
   inappropriate_use:
-    - Assume product_code is a complete product master record.
-  aliases:
-    - order detail fact
-    - order lines
+    - Unknown — needs confirmation
+  aliases: []
   freshness: Unknown — needs confirmation
   caveats:
-    - Business ownership and refresh expectations require reviewer confirmation.
+    - Business meaning requires domain reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
       reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.comment
       status: proposed
-      note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
+      note: Generated from the ClickHouse comment; domain confirmation is required.
 columns:
   line_number:
-    business_name: Order line number
-    description: One-based position of the line within an order.
-    semantic_type: ordinal
+    business_name: Line Number
+    description: One-based line position within an order
+    semantic_type: unknown
     unit: not_applicable
     nullable_meaning: not_applicable
     sensitivity: internal
@@ -44,92 +41,65 @@ columns:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.line_number
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   order_id:
-    business_name: Order identifier
-    description: Identifier used for the logical join to orders.order_id.
-    semantic_type: foreign_identifier
-    unit: not_applicable
-    nullable_meaning: not_applicable
-    sensitivity: internal
-    allowed_values: {}
-    caveats:
-      - The ClickHouse relation is logical and is not treated as an enforced foreign key.
-    evidence:
-      - kind: clickhouse_comment
-        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.order_id
-        status: proposed
-        note: Derived from the ClickHouse column comment.
-  product_code:
-    business_name: Product code
-    description: Synthetic product code captured when the order was placed.
+    business_name: Order Id
+    description: Parent order; logical join to orders.order_id
     semantic_type: identifier
     unit: not_applicable
     nullable_meaning: not_applicable
     sensitivity: internal
     allowed_values: {}
-    caveats:
-      - Product master semantics require reviewer confirmation.
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.order_id
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  product_code:
+    business_name: Product Code
+    description: Synthetic product code captured when the order was placed
+    semantic_type: identifier
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.product_code
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   quantity:
-    business_name: Ordered quantity
-    description: Number of product units recorded on the order line.
+    business_name: Quantity
+    description: Number of product units on this order line
     semantic_type: count
-    unit: product_unit
+    unit: Unknown — needs confirmation
     nullable_meaning: not_applicable
     sensitivity: internal
     allowed_values: {}
-    caveats:
-      - Return and cancellation handling require reviewer confirmation.
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.quantity
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   unit_price:
-    business_name: Unit price
-    description: Price per product unit captured when the order was placed.
+    business_name: Unit Price
+    description: Price per unit in VND when the order was placed
     semantic_type: monetary_amount
     unit: VND
     nullable_meaning: not_applicable
     sensitivity: internal
     allowed_values: {}
-    caveats:
-      - Tax and discount treatment require reviewer confirmation.
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.unit_price
         status: proposed
-        note: Derived from the ClickHouse column comment.
-relationships:
-  - name: order_items_to_orders
-    from_columns:
-      - order_id
-    to_table: orders
-    to_columns:
-      - order_id
-    join_condition: order_items.order_id = orders.order_id
-    cardinality: many_to_one
-    optional: false
-    row_count_impact: unknown
-    meaning: Associates each order line with its parent order identifier.
-    evidence:
-      - kind: tbls_relation
-        reference: catalog/commerce_demo/generated/raw/schema.json#relations.order_items_to_orders
-        status: proposed
-        note: Logical relation configured for tbls; cardinality requires data validation.
-business_rules:
-  - name: Technical line amount
-    description: Calculate line amount as quantity multiplied by unit_price when this definition fits the use case.
-    evidence:
-      - kind: clickhouse_comment
-        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns
-        status: proposed
-        note: Formula is inferred from technical column names and requires reviewer confirmation.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+relationships: []
+business_rules: []
 data_quality:
-  - Confirm that order_id plus line_number is unique before relying on the documented grain.
+  - Data quality expectations require reviewer confirmation.
 security: []

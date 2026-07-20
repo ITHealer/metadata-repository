@@ -10,28 +10,27 @@ document_status: needs_review
 schema_hash: b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc
 business:
   display_name: Customers
-  description: One technical row per customer represented in the ClickHouse demo dataset.
-  grain: One row per customer_id.
+  description: Customer dimension at one row per customer; contains synthetic PII-like fields.
+  grain: Unknown — needs confirmation
   purpose:
-    - Support customer-level analysis in the demo dataset.
+    - Unknown — needs confirmation
   appropriate_use:
-    - Join orders to a customer by customer_id.
+    - Unknown — needs confirmation
   inappropriate_use:
-    - Treat synthetic names or emails as real customer contact data.
-  aliases:
-    - customer dimension
+    - Unknown — needs confirmation
+  aliases: []
   freshness: Unknown — needs confirmation
   caveats:
-    - Business ownership and refresh expectations require reviewer confirmation.
+    - Business meaning requires domain reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
       reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment
       status: proposed
-      note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
+      note: Generated from the ClickHouse comment; domain confirmation is required.
 columns:
   created_at:
-    business_name: Customer created time
-    description: UTC timestamp recorded when the customer profile was created.
+    business_name: Created At
+    description: UTC timestamp when the customer profile was created
     semantic_type: timestamp
     unit: UTC
     nullable_meaning: not_applicable
@@ -42,10 +41,10 @@ columns:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.created_at
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   customer_id:
-    business_name: Customer identifier
-    description: Stable technical identifier for one demo customer.
+    business_name: Customer Id
+    description: Stable identifier for one demo customer
     semantic_type: identifier
     unit: not_applicable
     nullable_meaning: not_applicable
@@ -56,58 +55,52 @@ columns:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.customer_id
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   email:
-    business_name: Customer email
-    description: Synthetic contact email using the .test domain in this demo.
+    business_name: Email
+    description: Synthetic contact email classified as PII; always uses the .test domain
     semantic_type: email
     unit: not_applicable
     nullable_meaning: not_applicable
-    sensitivity: pii_synthetic
+    sensitivity: unknown
     allowed_values: {}
-    caveats:
-      - Demo-only synthetic value; do not use for contacting a person.
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.email
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   full_name:
-    business_name: Customer display name
-    description: Synthetic display name used by this demo.
+    business_name: Full Name
+    description: Display name; synthetic data used only by this demo
     semantic_type: person_name
     unit: not_applicable
     nullable_meaning: not_applicable
-    sensitivity: pii_synthetic
+    sensitivity: unknown
     allowed_values: {}
-    caveats:
-      - Demo-only synthetic value.
+    caveats: []
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.full_name
         status: proposed
-        note: Derived from the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
   segment:
-    business_name: Customer segment
-    description: Business segment currently recorded for the customer.
+    business_name: Segment
+    description: 'Business segment: retail, premium, or enterprise'
     semantic_type: categorical
     unit: not_applicable
     nullable_meaning: not_applicable
     sensitivity: internal
-    allowed_values:
-      retail: Retail segment.
-      premium: Premium segment.
-      enterprise: Enterprise segment.
+    allowed_values: {}
     caveats:
-      - Segment assignment rules require reviewer confirmation.
+      - Allowed values require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.segment
         status: proposed
-        note: Values are listed in the ClickHouse column comment.
+        note: Generated from the ClickHouse comment; domain confirmation is required.
 relationships: []
 business_rules: []
 data_quality:
-  - Confirm customer_id uniqueness before relying on one-row-per-customer grain.
-security:
-  - Treat email and full_name as sensitive-looking data even though this fixture is synthetic.
+  - Data quality expectations require reviewer confirmation.
+security: []
