@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ACTION="${1:-}"
-DOC_PATH="${TBLS_DOC_PATH:-schema/raw/commerce_demo}"
+DOC_PATH="${TBLS_DOC_PATH:-catalog/commerce_demo/generated/raw}"
 TBLS_COMMAND=(docker compose --profile tools run --rm tbls)
 
 cd "${REPOSITORY_ROOT}"

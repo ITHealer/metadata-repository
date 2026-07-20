@@ -11,14 +11,14 @@ GENERATION_SOURCE_PATTERNS = (
     "src/metadata_pipeline/io/published_markdown.py",
 )
 INPUT_PATTERNS = (
-    "schema/raw/**",
-    "metadata/review/**",
+    "catalog/*/generated/raw/**",
+    "catalog/*/review/**",
     "prompts/**",
     "guidelines/**",
     "contracts/metadata_contract.yml",
     *GENERATION_SOURCE_PATTERNS,
 )
-PUBLISHED_PATTERN = "knowledge/published/**"
+PUBLISHED_PATTERN = "catalog/*/generated/published/**"
 
 
 @dataclass(frozen=True)

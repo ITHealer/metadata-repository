@@ -2,8 +2,8 @@
 
 **Status:** Active specification (`retrieval-v1`); publish implementation is planned for PR-06
 **Audience:** AI Engineer, Data Engineer, reviewer of generated metadata
-**Inputs:** `schema/raw/**`, validated `metadata/review/**`, `contracts/metadata_contract.yml`
-**Output:** generated files under `knowledge/published/**`
+**Inputs:** `catalog/*/generated/raw/**`, validated `catalog/*/review/**`, `contracts/metadata_contract.yml`
+**Output:** generated files under `catalog/*/generated/published/**`
 
 ## 1. Purpose
 
@@ -18,9 +18,9 @@ raw tbls `schema.json`.
 ## 2. Input boundary
 
 ```text
-schema/raw/<database>/schema.json       Technical ClickHouse facts
+catalog/<database>/generated/raw/schema.json       Technical ClickHouse facts
   +
-metadata/review/<database>/<table>.yml  Reviewer business claims and evidence states
+catalog/<database>/review/<table>.yml  Reviewer business claims and evidence states
   +
 contracts/metadata_contract.yml            Expected contract/guideline versions
   ↓
@@ -106,8 +106,8 @@ schema_hash: <validated-review-hash>
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
-source_schema_path: schema/raw/commerce_demo/schema.json
-source_review_path: metadata/review/commerce_demo/orders.yml
+source_schema_path: catalog/commerce_demo/generated/raw/schema.json
+source_review_path: catalog/commerce_demo/review/orders.yml
 source_review_commit: <git-commit>
 generator_mode: mock-or-live
 ```

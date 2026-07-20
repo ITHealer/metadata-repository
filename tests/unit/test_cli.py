@@ -41,7 +41,7 @@ def test_validate_review_returns_failure_for_unknown_table(
 ) -> None:
     review_dir = tmp_path / "review"
     review_dir.mkdir()
-    source = Path("metadata/review/commerce_demo/customers.yml")
+    source = Path("catalog/commerce_demo/review/customers.yml")
     payload: dict[str, Any] = yaml.safe_load(source.read_text(encoding="utf-8"))
     payload["table"] = "customers_typo"
     (review_dir / "customers.yml").write_text(
@@ -53,7 +53,7 @@ def test_validate_review_returns_failure_for_unknown_table(
         [
             "validate-review",
             "--schema",
-            "schema/raw/commerce_demo/schema.json",
+            "catalog/commerce_demo/generated/raw/schema.json",
             "--review-dir",
             str(review_dir),
             "--contract",
@@ -72,7 +72,7 @@ def test_draft_cli_is_idempotent_and_warning_only_validation_passes(
     review_dir = tmp_path / "review"
     common_arguments = [
         "--schema",
-        "schema/raw/commerce_demo/schema.json",
+        "catalog/commerce_demo/generated/raw/schema.json",
         "--review-dir",
         str(review_dir),
         "--contract",
@@ -96,13 +96,13 @@ def test_publish_validate_and_chunk_commands_share_one_contract(
 ) -> None:
     review_dir = tmp_path / "review"
     review_dir.mkdir()
-    for source in Path("metadata/review/commerce_demo").glob("*.yml"):
+    for source in Path("catalog/commerce_demo/review").glob("*.yml"):
         copy2(source, review_dir / source.name)
     published_dir = tmp_path / "published"
     chunk_path = tmp_path / "chunks.jsonl"
     common_arguments = [
         "--schema",
-        "schema/raw/commerce_demo/schema.json",
+        "catalog/commerce_demo/generated/raw/schema.json",
         "--review-dir",
         str(review_dir),
         "--contract",

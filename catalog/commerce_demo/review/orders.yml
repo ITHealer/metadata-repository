@@ -26,7 +26,7 @@ business:
     - Business ownership and refresh expectations require reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
-      reference: schema/raw/commerce_demo/schema.json#tables.orders.comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
       status: proposed
       note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
 columns:
@@ -41,7 +41,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.created_at
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at
         status: proposed
         note: Derived from the ClickHouse column comment.
   customer_id:
@@ -56,7 +56,7 @@ columns:
       - The ClickHouse relation is logical and is not treated as an enforced foreign key.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.customer_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id
         status: proposed
         note: Derived from the ClickHouse column comment.
   order_id:
@@ -70,7 +70,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.order_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id
         status: proposed
         note: Derived from the ClickHouse column comment.
   order_status:
@@ -89,7 +89,7 @@ columns:
       - Transition rules require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.order_status
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status
         status: proposed
         note: Values are listed in the ClickHouse column comment.
   total_amount:
@@ -104,7 +104,7 @@ columns:
       - Tax, shipping, refund, and cancellation treatment require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.total_amount
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount
         status: proposed
         note: Derived from the ClickHouse column comment.
   updated_at:
@@ -118,7 +118,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.updated_at
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at
         status: proposed
         note: Derived from the ClickHouse column comment.
 relationships:
@@ -135,7 +135,7 @@ relationships:
     meaning: Associates each order with the customer identifier that placed it.
     evidence:
       - kind: tbls_relation
-        reference: schema/raw/commerce_demo/schema.json#relations.orders_to_customers
+        reference: catalog/commerce_demo/generated/raw/schema.json#relations.orders_to_customers
         status: proposed
         note: Logical relation configured for tbls; cardinality requires data validation.
 business_rules:
@@ -143,7 +143,7 @@ business_rules:
     description: A cancelled status does not imply that the order row is deleted.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
         status: proposed
         note: Derived from the ClickHouse table comment.
 data_quality:

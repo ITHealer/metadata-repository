@@ -11,8 +11,8 @@ schema_hash: 45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
-source_schema_path: schema/raw/commerce_demo/schema.json
-source_review_path: metadata/review/commerce_demo/order_items.yml
+source_schema_path: catalog/commerce_demo/generated/raw/schema.json
+source_review_path: catalog/commerce_demo/review/order_items.yml
 source_review_commit: a21b31ecc02bc01fd55f0693996b8d6641ef64c0
 generator_mode: mock
 generator_model: deterministic-v1
@@ -144,11 +144,11 @@ Not applicable — no table-level security instruction was supplied.
 
 ## Evidence
 
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.columns`: Formula is inferred from technical column names and requires reviewer confirmation.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.columns.line_number`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.columns.order_id`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.columns.product_code`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.columns.quantity`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.columns.unit_price`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.order_items.comment`: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
-- `proposed` `tbls_relation` — `schema/raw/commerce_demo/schema.json#relations.order_items_to_orders`: Logical relation configured for tbls; cardinality requires data validation.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns`: Formula is inferred from technical column names and requires reviewer confirmation.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.line_number`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.order_id`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.product_code`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.quantity`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.unit_price`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.order_items.comment`: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
+- `proposed` `tbls_relation` — `catalog/commerce_demo/generated/raw/schema.json#relations.order_items_to_orders`: Logical relation configured for tbls; cardinality requires data validation.

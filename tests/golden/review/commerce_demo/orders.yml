@@ -24,7 +24,7 @@ business:
     - Business meaning requires domain reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
-      reference: schema/raw/commerce_demo/schema.json#tables.orders.comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
       status: proposed
       note: Generated from the ClickHouse comment; domain confirmation is required.
 columns:
@@ -39,7 +39,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.created_at
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   customer_id:
@@ -53,7 +53,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.customer_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   order_id:
@@ -67,7 +67,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.order_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   order_status:
@@ -82,7 +82,7 @@ columns:
       - Allowed values require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.order_status
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   total_amount:
@@ -96,7 +96,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.total_amount
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   updated_at:
@@ -110,7 +110,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.updated_at
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
 relationships: []

@@ -5,7 +5,7 @@ import pytest
 
 from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
 
-RAW_SCHEMA_PATH = Path("schema/raw/commerce_demo")
+RAW_SCHEMA_PATH = Path("catalog/commerce_demo/generated/raw")
 
 pytestmark = [
     pytest.mark.schema_integration,

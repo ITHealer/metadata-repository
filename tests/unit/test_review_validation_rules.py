@@ -15,9 +15,9 @@ from metadata_pipeline.validation.review import (
     validate_review_document,
 )
 
-SCHEMA = TblsSchemaSource(Path("schema/raw/commerce_demo/schema.json")).load()
+SCHEMA = TblsSchemaSource(Path("catalog/commerce_demo/generated/raw/schema.json")).load()
 CONTRACT = load_review_contract(Path("contracts/metadata_contract.yml"))
-REVIEW_DIR = Path("metadata/review/commerce_demo")
+REVIEW_DIR = Path("catalog/commerce_demo/review")
 
 
 def _confirmed(review: ReviewDocument) -> ReviewDocument:

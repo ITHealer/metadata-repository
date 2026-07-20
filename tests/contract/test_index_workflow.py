@@ -9,7 +9,7 @@ def test_index_workflow_runs_only_after_main_published_changes() -> None:
     content = WORKFLOW.read_text(encoding="utf-8")
 
     assert "  push:\n    branches:\n      - main" in content
-    assert "      - knowledge/published/**" in content
+    assert "      - catalog/*/generated/published/**" in content
     assert "pull_request:" not in content
     assert "  contents: read" in content
     assert "make index-build" in content

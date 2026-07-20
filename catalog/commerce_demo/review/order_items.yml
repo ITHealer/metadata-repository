@@ -27,7 +27,7 @@ business:
     - Business ownership and refresh expectations require reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
-      reference: schema/raw/commerce_demo/schema.json#tables.order_items.comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.comment
       status: proposed
       note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
 columns:
@@ -42,7 +42,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.line_number
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.line_number
         status: proposed
         note: Derived from the ClickHouse column comment.
   order_id:
@@ -57,7 +57,7 @@ columns:
       - The ClickHouse relation is logical and is not treated as an enforced foreign key.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.order_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.order_id
         status: proposed
         note: Derived from the ClickHouse column comment.
   product_code:
@@ -72,7 +72,7 @@ columns:
       - Product master semantics require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.product_code
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.product_code
         status: proposed
         note: Derived from the ClickHouse column comment.
   quantity:
@@ -87,7 +87,7 @@ columns:
       - Return and cancellation handling require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.quantity
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.quantity
         status: proposed
         note: Derived from the ClickHouse column comment.
   unit_price:
@@ -102,7 +102,7 @@ columns:
       - Tax and discount treatment require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns.unit_price
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.unit_price
         status: proposed
         note: Derived from the ClickHouse column comment.
 relationships:
@@ -119,7 +119,7 @@ relationships:
     meaning: Associates each order line with its parent order identifier.
     evidence:
       - kind: tbls_relation
-        reference: schema/raw/commerce_demo/schema.json#relations.order_items_to_orders
+        reference: catalog/commerce_demo/generated/raw/schema.json#relations.order_items_to_orders
         status: proposed
         note: Logical relation configured for tbls; cardinality requires data validation.
 business_rules:
@@ -127,7 +127,7 @@ business_rules:
     description: Calculate line amount as quantity multiplied by unit_price when this definition fits the use case.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.order_items.columns
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns
         status: proposed
         note: Formula is inferred from technical column names and requires reviewer confirmation.
 data_quality:

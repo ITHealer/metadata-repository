@@ -5,8 +5,8 @@ VENV ?= .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 COMPOSE ?= docker compose
-SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- metadata/review/commerce_demo)
-PUBLISHED_DIR ?= knowledge/published/commerce_demo
+SOURCE_REVIEW_COMMIT ?= $(shell git log -1 --format=%H -- catalog/commerce_demo/review)
+PUBLISHED_DIR ?= catalog/commerce_demo/generated/published
 CHUNK_OUTPUT ?= build/chunks/commerce_demo.jsonl
 INDEX_MANIFEST ?= build/index/manifest.json
 INDEX_ACTIONS ?= build/index/actions.json
@@ -105,22 +105,22 @@ review-schema: ## Generate JSON Schema from the Pydantic reviewer contract
 
 review-draft: ## Create or refresh deterministic reviewer YAML drafts
 	./scripts/metadata draft \
-		--schema schema/raw/commerce_demo/schema.json \
-		--review-dir metadata/review/commerce_demo \
+		--schema catalog/commerce_demo/generated/raw/schema.json \
+		--review-dir catalog/commerce_demo/review \
 		--contract contracts/metadata_contract.yml
 
 review-validate: ## Validate reviewer YAML against the raw tbls schema
 	./scripts/metadata validate-review \
-		--schema schema/raw/commerce_demo/schema.json \
-		--review-dir metadata/review/commerce_demo \
+		--schema catalog/commerce_demo/generated/raw/schema.json \
+		--review-dir catalog/commerce_demo/review \
 		--contract contracts/metadata_contract.yml
 
 review-check: review-schema review-validate ## Generate and validate the reviewer contract
 
 publish: ## Generate deterministic published Markdown from raw and reviewer metadata
 	./scripts/metadata publish \
-		--schema schema/raw/commerce_demo/schema.json \
-		--review-dir metadata/review/commerce_demo \
+		--schema catalog/commerce_demo/generated/raw/schema.json \
+		--review-dir catalog/commerce_demo/review \
 		--contract contracts/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
@@ -128,16 +128,16 @@ publish: ## Generate deterministic published Markdown from raw and reviewer meta
 
 published-validate: ## Require committed published Markdown to match validated inputs
 	./scripts/metadata validate-published \
-		--schema schema/raw/commerce_demo/schema.json \
-		--review-dir metadata/review/commerce_demo \
+		--schema catalog/commerce_demo/generated/raw/schema.json \
+		--review-dir catalog/commerce_demo/review \
 		--contract contracts/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT)
 
 chunk-dry-run: ## Build validated semantic chunk JSONL without indexing
 	./scripts/metadata chunk \
-		--schema schema/raw/commerce_demo/schema.json \
-		--review-dir metadata/review/commerce_demo \
+		--schema catalog/commerce_demo/generated/raw/schema.json \
+		--review-dir catalog/commerce_demo/review \
 		--contract contracts/metadata_contract.yml \
 		--published-dir $(PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \
@@ -159,8 +159,8 @@ retrieval-smoke: ## Run 10 golden questions against an approved in-memory fixtur
 
 live-uat: ## Manually call the configured gateway once per document and write isolated artifacts
 	./scripts/metadata publish \
-		--schema schema/raw/commerce_demo/schema.json \
-		--review-dir metadata/review/commerce_demo \
+		--schema catalog/commerce_demo/generated/raw/schema.json \
+		--review-dir catalog/commerce_demo/review \
 		--contract contracts/metadata_contract.yml \
 		--published-dir $(LIVE_PUBLISHED_DIR) \
 		--source-review-commit $(SOURCE_REVIEW_COMMIT) \

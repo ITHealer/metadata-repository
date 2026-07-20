@@ -16,13 +16,13 @@ from metadata_pipeline.ports.index_store import IndexStoreError
 def test_maps_add_modify_delete_and_rename_to_document_actions() -> None:
     actions = map_index_actions(
         (
-            ChangedPath("A", "knowledge/published/commerce_demo/customers.md"),
-            ChangedPath("M", "knowledge/published/commerce_demo/orders.md"),
-            ChangedPath("D", "knowledge/published/commerce_demo/legacy.md"),
+            ChangedPath("A", "catalog/commerce_demo/generated/published/customers.md"),
+            ChangedPath("M", "catalog/commerce_demo/generated/published/orders.md"),
+            ChangedPath("D", "catalog/commerce_demo/generated/published/legacy.md"),
             ChangedPath(
                 "R100",
-                "knowledge/published/commerce_demo/order_lines.md",
-                "knowledge/published/commerce_demo/order_items.md",
+                "catalog/commerce_demo/generated/published/order_lines.md",
+                "catalog/commerce_demo/generated/published/order_items.md",
             ),
             ChangedPath("M", "README.md"),
         )

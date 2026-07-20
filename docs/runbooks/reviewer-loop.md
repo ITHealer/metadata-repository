@@ -13,12 +13,12 @@ make install
 make review-validate
 ```
 
-Confirm `schema/raw/commerce_demo/schema.json` already contains `orders.total_amount`. If the raw
+Confirm `catalog/commerce_demo/generated/raw/schema.json` already contains `orders.total_amount`. If the raw
 schema changed, regenerate it through the schema-sync flow before reviewing business meaning.
 
 ## 2. Edit reviewer-owned metadata
 
-Open `metadata/review/commerce_demo/orders.yml` and change only the relevant business fields. For
+Open `catalog/commerce_demo/review/orders.yml` and change only the relevant business fields. For
 example:
 
 ```yaml
@@ -43,8 +43,8 @@ make publish TABLE=orders
 Inspect:
 
 ```bash
-git diff -- metadata/review/commerce_demo/orders.yml
-git diff -- knowledge/published/commerce_demo/orders.md
+git diff -- catalog/commerce_demo/review/orders.yml
+git diff -- catalog/commerce_demo/generated/published/orders.md
 ```
 
 `make publish TABLE=orders` uses the deterministic renderer and updates only `orders.md`. It does
@@ -110,7 +110,7 @@ make retrieval-smoke
 Commit the human-owned input, not a hand-edited Markdown file:
 
 ```bash
-git add metadata/review/commerce_demo/orders.yml
+git add catalog/commerce_demo/review/orders.yml
 git commit -m "docs(metadata): review orders total amount"
 git push -u origin review/orders-total-amount
 ```

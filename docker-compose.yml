@@ -36,7 +36,7 @@ services:
       - .:/work
     environment:
       TBLS_DSN: clickhouse://${CLICKHOUSE_USER:-demo}:${CLICKHOUSE_PASSWORD:-demo_password}@clickhouse:9000/${CLICKHOUSE_DB:-commerce_demo}
-      TBLS_DOC_PATH: ${TBLS_DOC_PATH:-schema/raw/commerce_demo}
+      TBLS_DOC_PATH: ${TBLS_DOC_PATH:-catalog/commerce_demo/generated/raw}
     depends_on:
       clickhouse:
         condition: service_healthy

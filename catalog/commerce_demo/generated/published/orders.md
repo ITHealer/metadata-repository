@@ -11,8 +11,8 @@ schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
-source_schema_path: schema/raw/commerce_demo/schema.json
-source_review_path: metadata/review/commerce_demo/orders.yml
+source_schema_path: catalog/commerce_demo/generated/raw/schema.json
+source_review_path: catalog/commerce_demo/review/orders.yml
 source_review_commit: a21b31ecc02bc01fd55f0693996b8d6641ef64c0
 generator_mode: mock
 generator_model: deterministic-v1
@@ -160,12 +160,12 @@ Not applicable — no table-level security instruction was supplied.
 
 ## Evidence
 
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.columns.created_at`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.columns.customer_id`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.columns.order_id`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.columns.order_status`: Values are listed in the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.columns.total_amount`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.columns.updated_at`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.comment`: Derived from the ClickHouse table comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.orders.comment`: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
-- `proposed` `tbls_relation` — `schema/raw/commerce_demo/schema.json#relations.orders_to_customers`: Logical relation configured for tbls; cardinality requires data validation.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status`: Values are listed in the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment`: Derived from the ClickHouse table comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment`: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
+- `proposed` `tbls_relation` — `catalog/commerce_demo/generated/raw/schema.json#relations.orders_to_customers`: Logical relation configured for tbls; cardinality requires data validation.

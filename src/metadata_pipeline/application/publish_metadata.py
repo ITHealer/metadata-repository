@@ -292,5 +292,5 @@ def _stable_path(path: Path, database: str, filename: str) -> str:
         return path.relative_to(Path.cwd()).as_posix()
     except ValueError:
         if filename == "schema.json":
-            return f"schema/raw/{database}/schema.json"
-        return f"metadata/review/{database}/{filename}"
+            return f"catalog/{database}/generated/raw/schema.json"
+        return f"catalog/{database}/review/{filename}"

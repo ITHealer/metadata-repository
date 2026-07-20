@@ -92,7 +92,7 @@ jobs:
       - run: make install
       - run: make knowledge-check
       - name: Verify generated published documents are committed
-        run: test -z "$(git status --porcelain -- knowledge/published)"
+        run: test -z "$(git status --porcelain -- 'catalog/*/generated/published')"
 
   clickhouse-fixture:
     name: ClickHouse fixture
@@ -124,7 +124,7 @@ jobs:
       - run: make install
       - run: make db-up schema-check
       - name: Verify generated schema is committed
-        run: git diff --exit-code -- schema/raw/commerce_demo
+        run: git diff --exit-code -- catalog/commerce_demo/generated/raw
       - name: Show ClickHouse logs on failure
         if: failure()
         run: make db-logs

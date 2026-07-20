@@ -15,9 +15,9 @@ from metadata_pipeline.cli import main
 def test_path_matrix_classifies_inputs_outputs_and_unrelated_changes() -> None:
     classification = classify_changed_paths(
         (
-            ChangedPath("M", "metadata/review/commerce_demo/orders.yml"),
-            ChangedPath("A", "schema/raw/commerce_demo/order_events.md"),
-            ChangedPath("M", "knowledge/published/commerce_demo/orders.md"),
+            ChangedPath("M", "catalog/commerce_demo/review/orders.yml"),
+            ChangedPath("A", "catalog/commerce_demo/generated/raw/order_events.md"),
+            ChangedPath("M", "catalog/commerce_demo/generated/published/orders.md"),
             ChangedPath("M", "src/metadata_pipeline/domain/published.py"),
             ChangedPath("M", "README.md"),
         )
@@ -37,7 +37,7 @@ def test_path_matrix_classifies_inputs_outputs_and_unrelated_changes() -> None:
 def test_only_published_requires_nonempty_allowlisted_change_set() -> None:
     empty = classify_changed_paths(())
     published = classify_changed_paths(
-        (ChangedPath("M", "knowledge/published/commerce_demo/orders.md"),)
+        (ChangedPath("M", "catalog/commerce_demo/generated/published/orders.md"),)
     )
 
     assert empty.only_published is False
@@ -47,14 +47,14 @@ def test_only_published_requires_nonempty_allowlisted_change_set() -> None:
 
 def test_rename_checks_both_old_and_new_paths() -> None:
     changes = parse_name_status_z(
-        "R100\0knowledge/published/commerce_demo/orders.md\0docs/orders.md\0"
+        "R100\0catalog/commerce_demo/generated/published/orders.md\0docs/orders.md\0"
     )
 
     assert changes == (
         ChangedPath(
             "R100",
             "docs/orders.md",
-            "knowledge/published/commerce_demo/orders.md",
+            "catalog/commerce_demo/generated/published/orders.md",
         ),
     )
     assert classify_changed_paths(changes).has_published is True
@@ -72,11 +72,11 @@ def test_classify_changes_cli_writes_github_outputs(
 ) -> None:
     monkeypatch.setattr(
         "metadata_pipeline.cli.read_changed_paths",
-        lambda base, head: (ChangedPath("M", "metadata/review/commerce_demo/orders.yml"),),
+        lambda base, head: (ChangedPath("M", "catalog/commerce_demo/review/orders.yml"),),
     )
     monkeypatch.setattr(
         "metadata_pipeline.cli.read_commit_changes",
-        lambda head: (ChangedPath("M", "knowledge/published/commerce_demo/orders.md"),),
+        lambda head: (ChangedPath("M", "catalog/commerce_demo/generated/published/orders.md"),),
     )
     output = tmp_path / "github-output"
 

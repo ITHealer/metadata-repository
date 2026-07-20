@@ -265,7 +265,7 @@ Dựng database demo deterministic với ba table và dữ liệu giả theo PRD
 config/databases/commerce_demo/tbls.yml
 docker-compose.yml
 scripts/extract_schema.sh
-schema/raw/commerce_demo/**
+catalog/commerce_demo/generated/raw/**
 src/metadata_pipeline/ports/schema_source.py
 src/metadata_pipeline/adapters/schema/tbls_json.py
 tests/contract/test_tbls_schema_source.py
@@ -278,7 +278,7 @@ tests/integration/test_tbls_extraction.py
 - Raw output có Markdown, ER diagram và `schema.json`.
 - Parser đọc được table, column, type, comment và relations.
 - Parser báo lỗi có path/field khi schema JSON không hợp lệ.
-- `schema/raw/**` không chứa password hoặc DSN có credential.
+- `catalog/*/generated/raw/**` không chứa password hoặc DSN có credential.
 
 ### Không thuộc PR
 
@@ -422,9 +422,9 @@ contract.
 
 #### Input
 
-- `schema/raw/<database>/schema.json`: nguồn authoritative cho identifier, type, nullability,
+- `catalog/<database>/generated/raw/schema.json`: nguồn authoritative cho identifier, type, nullability,
   ClickHouse comment và relation kỹ thuật.
-- `metadata/review/<database>/<table>.yml`: nguồn authoritative cho purpose, grain, owner, column
+- `catalog/<database>/review/<table>.yml`: nguồn authoritative cho purpose, grain, owner, column
   meaning, rule, join risk, quality, security và evidence.
 - `contracts/metadata_contract.yml`: contract/guideline versions hiện hành.
 - `source_review_commit`: commit SHA được CLI/CI truyền rõ ràng để provenance deterministic; use case
@@ -436,7 +436,7 @@ unknown technical reference hoặc evidence `conflicting` đều chặn publish.
 
 #### Output
 
-- `knowledge/published/<database>/<table>.md`: generated-only Markdown được commit và review trong
+- `catalog/<database>/generated/published/<table>.md`: generated-only Markdown được commit và review trong
   PR; một file cho mỗi reviewer document hợp lệ.
 - `build/chunks/<database>.jsonl`: artifact deterministic của `metadata chunk --dry-run`, không
   commit; mỗi dòng là một `Chunk` hợp lệ. PR-09 sẽ dùng cùng chunk model để tạo index manifest.
@@ -585,12 +585,12 @@ Triển khai human commit → bot commit → validate latest SHA mà không tạ
 - [ ] Checkout đúng PR head SHA với full diff context cần thiết.
 - [ ] Implement changed-path detector có unit test.
 - [ ] Define input paths:
-  - `schema/raw/**`
-  - `metadata/review/**`
+  - `catalog/*/generated/raw/**`
+  - `catalog/*/review/**`
   - `prompts/**`
   - `guidelines/**`
   - `contracts/metadata_contract.yml`
-- [ ] Define bot output allowlist: `knowledge/published/**`.
+- [ ] Define bot output allowlist: `catalog/*/generated/published/**`.
 - [ ] Chạy validate review → publish → validate published → chunk dry-run.
 - [ ] Commit published output bằng bot token nếu có diff.
 - [ ] Lượt bot-only chỉ validate; không generate lần hai.
@@ -651,7 +651,7 @@ Tự động chạy `tbls`, tạo/update drafts và mở draft PR mà không pus
 - Manual dispatch tạo đúng một draft PR khi có schema diff.
 - Không có diff thì không tạo branch/PR rác.
 - Existing reviewer content được giữ; affected document hạ về `needs_review`.
-- Workflow chỉ commit `schema/raw/**` và `metadata/review/**`.
+- Workflow chỉ commit `catalog/*/generated/raw/**` và `catalog/*/review/**`.
 - PR body đủ thông tin để reviewer biết table nào cần xử lý.
 
 ### Production follow-up, không làm trong MVP

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - knowledge/published/**
+      - catalog/*/generated/published/**
   workflow_dispatch:
 
 permissions:
