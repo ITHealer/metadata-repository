@@ -9,7 +9,7 @@ from metadata_pipeline.application.review_contract import validate_review_direct
 from metadata_pipeline.validation.review import IssueSeverity
 
 SCHEMA_PATH = Path("schema/raw/commerce_demo/schema.json")
-CONTRACT_PATH = Path("config/metadata_contract.yml")
+CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 GOLDEN_DIR = Path("tests/golden/review/commerce_demo")
 
 

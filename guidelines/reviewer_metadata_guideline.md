@@ -247,7 +247,7 @@ Example based only on the current ClickHouse demo metadata:
 - Cardinality: many orders to one customer — proposed until verified by the domain reviewer
 - Enforcement: logical metadata only; the current ClickHouse schema does not enforce this join
 - Duplicate risk: unknown until key uniqueness is verified
-- Evidence: `.tbls.yml` virtual relation and ClickHouse column comments
+- Evidence: `config/databases/commerce_demo/tbls.yml` virtual relation and ClickHouse column comments
 - Evidence state: proposed
 ```
 
@@ -346,6 +346,6 @@ Before changing `document_status` to `approved`, confirm:
   patch.
 - Adding or removing required fields changes the metadata contract and requires validator/template
   updates.
-- Canonical guideline versions live in `config/metadata_contract.yml`; each review file repeats the
+- Canonical guideline versions live in `contracts/metadata_contract.yml`; each review file repeats the
   expected versions so a committed review remains auditable.
 - Changes that affect published output require regeneration after the publish pipeline exists.

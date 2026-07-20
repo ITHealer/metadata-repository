@@ -1,0 +1,8 @@
+key: commerce_demo
+display_name: Commerce Demo
+clickhouse_database: commerce_demo
+description: Local deterministic ClickHouse fixture used by the metadata pipeline tests.
+tables:
+  - customers
+  - order_items
+  - orders

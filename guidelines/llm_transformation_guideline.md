@@ -2,7 +2,7 @@
 
 **Status:** Active specification (`retrieval-v1`); publish implementation is planned for PR-06
 **Audience:** AI Engineer, Data Engineer, reviewer of generated metadata
-**Inputs:** `schema/raw/**`, validated `metadata/review/**`, `config/metadata_contract.yml`
+**Inputs:** `schema/raw/**`, validated `metadata/review/**`, `contracts/metadata_contract.yml`
 **Output:** generated files under `knowledge/published/**`
 
 ## 1. Purpose
@@ -22,7 +22,7 @@ schema/raw/<database>/schema.json       Technical ClickHouse facts
   +
 metadata/review/<database>/<table>.yml  Reviewer business claims and evidence states
   +
-config/metadata_contract.yml            Expected contract/guideline versions
+contracts/metadata_contract.yml            Expected contract/guideline versions
   ↓
 validate-review                         Structural and cross-file gate
   ↓

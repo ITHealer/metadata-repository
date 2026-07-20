@@ -25,7 +25,7 @@ from metadata_pipeline.io.review_yaml import load_review_document
 
 SCHEMA = Path("schema/raw/commerce_demo/schema.json")
 REVIEWS = Path("metadata/review/commerce_demo")
-CONTRACT = Path("config/metadata_contract.yml")
+CONTRACT = Path("contracts/metadata_contract.yml")
 QUESTIONS = Path("tests/fixtures/golden_questions.yml")
 
 

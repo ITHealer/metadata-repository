@@ -76,7 +76,7 @@ jobs:
       - run: make install
       - run: make review-check
       - name: Verify generated JSON Schema is committed
-        run: git diff --exit-code -- schemas/reviewer_metadata.schema.json
+        run: git diff --exit-code -- contracts/reviewer_metadata.schema.json
 
   published-knowledge:
     name: Published knowledge contract

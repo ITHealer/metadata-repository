@@ -346,7 +346,7 @@
       "type": "string"
     }
   },
-  "$id": "https://raw.githubusercontent.com/ITHealer/metadata-repository/main/schemas/reviewer_metadata.schema.json",
+  "$id": "https://raw.githubusercontent.com/ITHealer/metadata-repository/main/contracts/reviewer_metadata.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Complete reviewer contract for one ClickHouse table.",

@@ -80,7 +80,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_schema.add_argument(
         "--output",
         type=Path,
-        default=Path("schemas/reviewer_metadata.schema.json"),
+        default=Path("contracts/reviewer_metadata.schema.json"),
     )
     draft = commands.add_parser(
         "draft",
@@ -164,7 +164,7 @@ def _add_review_paths(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--contract",
         type=Path,
-        default=Path("config/metadata_contract.yml"),
+        default=Path("contracts/metadata_contract.yml"),
     )
 
 

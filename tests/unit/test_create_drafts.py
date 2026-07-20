@@ -11,7 +11,7 @@ from metadata_pipeline.domain.review import DocumentStatus
 from metadata_pipeline.io.review_yaml import load_review_document, write_review_document
 
 SCHEMA_PATH = Path("schema/raw/commerce_demo/schema.json")
-CONTRACT_PATH = Path("config/metadata_contract.yml")
+CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 
 
 def _changed_schema(tmp_path: Path, mutate: str) -> Path:

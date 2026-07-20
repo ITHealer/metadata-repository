@@ -15,7 +15,7 @@ INPUT_PATTERNS = (
     "metadata/review/**",
     "prompts/**",
     "guidelines/**",
-    "config/metadata_contract.yml",
+    "contracts/metadata_contract.yml",
     *GENERATION_SOURCE_PATTERNS,
 )
 PUBLISHED_PATTERN = "knowledge/published/**"

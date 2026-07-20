@@ -115,7 +115,7 @@ make schema-check
 
 Expected output includes `README.md`, per-table Markdown with embedded Mermaid ER diagrams, and
 `schema.json`. Never edit files under `schema/raw/commerce_demo` manually. Update the database DDL
-or `.tbls.yml`, regenerate, inspect the diff, and commit source plus generated changes together.
+or `config/databases/commerce_demo/tbls.yml`, regenerate, inspect the diff, and commit source plus generated changes together.
 The generated directory must never contain credentials, a DSN, or database row data.
 
 ## CLI
@@ -136,7 +136,7 @@ The wrapper below is also available for lightweight smoke checks:
 ## Reviewer metadata contract
 
 Reviewer-owned metadata is stored as YAML under `metadata/review/commerce_demo`. Its shape is
-defined once in the Pydantic models and exported to `schemas/reviewer_metadata.schema.json` for
+defined once in the Pydantic models and exported to `contracts/reviewer_metadata.schema.json` for
 editor/tooling support. The validator also performs checks JSON Schema cannot express by itself:
 every declared table, column, and relationship endpoint must exist in the raw tbls `schema.json`.
 
