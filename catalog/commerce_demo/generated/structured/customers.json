@@ -1,0 +1,197 @@
+{
+  "artifact_version": "candidate-v1",
+  "candidate_hash": "b48a93c86cd6799a6671a8228b6257c5aa6fc15a516f6dc494109429cea6ecfc",
+  "database": "commerce_demo",
+  "document": {
+    "aliases": [
+      "customer dimension"
+    ],
+    "appropriate_use": [
+      "Join orders to a customer by customer_id."
+    ],
+    "business_evidence": [
+      {
+        "kind": "clickhouse_comment",
+        "note": "Technical ClickHouse comment; business meaning still requires reviewer confirmation.",
+        "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment",
+        "status": "proposed"
+      }
+    ],
+    "business_rules": [],
+    "caveats": [
+      "Business ownership and refresh expectations require reviewer confirmation."
+    ],
+    "columns": [
+      {
+        "allowed_values": {},
+        "business_name": "Customer created time",
+        "caveats": [],
+        "data_type": "DateTime",
+        "description": "UTC timestamp recorded when the customer profile was created.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.created_at",
+            "status": "proposed"
+          }
+        ],
+        "name": "created_at",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "timestamp",
+        "sensitivity": "internal",
+        "technical_comment": "UTC timestamp when the customer profile was created",
+        "unit": "UTC"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Customer identifier",
+        "caveats": [],
+        "data_type": "UUID",
+        "description": "Stable technical identifier for one demo customer.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.customer_id",
+            "status": "proposed"
+          }
+        ],
+        "name": "customer_id",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Stable identifier for one demo customer",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Customer email",
+        "caveats": [
+          "Demo-only synthetic value; do not use for contacting a person."
+        ],
+        "data_type": "String",
+        "description": "Synthetic contact email using the .test domain in this demo.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.email",
+            "status": "proposed"
+          }
+        ],
+        "name": "email",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "email",
+        "sensitivity": "pii_synthetic",
+        "technical_comment": "Synthetic contact email classified as PII; always uses the .test domain",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Customer display name",
+        "caveats": [
+          "Demo-only synthetic value."
+        ],
+        "data_type": "String",
+        "description": "Synthetic display name used by this demo.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.full_name",
+            "status": "proposed"
+          }
+        ],
+        "name": "full_name",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "person_name",
+        "sensitivity": "pii_synthetic",
+        "technical_comment": "Display name; synthetic data used only by this demo",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {
+          "enterprise": "Enterprise segment.",
+          "premium": "Premium segment.",
+          "retail": "Retail segment."
+        },
+        "business_name": "Customer segment",
+        "caveats": [
+          "Segment assignment rules require reviewer confirmation."
+        ],
+        "data_type": "LowCardinality(String)",
+        "description": "Business segment currently recorded for the customer.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Values are listed in the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.segment",
+            "status": "proposed"
+          }
+        ],
+        "name": "segment",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "categorical",
+        "sensitivity": "internal",
+        "technical_comment": "Business segment: retail, premium, or enterprise",
+        "unit": "not_applicable"
+      }
+    ],
+    "contract_version": "reviewer-v1",
+    "data_quality": [
+      "Confirm customer_id uniqueness before relying on one-row-per-customer grain."
+    ],
+    "database": "commerce_demo",
+    "description": "One technical row per customer represented in the ClickHouse demo dataset.",
+    "display_name": "Customers",
+    "document_id": "commerce_demo.customers",
+    "document_status": "needs_review",
+    "freshness": "Unknown — needs confirmation",
+    "grain": "One row per customer_id.",
+    "inappropriate_use": [
+      "Treat synthetic names or emails as real customer contact data."
+    ],
+    "index_eligible": false,
+    "owner": "unassigned",
+    "provenance": {
+      "generator_mode": "mock",
+      "generator_model": "deterministic-v1",
+      "prompt_version": "deterministic-v1",
+      "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
+      "source_review_path": "catalog/commerce_demo/review/customers.yml",
+      "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
+    },
+    "purpose": [
+      "Support customer-level analysis in the demo dataset."
+    ],
+    "qualified_name": "commerce_demo.customers",
+    "relationships": [],
+    "review_guideline_version": "reviewer-v1",
+    "reviewer": "unassigned",
+    "schema_hash": "b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc",
+    "security": [
+      "Treat email and full_name as sensitive-looking data even though this fixture is synthetic."
+    ],
+    "summary": "One technical row per customer represented in the ClickHouse demo dataset. Grain: One row per customer_id.",
+    "table": "customers",
+    "transformation_guideline_version": "retrieval-v1"
+  },
+  "fingerprint": {
+    "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
+    "generator_model": "deterministic-v1",
+    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
+    "input_hash": "440645bb043d576450e592446508df68fc5370e1b36d461d830ff2636283df93",
+    "prompt_version": "deterministic-v1",
+    "review_content_hash": "bdfd6c8ec1cdabf41fbb14df7883219697d82686bd03dc1f58815f53a27b03ab",
+    "schema_hash": "b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc"
+  },
+  "reviewable_body_hash": "cd205363d65b2d5611f1bd8d44de5a30de81319970d341217baf15beaefb2c2c",
+  "state": "review",
+  "table": "customers"
+}

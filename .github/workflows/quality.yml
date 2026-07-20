@@ -79,7 +79,7 @@ jobs:
         run: git diff --exit-code -- contracts/reviewer_metadata.schema.json
 
   published-knowledge:
-    name: Published knowledge contract
+    name: Candidate and published knowledge contract
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -90,9 +90,15 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: make install
-      - run: make knowledge-check
-      - name: Verify generated published documents are committed
-        run: test -z "$(git status --porcelain -- 'catalog/*/generated/published')"
+      - run: make catalog-check-all
+      - name: Validate committed candidates without LLM access
+        run: |
+          for profile in config/databases/*/database.yml; do
+            database="$(basename "$(dirname "$profile")")"
+            make candidate-validate DATABASE="$database"
+          done
+      - name: Verify candidate validation is read-only
+        run: test -z "$(git status --porcelain -- 'catalog/*/generated/structured' 'catalog/*/generated/published')"
 
   clickhouse-fixture:
     name: ClickHouse fixture

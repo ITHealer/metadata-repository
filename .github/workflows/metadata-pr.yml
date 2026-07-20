@@ -82,21 +82,42 @@ jobs:
       - name: Reject human or mixed published edits
         if: steps.decision.outputs.mode == 'reject-published'
         run: |
-          echo "catalog/*/generated/published/** is bot-owned generated output."
+          echo "catalog/*/generated/{structured,published}/** is bot-owned generated output."
           echo "Change raw/reviewer metadata and let the metadata bot regenerate it."
           exit 1
 
       - name: Validate reviewer metadata
         if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate' || steps.decision.outputs.mode == 'validate-migration'
-        run: make review-validate
+        run: |
+          make catalog-check-all
+          for profile in config/databases/*/database.yml; do
+            database="$(basename "$(dirname "$profile")")"
+            make review-validate DATABASE="$database"
+          done
 
-      - name: Generate deterministic published output
+      - name: Generate or promote candidates
         if: steps.decision.outputs.mode == 'generate'
-        run: make publish
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_RESPONSE_FORMAT: ${{ vars.OPENAI_RESPONSE_FORMAT }}
+          OPENAI_PROMPT_VERSION: ${{ vars.OPENAI_PROMPT_VERSION }}
+          GENERATOR_MODE: ${{ vars.METADATA_GENERATOR_MODE || 'live' }}
+        run: |
+          for profile in config/databases/*/database.yml; do
+            database="$(basename "$(dirname "$profile")")"
+            make candidate-sync DATABASE="$database" GENERATOR_MODE="$GENERATOR_MODE"
+          done
 
-      - name: Validate published output and chunks
+      - name: Validate existing candidates without LLM access
         if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate' || steps.decision.outputs.mode == 'validate-migration'
-        run: make published-validate chunk-dry-run retrieval-smoke
+        run: |
+          for profile in config/databases/*/database.yml; do
+            database="$(basename "$(dirname "$profile")")"
+            make candidate-validate DATABASE="$database"
+          done
+          make retrieval-smoke
 
       - name: Commit generated output
         if: steps.decision.outputs.mode == 'generate'
@@ -105,8 +126,8 @@ jobs:
           SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          if [[ -z "$(git status --porcelain -- 'catalog/*/generated/published')" ]]; then
-            echo "No published output changed."
+          if [[ -z "$(git status --porcelain -- 'catalog/*/generated/structured' 'catalog/*/generated/published')" ]]; then
+            echo "No candidate output changed."
             exit 0
           fi
           if [[ "$SAME_REPOSITORY" != "true" ]]; then
@@ -117,7 +138,7 @@ jobs:
             echo "METADATA_BOT_TOKEN is required so the bot commit triggers latest-SHA CI."
             exit 1
           fi
-          unexpected="$(git status --porcelain | awk '$2 !~ /^knowledge\/published\// {print}')"
+          unexpected="$(git status --porcelain | awk '$2 !~ /^catalog\/[^/]+\/generated\/(structured|published)\// {print}')"
           if [[ -n "$unexpected" ]]; then
             echo "Generation changed files outside catalog/*/generated/published/**:"
             echo "$unexpected"
@@ -125,8 +146,8 @@ jobs:
           fi
           git config user.name "metadata-bot"
           git config user.email "metadata-bot@users.noreply.github.com"
-          git add 'catalog/*/generated/published'
-          git commit -m "chore(metadata): regenerate published knowledge"
+          git add 'catalog/*/generated/structured' 'catalog/*/generated/published'
+          git commit -m "chore(metadata): sync reviewed candidates"
           git push origin "HEAD:$HEAD_BRANCH"
 
       - name: Write metadata gate summary

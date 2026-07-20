@@ -1,0 +1,235 @@
+{
+  "artifact_version": "candidate-v1",
+  "candidate_hash": "e36bf3d1fe07270657798e61ca92333025e094d919c58b9ed9d99c9d5999b1d5",
+  "database": "commerce_demo",
+  "document": {
+    "aliases": [
+      "order detail fact",
+      "order lines"
+    ],
+    "appropriate_use": [
+      "Join order lines to orders by order_id.",
+      "Calculate a technical line amount as quantity multiplied by unit_price."
+    ],
+    "business_evidence": [
+      {
+        "kind": "clickhouse_comment",
+        "note": "Technical ClickHouse comment; business meaning still requires reviewer confirmation.",
+        "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.comment",
+        "status": "proposed"
+      }
+    ],
+    "business_rules": [
+      {
+        "description": "Calculate line amount as quantity multiplied by unit_price when this definition fits the use case.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Formula is inferred from technical column names and requires reviewer confirmation.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns",
+            "status": "proposed"
+          }
+        ],
+        "name": "Technical line amount"
+      }
+    ],
+    "caveats": [
+      "Business ownership and refresh expectations require reviewer confirmation."
+    ],
+    "columns": [
+      {
+        "allowed_values": {},
+        "business_name": "Order line number",
+        "caveats": [],
+        "data_type": "UInt16",
+        "description": "One-based position of the line within an order.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.line_number",
+            "status": "proposed"
+          }
+        ],
+        "name": "line_number",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "ordinal",
+        "sensitivity": "internal",
+        "technical_comment": "One-based line position within an order",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Order identifier",
+        "caveats": [
+          "The ClickHouse relation is logical and is not treated as an enforced foreign key."
+        ],
+        "data_type": "UUID",
+        "description": "Identifier used for the logical join to orders.order_id.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.order_id",
+            "status": "proposed"
+          }
+        ],
+        "name": "order_id",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "foreign_identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Parent order; logical join to orders.order_id",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Product code",
+        "caveats": [
+          "Product master semantics require reviewer confirmation."
+        ],
+        "data_type": "String",
+        "description": "Synthetic product code captured when the order was placed.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.product_code",
+            "status": "proposed"
+          }
+        ],
+        "name": "product_code",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Synthetic product code captured when the order was placed",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Ordered quantity",
+        "caveats": [
+          "Return and cancellation handling require reviewer confirmation."
+        ],
+        "data_type": "UInt16",
+        "description": "Number of product units recorded on the order line.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.quantity",
+            "status": "proposed"
+          }
+        ],
+        "name": "quantity",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "count",
+        "sensitivity": "internal",
+        "technical_comment": "Number of product units on this order line",
+        "unit": "product_unit"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Unit price",
+        "caveats": [
+          "Tax and discount treatment require reviewer confirmation."
+        ],
+        "data_type": "Decimal(18, 2)",
+        "description": "Price per product unit captured when the order was placed.",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Derived from the ClickHouse column comment.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.unit_price",
+            "status": "proposed"
+          }
+        ],
+        "name": "unit_price",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "monetary_amount",
+        "sensitivity": "internal",
+        "technical_comment": "Price per unit in VND when the order was placed",
+        "unit": "VND"
+      }
+    ],
+    "contract_version": "reviewer-v1",
+    "data_quality": [
+      "Confirm that order_id plus line_number is unique before relying on the documented grain."
+    ],
+    "database": "commerce_demo",
+    "description": "One technical row per order line represented in the ClickHouse demo dataset.",
+    "display_name": "Order items",
+    "document_id": "commerce_demo.order_items",
+    "document_status": "needs_review",
+    "freshness": "Unknown — needs confirmation",
+    "grain": "One row per order_id and line_number.",
+    "inappropriate_use": [
+      "Assume product_code is a complete product master record."
+    ],
+    "index_eligible": false,
+    "owner": "unassigned",
+    "provenance": {
+      "generator_mode": "mock",
+      "generator_model": "deterministic-v1",
+      "prompt_version": "deterministic-v1",
+      "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
+      "source_review_path": "catalog/commerce_demo/review/order_items.yml",
+      "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
+    },
+    "purpose": [
+      "Support product quantity and order-line value analysis in the demo dataset."
+    ],
+    "qualified_name": "commerce_demo.order_items",
+    "relationships": [
+      {
+        "cardinality": "many_to_one",
+        "evidence": [
+          {
+            "kind": "tbls_relation",
+            "note": "Logical relation configured for tbls; cardinality requires data validation.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#relations.order_items_to_orders",
+            "status": "proposed"
+          }
+        ],
+        "from_columns": [
+          "order_id"
+        ],
+        "from_table": "order_items",
+        "join_condition": "order_items.order_id = orders.order_id",
+        "meaning": "Associates each order line with its parent order identifier.",
+        "name": "order_items_to_orders",
+        "optional": false,
+        "row_count_impact": "unknown",
+        "technical_definition": "order_items.order_id -> orders.order_id",
+        "to_columns": [
+          "order_id"
+        ],
+        "to_table": "orders",
+        "virtual": true
+      }
+    ],
+    "review_guideline_version": "reviewer-v1",
+    "reviewer": "unassigned",
+    "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db",
+    "security": [],
+    "summary": "One technical row per order line represented in the ClickHouse demo dataset. Grain: One row per order_id and line_number.",
+    "table": "order_items",
+    "transformation_guideline_version": "retrieval-v1"
+  },
+  "fingerprint": {
+    "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
+    "generator_model": "deterministic-v1",
+    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
+    "input_hash": "f579bf6f25434ce3abf604a12b21e38910f22b39046cf76628cb2ecd8f6a1e47",
+    "prompt_version": "deterministic-v1",
+    "review_content_hash": "34af159a42833bb498257330d99627d064c97d2fc196f19137aed1cec41d2ff0",
+    "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db"
+  },
+  "reviewable_body_hash": "057879d15b417f9f447efee7b57b5047197b1529b3bcd0b7a5c02d3c92c878b9",
+  "state": "review",
+  "table": "order_items"
+}
