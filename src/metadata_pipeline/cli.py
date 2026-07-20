@@ -154,12 +154,12 @@ def _add_review_paths(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--schema",
         type=Path,
-        default=Path("schema/raw/commerce_demo/schema.json"),
+        default=Path("catalog/commerce_demo/generated/raw/schema.json"),
     )
     parser.add_argument(
         "--review-dir",
         type=Path,
-        default=Path("metadata/review/commerce_demo"),
+        default=Path("catalog/commerce_demo/review"),
     )
     parser.add_argument(
         "--contract",
@@ -173,7 +173,7 @@ def _add_publication_paths(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--published-dir",
         type=Path,
-        default=Path("knowledge/published/commerce_demo"),
+        default=Path("catalog/commerce_demo/generated/published"),
     )
     parser.add_argument("--source-review-commit", required=True)
 

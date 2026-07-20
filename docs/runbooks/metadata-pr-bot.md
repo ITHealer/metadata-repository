@@ -12,7 +12,7 @@ The `Metadata PR / pr-gate` workflow implements this loop:
 ```text
 human changes an authoritative metadata input
   -> deterministic validation and publication
-  -> bot commits only knowledge/published/**
+  -> bot commits only catalog/*/generated/published/**
   -> latest bot SHA runs validation only
   -> required check passes on the latest SHA
 ```
@@ -42,7 +42,7 @@ stable check name `Metadata PR / pr-gate` and require branches to be up to date 
 |---|---|
 | No metadata path | Successful no-op gate |
 | Raw/reviewer/guideline/config input | Validate, generate, validate, chunk, then bot commit if needed |
-| Bot-owned `knowledge/published/**` only | Validate only; no second generation or commit |
+| Bot-owned `catalog/*/generated/published/**` only | Validate only; no second generation or commit |
 | Human or mixed commit containing published output | Fail with `bot-owned generated output` |
 | Fork requiring a generated diff | Validate without secrets, then fail before push with an actionable message |
 
@@ -53,12 +53,12 @@ guard.
 
 - Missing token: set or rotate `METADATA_BOT_TOKEN`, then re-run the failed job.
 - Wrong bot identity: update `METADATA_BOT_LOGIN` to the account that owns the token.
-- Stale generated output: remove human edits under `knowledge/published/**`, update the authoritative
+- Stale generated output: remove human edits under `catalog/*/generated/published/**`, update the authoritative
   input, and push a new commit. The bot will regenerate the output.
 - Bot push rejected: confirm token expiry, Contents permission, machine-user repository access, and
   branch rules that permit the bot to push to the PR branch.
 - Repeated bot commits: disable the workflow temporarily, verify that the bot commit contains only
-  `knowledge/published/**`, and run `make knowledge-check` twice locally. The second run must be
+  `catalog/*/generated/published/**`, and run `make knowledge-check` twice locally. The second run must be
   unchanged before re-enabling the workflow.
 
 Do not solve a stuck run by switching to `pull_request_target` or by sending secrets to forked Pull

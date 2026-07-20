@@ -34,7 +34,7 @@ scoped. See `docs/runbooks/metadata-pr-bot.md` for the PR path and loop-preventi
 ## Recover failed generation
 
 1. Read the first `PublicationPreflightError` issue code in the Actions log.
-2. Fix the reviewer YAML or raw source; never patch `knowledge/published/**` directly.
+2. Fix the reviewer YAML or raw source; never patch `catalog/*/generated/published/**` directly.
 3. Run `make review-validate` and `make knowledge-check` locally.
 4. Push one human commit. The bot may then replace generated Markdown in one bot-only commit.
 5. If a live call failed, switch the PR/workflow back to `GENERATOR_MODE=mock`; live failure must not

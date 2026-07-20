@@ -48,7 +48,7 @@ jobs:
       - name: Preserve the committed schema for the PR summary
         run: |
           mkdir -p build
-          git show HEAD:schema/raw/commerce_demo/schema.json > build/schema-before.json
+          git show HEAD:catalog/commerce_demo/generated/raw/schema.json > build/schema-before.json
 
       - name: Start the reproducible ClickHouse source
         run: make db-up
@@ -76,7 +76,7 @@ jobs:
       - name: Detect synchronized source changes
         id: diff
         run: |
-          if [[ -z "$(git status --porcelain -- schema/raw metadata/review)" ]]; then
+          if [[ -z "$(git status --porcelain -- 'catalog/*/generated/raw' 'catalog/*/review')" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Schema is already synchronized."
           else
@@ -88,7 +88,7 @@ jobs:
         run: |
           ./scripts/metadata schema-sync-summary \
             --before build/schema-before.json \
-            --after schema/raw/commerce_demo/schema.json \
+            --after catalog/commerce_demo/generated/raw/schema.json \
             --output build/schema-sync-pr.md
           {
             echo "## Automation validation"
@@ -119,7 +119,7 @@ jobs:
           git switch -c "$branch"
           git config user.name "metadata-bot"
           git config user.email "metadata-bot@users.noreply.github.com"
-          git add schema/raw metadata/review
+          git add 'catalog/*/generated/raw' 'catalog/*/review'
           git commit -m "chore(schema): synchronize ClickHouse metadata"
           git push origin "HEAD:$branch"
           gh pr create \

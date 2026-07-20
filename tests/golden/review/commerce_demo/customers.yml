@@ -24,7 +24,7 @@ business:
     - Business meaning requires domain reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
-      reference: schema/raw/commerce_demo/schema.json#tables.customers.comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment
       status: proposed
       note: Generated from the ClickHouse comment; domain confirmation is required.
 columns:
@@ -39,7 +39,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.created_at
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.created_at
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   customer_id:
@@ -53,7 +53,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.customer_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.customer_id
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   email:
@@ -67,7 +67,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.email
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.email
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   full_name:
@@ -81,7 +81,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.full_name
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.full_name
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
   segment:
@@ -96,7 +96,7 @@ columns:
       - Allowed values require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.segment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.segment
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
 relationships: []

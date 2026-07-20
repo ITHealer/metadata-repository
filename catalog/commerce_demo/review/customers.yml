@@ -25,7 +25,7 @@ business:
     - Business ownership and refresh expectations require reviewer confirmation.
   evidence:
     - kind: clickhouse_comment
-      reference: schema/raw/commerce_demo/schema.json#tables.customers.comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment
       status: proposed
       note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
 columns:
@@ -40,7 +40,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.created_at
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.created_at
         status: proposed
         note: Derived from the ClickHouse column comment.
   customer_id:
@@ -54,7 +54,7 @@ columns:
     caveats: []
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.customer_id
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.customer_id
         status: proposed
         note: Derived from the ClickHouse column comment.
   email:
@@ -69,7 +69,7 @@ columns:
       - Demo-only synthetic value; do not use for contacting a person.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.email
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.email
         status: proposed
         note: Derived from the ClickHouse column comment.
   full_name:
@@ -84,7 +84,7 @@ columns:
       - Demo-only synthetic value.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.full_name
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.full_name
         status: proposed
         note: Derived from the ClickHouse column comment.
   segment:
@@ -102,7 +102,7 @@ columns:
       - Segment assignment rules require reviewer confirmation.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.customers.columns.segment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.segment
         status: proposed
         note: Values are listed in the ClickHouse column comment.
 relationships: []

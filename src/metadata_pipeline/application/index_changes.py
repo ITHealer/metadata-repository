@@ -98,10 +98,15 @@ def _manifest_from_chunks(chunks: tuple[Chunk, ...], source_commit: str) -> Inde
 def _action(action_type: IndexActionType, source_path: str) -> IndexAction | None:
     path = PurePosixPath(source_path)
     parts = path.parts
-    if len(parts) != 4 or parts[:2] != ("knowledge", "published") or path.suffix != ".md":
+    if (
+        len(parts) != 5
+        or parts[0] != "catalog"
+        or parts[2:4] != ("generated", "published")
+        or path.suffix != ".md"
+    ):
         return None
     return IndexAction(
         action=action_type,
-        document_id=f"{parts[2]}.{path.stem}",
+        document_id=f"{parts[1]}.{path.stem}",
         source_path=source_path,
     )

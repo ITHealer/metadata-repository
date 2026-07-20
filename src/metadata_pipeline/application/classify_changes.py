@@ -6,19 +6,20 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 
 GENERATION_SOURCE_PATTERNS = (
+    "src/metadata_pipeline/application/publish_metadata.py",
     "src/metadata_pipeline/adapters/generator/deterministic.py",
     "src/metadata_pipeline/domain/published.py",
     "src/metadata_pipeline/io/published_markdown.py",
 )
 INPUT_PATTERNS = (
-    "schema/raw/**",
-    "metadata/review/**",
+    "catalog/*/generated/raw/**",
+    "catalog/*/review/**",
     "prompts/**",
     "guidelines/**",
     "contracts/metadata_contract.yml",
     *GENERATION_SOURCE_PATTERNS,
 )
-PUBLISHED_PATTERN = "knowledge/published/**"
+PUBLISHED_PATTERN = "catalog/*/generated/published/**"
 
 
 @dataclass(frozen=True)

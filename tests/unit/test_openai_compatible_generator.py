@@ -266,7 +266,7 @@ def test_approved_document_rewrites_full_narrative_but_locks_facts(
     assert not validate_published_document(
         approved_context,
         document,
-        Path("knowledge/published/commerce_demo/orders.md"),
+        Path("catalog/commerce_demo/generated/published/orders.md"),
     )
 
 

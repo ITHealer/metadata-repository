@@ -294,4 +294,4 @@ def _stable_schema_reference(schema_path: Path, database: str) -> str:
     try:
         return schema_path.relative_to(Path.cwd()).as_posix()
     except ValueError:
-        return f"schema/raw/{database}/schema.json"
+        return f"catalog/{database}/generated/raw/schema.json"

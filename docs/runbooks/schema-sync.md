@@ -19,8 +19,8 @@ false.
 The MVP starts the repository's synthetic ClickHouse fixture. It does not connect to production.
 The workflow may commit only:
 
-- `schema/raw/**`
-- `metadata/review/**`
+- `catalog/*/generated/raw/**`
+- `catalog/*/review/**`
 
 It creates a timestamped automation branch and Draft Pull Request; it never pushes to `main`.
 Generated published documents are handled later by `Metadata PR / pr-gate`.
@@ -32,7 +32,7 @@ Generated published documents are handled later by `Metadata PR / pr-gate`.
 3. Complete each reviewer file listed under **Reviewer attention**.
 4. Resolve orphaned columns/tables explicitly when the schema removed an object.
 5. Run `make review-validate` until it passes.
-6. Confirm the metadata bot generated only `knowledge/published/**`.
+6. Confirm the metadata bot generated only `catalog/*/generated/published/**`.
 7. Request domain-owner approval before merge.
 
 The draft refresh and validation exit codes are recorded in the PR body. A non-zero code is expected

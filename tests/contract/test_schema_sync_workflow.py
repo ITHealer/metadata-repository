@@ -23,7 +23,7 @@ def test_schema_sync_has_write_allowlist_and_always_cleans_up() -> None:
 
     assert "secrets.METADATA_BOT_TOKEN || github.token" in content
     assert "Schema sync changed files outside its allowlist" in content
-    assert "git add schema/raw metadata/review" in content
+    assert "git add 'catalog/*/generated/raw' 'catalog/*/review'" in content
     assert "if: failure()\n        run: make db-logs" in content
     assert "if: always()\n        run: make db-down" in content
     assert "pull_request_target" not in content

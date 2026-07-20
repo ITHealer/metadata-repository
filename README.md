@@ -98,7 +98,7 @@ use `make db-logs`, then run `make db-reset db-up` after correcting the issue.
 ## Raw schema documentation with tbls
 
 The `tbls` tool reads ClickHouse table and column comments, adds the two logical relations that
-ClickHouse does not enforce, and writes generated-only artifacts to `schema/raw/commerce_demo`.
+ClickHouse does not enforce, and writes generated-only artifacts to `catalog/commerce_demo/generated/raw`.
 The tool image is pinned to an exact version and digest; no host installation is required.
 
 ```bash
@@ -114,7 +114,7 @@ make schema-check
 ```
 
 Expected output includes `README.md`, per-table Markdown with embedded Mermaid ER diagrams, and
-`schema.json`. Never edit files under `schema/raw/commerce_demo` manually. Update the database DDL
+`schema.json`. Never edit files under `catalog/commerce_demo/generated/raw` manually. Update the database DDL
 or `config/databases/commerce_demo/tbls.yml`, regenerate, inspect the diff, and commit source plus generated changes together.
 The generated directory must never contain credentials, a DSN, or database row data.
 
@@ -135,7 +135,7 @@ The wrapper below is also available for lightweight smoke checks:
 
 ## Reviewer metadata contract
 
-Reviewer-owned metadata is stored as YAML under `metadata/review/commerce_demo`. Its shape is
+Reviewer-owned metadata is stored as YAML under `catalog/commerce_demo/review`. Its shape is
 defined once in the Pydantic models and exported to `contracts/reviewer_metadata.schema.json` for
 editor/tooling support. The validator also performs checks JSON Schema cannot express by itself:
 every declared table, column, and relationship endpoint must exist in the raw tbls `schema.json`.
@@ -181,7 +181,7 @@ the same value. For a reproducibility check or a non-Git environment, pass it ex
 make knowledge-check SOURCE_REVIEW_COMMIT=<40-character-commit-sha>
 ```
 
-Files under `knowledge/published/commerce_demo` are generated and committed so reviewers can see
+Files under `catalog/commerce_demo/generated/published` are generated and committed so reviewers can see
 the exact output diff. Do not edit them manually. Change reviewer YAML, run `make knowledge-check`,
 inspect both input and output, then commit them together. The JSONL file under `build/chunks` is a
 local/CI artifact and is intentionally ignored by Git.
@@ -270,7 +270,7 @@ reviewer input commit
 
 The workflow classifies the full PR diff and the latest commit separately. This prevents a bot
 commit from starting another generation while still rejecting a human or mixed commit that changes
-`knowledge/published/**`. Unrelated PRs complete as a successful no-op instead of leaving a required
+`catalog/*/generated/published/**`. Unrelated PRs complete as a successful no-op instead of leaving a required
 check pending.
 
 The MVP requires repository secret `METADATA_BOT_TOKEN` and repository variable
@@ -299,7 +299,7 @@ workflow_dispatch / gated schedule
   -> timestamped branch + Draft PR
 ```
 
-The workflow can commit only `schema/raw/**` and `metadata/review/**`; it never pushes directly to
+The workflow can commit only `catalog/*/generated/raw/**` and `catalog/*/review/**`; it never pushes directly to
 `main`. Set `ENABLE_SCHEMA_SYNC=true` only after baseline and additive manual UAT pass. Publishing
 from a changed run also needs `METADATA_BOT_TOKEN`. See the
 [schema sync runbook](./docs/runbooks/schema-sync.md) for rollout and review steps.
@@ -307,7 +307,7 @@ from a changed run also needs `METADATA_BOT_TOKEN`. See the
 ## Index manifest and retrieval smoke test
 
 PR-09 adds a post-merge `Index Manifest` workflow. It rebuilds a complete, versioned manifest from
-structured chunks whenever `knowledge/published/**` changes on `main`, maps Git add/modify/delete/
+structured chunks whenever `catalog/*/generated/published/**` changes on `main`, maps Git add/modify/delete/
 rename changes into audit actions, and uploads the manifest plus retrieval report as artifacts.
 
 ```bash

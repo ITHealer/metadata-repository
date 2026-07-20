@@ -10,7 +10,7 @@ from metadata_pipeline.application.create_drafts import DraftAction, create_revi
 from metadata_pipeline.domain.review import DocumentStatus
 from metadata_pipeline.io.review_yaml import load_review_document, write_review_document
 
-SCHEMA_PATH = Path("schema/raw/commerce_demo/schema.json")
+SCHEMA_PATH = Path("catalog/commerce_demo/generated/raw/schema.json")
 CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 
 
@@ -85,7 +85,7 @@ def test_schema_refresh_preserves_human_content_and_adds_column(tmp_path: Path) 
     assert (
         refreshed.columns["channel"]
         .evidence[0]
-        .reference.startswith("schema/raw/commerce_demo/schema.json#")
+        .reference.startswith("catalog/commerce_demo/generated/raw/schema.json#")
     )
 
 

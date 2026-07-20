@@ -8,7 +8,7 @@ from metadata_pipeline.application.create_drafts import DraftAction, create_revi
 from metadata_pipeline.application.review_contract import validate_review_directory
 from metadata_pipeline.validation.review import IssueSeverity
 
-SCHEMA_PATH = Path("schema/raw/commerce_demo/schema.json")
+SCHEMA_PATH = Path("catalog/commerce_demo/generated/raw/schema.json")
 CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 GOLDEN_DIR = Path("tests/golden/review/commerce_demo")
 

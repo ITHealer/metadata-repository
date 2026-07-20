@@ -82,7 +82,7 @@ jobs:
       - name: Reject human or mixed published edits
         if: steps.decision.outputs.mode == 'reject-published'
         run: |
-          echo "knowledge/published/** is bot-owned generated output."
+          echo "catalog/*/generated/published/** is bot-owned generated output."
           echo "Change raw/reviewer metadata and let the metadata bot regenerate it."
           exit 1
 
@@ -105,7 +105,7 @@ jobs:
           SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          if [[ -z "$(git status --porcelain -- knowledge/published)" ]]; then
+          if [[ -z "$(git status --porcelain -- 'catalog/*/generated/published')" ]]; then
             echo "No published output changed."
             exit 0
           fi
@@ -119,13 +119,13 @@ jobs:
           fi
           unexpected="$(git status --porcelain | awk '$2 !~ /^knowledge\/published\// {print}')"
           if [[ -n "$unexpected" ]]; then
-            echo "Generation changed files outside knowledge/published/**:"
+            echo "Generation changed files outside catalog/*/generated/published/**:"
             echo "$unexpected"
             exit 1
           fi
           git config user.name "metadata-bot"
           git config user.email "metadata-bot@users.noreply.github.com"
-          git add knowledge/published
+          git add 'catalog/*/generated/published'
           git commit -m "chore(metadata): regenerate published knowledge"
           git push origin "HEAD:$HEAD_BRANCH"
 

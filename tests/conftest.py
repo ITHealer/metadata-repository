@@ -23,8 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.fixture
 def approved_chunks() -> tuple[Chunk, ...]:
     """Build approved demo chunks in memory without changing reviewer source files."""
-    schema_path = ROOT / "schema/raw/commerce_demo/schema.json"
-    review_dir = ROOT / "metadata/review/commerce_demo"
+    schema_path = ROOT / "catalog/commerce_demo/generated/raw/schema.json"
+    review_dir = ROOT / "catalog/commerce_demo/review"
     schema = TblsSchemaSource(schema_path).load()
     tables = {table.name: table for table in schema.tables}
     chunks: list[Chunk] = []
@@ -34,8 +34,8 @@ def approved_chunks() -> tuple[Chunk, ...]:
             schema=schema,
             table=tables[review.table],
             review=review,
-            source_schema_path="schema/raw/commerce_demo/schema.json",
-            source_review_path=f"metadata/review/commerce_demo/{review_path.name}",
+            source_schema_path="catalog/commerce_demo/generated/raw/schema.json",
+            source_review_path=f"catalog/commerce_demo/review/{review_path.name}",
             source_review_commit="e" * 40,
         )
         document = DeterministicDocumentGenerator().generate(context)

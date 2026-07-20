@@ -2,5 +2,5 @@
 /guidelines/ @ITHealer
 /config/databases/ @ITHealer
 /contracts/metadata_contract.yml @ITHealer
-/metadata/review/ @ITHealer
+/catalog/*/review/ @ITHealer
 /contracts/reviewer_metadata.schema.json @ITHealer

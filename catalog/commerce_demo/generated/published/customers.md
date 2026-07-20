@@ -11,9 +11,9 @@ schema_hash: b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
-source_schema_path: schema/raw/commerce_demo/schema.json
-source_review_path: metadata/review/commerce_demo/customers.yml
-source_review_commit: a21b31ecc02bc01fd55f0693996b8d6641ef64c0
+source_schema_path: catalog/commerce_demo/generated/raw/schema.json
+source_review_path: catalog/commerce_demo/review/customers.yml
+source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
 generator_mode: mock
 generator_model: deterministic-v1
 prompt_version: deterministic-v1
@@ -132,9 +132,9 @@ Not applicable — no reviewed business rule was supplied.
 
 ## Evidence
 
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.customers.columns.created_at`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.customers.columns.customer_id`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.customers.columns.email`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.customers.columns.full_name`: Derived from the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.customers.columns.segment`: Values are listed in the ClickHouse column comment.
-- `proposed` `clickhouse_comment` — `schema/raw/commerce_demo/schema.json#tables.customers.comment`: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.created_at`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.customer_id`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.email`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.full_name`: Derived from the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.segment`: Values are listed in the ClickHouse column comment.
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment`: Technical ClickHouse comment; business meaning still requires reviewer confirmation.

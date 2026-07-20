@@ -12,7 +12,7 @@ from metadata_pipeline.ports.schema_source import ColumnSchema, TableSchema
 
 
 def test_additive_schema_scenario_lists_tables_and_reviewer_files() -> None:
-    before = TblsSchemaSource(Path("schema/raw/commerce_demo/schema.json")).load()
+    before = TblsSchemaSource(Path("catalog/commerce_demo/generated/raw/schema.json")).load()
     orders = next(table for table in before.tables if table.name == "orders")
     changed_orders = replace(
         orders,
@@ -47,8 +47,8 @@ def test_additive_schema_scenario_lists_tables_and_reviewer_files() -> None:
     assert summary.modified == ("orders",)
     assert summary.deleted == ()
     assert summary.review_files == (
-        "metadata/review/commerce_demo/order_events.yml",
-        "metadata/review/commerce_demo/orders.yml",
+        "catalog/commerce_demo/review/order_events.yml",
+        "catalog/commerce_demo/review/orders.yml",
     )
     body = render_schema_sync_pr_body(summary)
     assert "| Added | `order_events` |" in body
@@ -56,7 +56,7 @@ def test_additive_schema_scenario_lists_tables_and_reviewer_files() -> None:
 
 
 def test_deleted_table_remains_in_reviewer_attention() -> None:
-    before = TblsSchemaSource(Path("schema/raw/commerce_demo/schema.json")).load()
+    before = TblsSchemaSource(Path("catalog/commerce_demo/generated/raw/schema.json")).load()
     after = replace(
         before,
         tables=tuple(table for table in before.tables if table.name != "customers"),
@@ -72,6 +72,6 @@ def test_deleted_table_remains_in_reviewer_attention() -> None:
     assert summary.deleted == ("customers",)
     assert summary.modified == ("orders",)
     assert summary.review_files == (
-        "metadata/review/commerce_demo/customers.yml",
-        "metadata/review/commerce_demo/orders.yml",
+        "catalog/commerce_demo/review/customers.yml",
+        "catalog/commerce_demo/review/orders.yml",
     )

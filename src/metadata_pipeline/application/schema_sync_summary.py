@@ -46,7 +46,7 @@ def summarize_schema_change(
         added=added,
         modified=modified,
         deleted=deleted,
-        review_files=tuple(f"metadata/review/{after.name}/{name}.yml" for name in sorted(affected)),
+        review_files=tuple(f"catalog/{after.name}/review/{name}.yml" for name in sorted(affected)),
     )
 
 

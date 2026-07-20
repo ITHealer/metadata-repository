@@ -2,8 +2,8 @@
 
 **Status:** Active contract (`reviewer-v1`)
 **Audience:** Domain Reviewer, Data Steward, Data Analyst
-**Applies to:** `metadata/review/**`
-**Does not apply to:** generated files under `schema/raw/**`
+**Applies to:** `catalog/*/review/**`
+**Does not apply to:** generated files under `catalog/*/generated/raw/**`
 
 ## 1. Purpose
 
@@ -19,7 +19,7 @@ content.
 
 The only technical source currently authorized and implemented by this project is **ClickHouse**.
 
-- `tbls` reads the live ClickHouse schema and writes `schema/raw/**`.
+- `tbls` reads the live ClickHouse schema and writes `catalog/*/generated/raw/**`.
 - Table names, column names, data types, ClickHouse keys, DDL, and database comments come from the
   ClickHouse connection and the checked-in `tbls` configuration.
 - A source system such as PostgreSQL, MySQL, Kafka, dbt, or an application service must not be stated
@@ -34,23 +34,23 @@ The only technical source currently authorized and implemented by this project i
 ```text
 ClickHouse
   ↓ tbls
-schema/raw/**                 Machine-generated; never edit manually
+catalog/*/generated/raw/**                 Machine-generated; never edit manually
   +
-metadata/review/**            Reviewer-owned business metadata
+catalog/*/review/**            Reviewer-owned business metadata
   ↓ publish/enrichment step
-knowledge/published/**        Machine-generated enriched output
+catalog/*/generated/published/**        Machine-generated enriched output
 ```
 
 Reviewers must not edit:
 
-- `schema/raw/**`
-- `knowledge/published/**`
+- `catalog/*/generated/raw/**`
+- `catalog/*/generated/published/**`
 
 Running `tbls doc --rm-dist` deletes and regenerates the raw directory, so manual changes under
-`schema/raw/**` will be lost.
+`catalog/*/generated/raw/**` will be lost.
 
 The reviewer reads the raw Markdown and `schema.json` for technical context, then edits the matching
-YAML file under `metadata/review/**`. YAML is human-editable while also supporting strict Pydantic
+YAML file under `catalog/*/review/**`. YAML is human-editable while also supporting strict Pydantic
 and JSON Schema validation.
 
 ## 4. Current command status
@@ -99,8 +99,8 @@ producing enriched output; rerunning `make schema-doc` only regenerates raw tbls
 
 ## 5. Reviewer workflow
 
-1. Read the matching raw table document and `schema/raw/<database>/schema.json`.
-2. Open the matching document under `metadata/review/<database>/`.
+1. Read the matching raw table document and `catalog/<database>/generated/raw/schema.json`.
+2. Open the matching document under `catalog/<database>/review/`.
 3. Verify that every referenced table and column exists in the raw schema.
 4. Complete required and conditionally required sections below.
 5. Attach evidence for business rules and relationships.
@@ -169,7 +169,7 @@ to make validation pass.
 ### 7.4 Do not duplicate machine-owned facts unnecessarily
 
 The reviewer does not need to copy data types, ClickHouse engines, partition keys, sorting keys, or
-raw DDL into the review document. Those facts remain in `schema/raw/**`.
+raw DDL into the review document. Those facts remain in `catalog/*/generated/raw/**`.
 
 Add reviewer content only when it supplies business meaning, usage conditions, ownership,
 governance, quality context, or verified relationship semantics.
@@ -296,7 +296,7 @@ business:
   caveats: []
   evidence:
     - kind: clickhouse_comment
-      reference: schema/raw/commerce_demo/schema.json#tables.orders.comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
       status: proposed
       note: Business meaning still requires reviewer confirmation.
 columns:
@@ -312,7 +312,7 @@ columns:
       - Shipping-fee treatment is unknown.
     evidence:
       - kind: clickhouse_comment
-        reference: schema/raw/commerce_demo/schema.json#tables.orders.columns.total_amount
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount
         status: proposed
         note: Derived from the ClickHouse column comment.
 relationships: []
@@ -321,7 +321,7 @@ data_quality: []
 security: []
 ```
 
-Use the complete, validator-passing examples in `metadata/review/commerce_demo/` as templates.
+Use the complete, validator-passing examples in `catalog/commerce_demo/review/` as templates.
 
 ## 13. Approval checklist
 
