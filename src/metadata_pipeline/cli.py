@@ -35,6 +35,11 @@ from metadata_pipeline.application.catalog import (
     load_catalog_context,
     validate_database_scope,
 )
+from metadata_pipeline.application.catalog_chunks import (
+    CatalogChunkError,
+    prepare_catalog_chunks,
+    write_catalog_chunks,
+)
 from metadata_pipeline.application.classify_changes import classify_changed_paths
 from metadata_pipeline.application.create_drafts import (
     DraftAction,
@@ -64,6 +69,7 @@ from metadata_pipeline.application.sync_candidates import (
     write_candidate_sync,
 )
 from metadata_pipeline.io.atomic_text import write_text_if_changed
+from metadata_pipeline.io.candidate_json import CandidateFileError
 from metadata_pipeline.io.chunk_jsonl import load_chunks
 from metadata_pipeline.io.review_yaml import ReviewFileError
 from metadata_pipeline.ports.document_generator import DocumentGenerator
@@ -102,6 +108,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate every configured database profile.",
     )
     catalog_check_all.add_argument("--repository-root", type=Path, default=Path("."))
+    chunk_catalog = commands.add_parser(
+        "chunk-catalog",
+        help="Build approved-only semantic chunks from all enabled database candidates.",
+    )
+    chunk_catalog.add_argument("--repository-root", type=Path, default=Path("."))
+    chunk_catalog.add_argument("--output", type=Path)
     list_databases = commands.add_parser(
         "list-databases",
         help="Print configured database keys for shell-safe automation loops.",
@@ -614,6 +626,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_doctor()
     if args.command == "catalog-check-all":
         return run_catalog_check_all(args.repository_root)
+    if args.command == "chunk-catalog":
+        contexts = tuple(
+            context
+            for database in discover_database_keys(args.repository_root, enabled_only=True)
+            if (context := _load_catalog_context(database, args.repository_root)) is not None
+        )
+        if not contexts:
+            print("catalog chunk error: no enabled database profiles found", file=sys.stderr)
+            return 1
+        output = args.output or args.repository_root.resolve() / "build/chunks/catalog.jsonl"
+        try:
+            batch = prepare_catalog_chunks(
+                tuple(context.layout.structured_dir for context in contexts)
+            )
+            changed = write_catalog_chunks(output, batch)
+        except (CatalogChunkError, CandidateFileError, CandidateStateError) as error:
+            print(f"catalog chunk error: {error}", file=sys.stderr)
+            return 1
+        print(
+            f"catalog chunks {'updated' if changed else 'unchanged'}: {output} "
+            f"({batch.promoted_documents} document(s), {len(batch.chunks)} chunk(s))"
+        )
+        return 0
     if args.command == "list-databases":
         for database in discover_database_keys(
             args.repository_root, enabled_only=not args.include_disabled
