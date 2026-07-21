@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "e36bf3d1fe07270657798e61ca92333025e094d919c58b9ed9d99c9d5999b1d5",
+  "candidate_hash": "2cb3d9475a301bec80168a5ad9ba873792dd48b9e4a66e819623efb0f42fa66a",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -173,9 +173,9 @@
     "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
-      "generator_mode": "mock",
-      "generator_model": "deterministic-v1",
-      "prompt_version": "deterministic-v1",
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "approved-narrative-v1",
       "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
       "source_review_path": "catalog/commerce_demo/review/order_items.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
@@ -216,20 +216,20 @@
     "reviewer": "unassigned",
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db",
     "security": [],
-    "summary": "One technical row per order line represented in the ClickHouse demo dataset. Grain: One row per order_id and line_number.",
+    "summary": "The `order_items` table in the `commerce_demo` ClickHouse dataset provides one technical row per order line, with the grain defined as one row per `order_id` and `line_number`. Each row includes the line position (`line_number` UInt16, ordinal), a logical foreign key to the parent order (`order_id` UUID), a synthetic product code (`product_code` String), the ordered quantity (`quantity` UInt16, product units) and the unit price (`unit_price` Decimal(18,2) in VND). A technical line amount can be derived as `quantity × unit_price`, though this calculation requires reviewer confirmation. The table is intended for joining order lines to orders and for product‑quantity and order‑line value analysis. Reviewers must confirm uniqueness of the (`order_id`, `line_number`) combination, ownership and refresh expectations, and the treatment of product master semantics, returns, cancellations, taxes and discounts. Freshness is currently unknown. All columns are marked internal sensitivity.",
     "table": "order_items",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
-    "generator_model": "deterministic-v1",
-    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "f579bf6f25434ce3abf604a12b21e38910f22b39046cf76628cb2ecd8f6a1e47",
-    "prompt_version": "deterministic-v1",
+    "generator_model": "gpt-oss-120b",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "1fa4e8b64e409094480b57df09bb3d6d89440d852442e2e9821cfebb99882cd4",
+    "prompt_version": "approved-narrative-v1",
     "review_content_hash": "34af159a42833bb498257330d99627d064c97d2fc196f19137aed1cec41d2ff0",
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db"
   },
-  "reviewable_body_hash": "057879d15b417f9f447efee7b57b5047197b1529b3bcd0b7a5c02d3c92c878b9",
+  "reviewable_body_hash": "70ce8a31cff76a08313f0e26bd666d3cba891fb54062e78717e3d8693ea6a4e1",
   "state": "review",
   "table": "order_items"
 }

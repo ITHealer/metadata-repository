@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "b48a93c86cd6799a6671a8228b6257c5aa6fc15a516f6dc494109429cea6ecfc",
+  "candidate_hash": "b54ad142e2cb0b1538e6d95e920298e6d1446fe39907970c79a2a8ca026039de",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -160,9 +160,9 @@
     "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
-      "generator_mode": "mock",
-      "generator_model": "deterministic-v1",
-      "prompt_version": "deterministic-v1",
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "approved-narrative-v1",
       "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
       "source_review_path": "catalog/commerce_demo/review/customers.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
@@ -178,20 +178,20 @@
     "security": [
       "Treat email and full_name as sensitive-looking data even though this fixture is synthetic."
     ],
-    "summary": "One technical row per customer represented in the ClickHouse demo dataset. Grain: One row per customer_id.",
+    "summary": "The Customers table contains one technical row per demo customer, keyed by a stable UUID (customer_id). Each row records the UTC creation timestamp (created_at), synthetic email and display name (both marked synthetic PII), and a business segment value (retail, premium, or enterprise). The grain is one row per customer_id, intended for joining orders to customers via customer_id. Data are synthetic; email and names must not be used as real contact data. Reviewers should confirm segment assignment rules, dataset freshness, and the uniqueness of customer_id.",
     "table": "customers",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
-    "generator_model": "deterministic-v1",
-    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "440645bb043d576450e592446508df68fc5370e1b36d461d830ff2636283df93",
-    "prompt_version": "deterministic-v1",
+    "generator_model": "gpt-oss-120b",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "47ca4c4677368385ee959af02972ce543c83c0445a40092ef5facd97336e8cbc",
+    "prompt_version": "approved-narrative-v1",
     "review_content_hash": "bdfd6c8ec1cdabf41fbb14df7883219697d82686bd03dc1f58815f53a27b03ab",
     "schema_hash": "b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc"
   },
-  "reviewable_body_hash": "cd205363d65b2d5611f1bd8d44de5a30de81319970d341217baf15beaefb2c2c",
+  "reviewable_body_hash": "0ffc505858b258afc14303c18c1616afb1d6d7f97a1db7e69a718fa63fa138cd",
   "state": "review",
   "table": "customers"
 }

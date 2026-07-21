@@ -14,9 +14,9 @@ transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
 source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
-generator_mode: mock
-generator_model: deterministic-v1
-prompt_version: deterministic-v1
+generator_mode: live
+generator_model: gpt-oss-120b
+prompt_version: approved-narrative-v1
 ---
 
 # commerce_demo.orders — Orders
@@ -26,7 +26,14 @@ prompt_version: deterministic-v1
 
 ## Summary
 
-One technical row per order represented in the ClickHouse demo dataset. Grain: One row per order_id.
+The table provides one technical row per order (grain: one row per order_id) in the ClickHouse demo dataset. Key columns are:
+- created_at (DateTime, UTC timestamp when the order was created)
+- updated_at (DateTime, UTC timestamp of the latest update)
+- order_id (UUID, stable identifier for the order)
+- customer_id (UUID, logical foreign identifier for joining to customers.customer_id)
+- order_status (LowCardinality(String) with allowed values pending, paid, shipped, cancelled; a cancelled status does not imply the row is deleted)
+- total_amount (Decimal(18,2) in VND, the order total after discounts).
+Appropriate uses include aggregating order totals after applying the documented status rules and joining orders to customers via customer_id. Caveats note that business ownership, refresh expectations, status transition rules, tax/shipping/refund handling, and confirmation of order_id uniqueness require reviewer validation. It is inappropriate to assume cancelled orders are removed from the table. All data is marked with internal sensitivity.
 
 ## Grain and purpose
 

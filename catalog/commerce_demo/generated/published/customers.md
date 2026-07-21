@@ -14,9 +14,9 @@ transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/customers.yml
 source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
-generator_mode: mock
-generator_model: deterministic-v1
-prompt_version: deterministic-v1
+generator_mode: live
+generator_model: gpt-oss-120b
+prompt_version: approved-narrative-v1
 ---
 
 # commerce_demo.customers — Customers
@@ -26,7 +26,7 @@ prompt_version: deterministic-v1
 
 ## Summary
 
-One technical row per customer represented in the ClickHouse demo dataset. Grain: One row per customer_id.
+The Customers table contains one technical row per demo customer, keyed by a stable UUID (customer_id). Each row records the UTC creation timestamp (created_at), synthetic email and display name (both marked synthetic PII), and a business segment value (retail, premium, or enterprise). The grain is one row per customer_id, intended for joining orders to customers via customer_id. Data are synthetic; email and names must not be used as real contact data. Reviewers should confirm segment assignment rules, dataset freshness, and the uniqueness of customer_id.
 
 ## Grain and purpose
 

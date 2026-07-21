@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "2f98e037314244013d5732484ff0fd2bca6e0aee03337b74bc11739350ccf09b",
+  "candidate_hash": "71a0895e573616a389172f3688ae1a01babc03cb2bb19563caf615ada763a3d3",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -197,9 +197,9 @@
     "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
-      "generator_mode": "mock",
-      "generator_model": "deterministic-v1",
-      "prompt_version": "deterministic-v1",
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "approved-narrative-v1",
       "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
@@ -240,20 +240,20 @@
     "reviewer": "unassigned",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06",
     "security": [],
-    "summary": "One technical row per order represented in the ClickHouse demo dataset. Grain: One row per order_id.",
+    "summary": "The table provides one technical row per order (grain: one row per order_id) in the ClickHouse demo dataset. Key columns are:\n- created_at (DateTime, UTC timestamp when the order was created)\n- updated_at (DateTime, UTC timestamp of the latest update)\n- order_id (UUID, stable identifier for the order)\n- customer_id (UUID, logical foreign identifier for joining to customers.customer_id)\n- order_status (LowCardinality(String) with allowed values pending, paid, shipped, cancelled; a cancelled status does not imply the row is deleted)\n- total_amount (Decimal(18,2) in VND, the order total after discounts).\nAppropriate uses include aggregating order totals after applying the documented status rules and joining orders to customers via customer_id. Caveats note that business ownership, refresh expectations, status transition rules, tax/shipping/refund handling, and confirmation of order_id uniqueness require reviewer validation. It is inappropriate to assume cancelled orders are removed from the table. All data is marked with internal sensitivity.",
     "table": "orders",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
-    "generator_model": "deterministic-v1",
-    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "07ef0963d81f9b13abe37b56085b46e993a281c0ca1b32a67281b323964af646",
-    "prompt_version": "deterministic-v1",
+    "generator_model": "gpt-oss-120b",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "40710f2d4193065a09e35fc3100b08302fb26b3b576845aaeb3f2802c0294e92",
+    "prompt_version": "approved-narrative-v1",
     "review_content_hash": "17b6e39eba535d6074925eb5592aeb2d1b439a94c9298afaed9d5fef4e73ba87",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
   },
-  "reviewable_body_hash": "1af891f618e73322509927f2006b108cbd0bf28ab7bbc1d8e8e21f6aa34f71a5",
+  "reviewable_body_hash": "02ad1b24c55459372de8be58f2a6bd9c481ae6e9e445a8b0d464f859b31c2cf3",
   "state": "review",
   "table": "orders"
 }
