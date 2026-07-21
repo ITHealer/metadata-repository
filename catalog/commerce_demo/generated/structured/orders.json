@@ -1,13 +1,13 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "c3b42239c4ed73807e7c44c54ff76e783d81fe097e5c3fee3607ea67c509c3d6",
+  "candidate_hash": "27234b8fbeda449a74f25bb4a1b7b67d7a8f8f0315dce795a6847460913d7381",
   "database": "commerce_demo",
   "document": {
     "aliases": [
       "order fact"
     ],
     "appropriate_use": [
-      "Aggregate order totals after applying the documented status rules.",
+      "Daily order reporting.",
       "Join an order to customers by customer_id."
     ],
     "business_evidence": [
@@ -15,7 +15,7 @@
         "kind": "clickhouse_comment",
         "note": "Technical ClickHouse comment; business meaning still requires reviewer confirmation.",
         "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment",
-        "status": "proposed"
+        "status": "confirmed"
       }
     ],
     "business_rules": [
@@ -26,7 +26,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse table comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "Cancelled orders remain present"
@@ -47,7 +47,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "created_at",
@@ -71,7 +71,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "customer_id",
@@ -93,7 +93,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "order_id",
@@ -122,7 +122,7 @@
             "kind": "clickhouse_comment",
             "note": "Values are listed in the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "order_status",
@@ -146,7 +146,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "total_amount",
@@ -168,7 +168,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "updated_at",
@@ -185,27 +185,27 @@
       "Confirm order_id uniqueness before relying on one-row-per-order grain."
     ],
     "database": "commerce_demo",
-    "description": "One technical row per order represented in the ClickHouse demo dataset.",
+    "description": "One row represents one customer order.",
     "display_name": "Orders",
     "document_id": "commerce_demo.orders",
-    "document_status": "needs_review",
-    "freshness": "Unknown — needs confirmation",
+    "document_status": "approved",
+    "freshness": "Updated near real time.",
     "grain": "One row per order_id.",
     "inappropriate_use": [
-      "Assume cancelled orders are removed from the table."
+      "Do not use as a payment settlement source."
     ],
-    "index_eligible": false,
-    "owner": "unassigned",
+    "index_eligible": true,
+    "owner": "commerce-team",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
+      "source_review_commit": "d638d62cc7aa92e4c52fce0ec3f0871b3e0b7170",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
     "purpose": [
-      "Support order lifecycle and value analysis in the demo dataset."
+      "Analyze order volume and revenue."
     ],
     "qualified_name": "commerce_demo.orders",
     "relationships": [
@@ -216,7 +216,7 @@
             "kind": "tbls_relation",
             "note": "Logical relation configured for tbls; cardinality requires data validation.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#relations.orders_to_customers",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "from_columns": [
@@ -237,10 +237,10 @@
       }
     ],
     "review_guideline_version": "reviewer-v1",
-    "reviewer": "unassigned",
+    "reviewer": "ITHealer",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06",
     "security": [],
-    "summary": "The orders table stores one technical row per order_id in the ClickHouse demo dataset. Each row includes UTC timestamps for creation (created_at) and latest update (updated_at), a UUID order_id, a logical UUID customer_id for joining to customers, a LowCardinality(String) order_status with values pending, paid, shipped, or cancelled (cancelled rows remain in the table), and a Decimal(18,2) total_amount expressed in VND after discounts. Grain is one row per order_id; order_id uniqueness should be confirmed before assuming a one‑row‑per‑order grain. Appropriate uses include aggregating order totals after applying status rules and joining orders to customers via customer_id. It is inappropriate to assume cancelled orders are removed. Freshness is unknown and requires confirmation.",
+    "summary": "Each row in the orders table captures a single customer order (grain = one row per order_id). The table stores UTC timestamps for creation (created_at) and last update (updated_at), a logical customer reference (customer_id) for joining to customers, a stable order identifier (order_id), the order status (pending, paid, shipped, cancelled) – with cancelled orders remaining present – and the total amount in VND. It is appropriate for daily order reporting, analysis of order volume and revenue, and can be joined to customers by customer_id. It is not suitable as a payment settlement source. Data is refreshed near real time.",
     "table": "orders",
     "transformation_guideline_version": "retrieval-v1"
   },
@@ -248,12 +248,12 @@
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
     "generator_model": "gpt-oss-120b",
     "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
-    "input_hash": "a486e6d539137bcaaa494af7f0cab3b8797594f28bef083c163c08504c3b60c3",
+    "input_hash": "25ee6f5e4dbe0d9a42e8fba29c99a2ff27c881129be4465e1be7f69d5e7ef1c8",
     "prompt_version": "workflow-neutral-narrative-v2",
-    "review_content_hash": "17b6e39eba535d6074925eb5592aeb2d1b439a94c9298afaed9d5fef4e73ba87",
+    "review_content_hash": "b289e8533a33ae28299a0e8b71cf0920bd839e001f8d2c355be4b34a9e724c7a",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
   },
-  "reviewable_body_hash": "addb4b8dd0a0684843f5c6c0745b806e824d9b0ba0232c2376fe9d8e09943f2c",
-  "state": "review",
+  "reviewable_body_hash": "5a52eab50768a7c49a81514929f4b106e3cf4cf78a53e262b88a70ee10dee931",
+  "state": "promoted",
   "table": "orders"
 }
