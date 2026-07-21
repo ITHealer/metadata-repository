@@ -2,7 +2,7 @@
 
 ## Description
 
-Customer dimension at one row per customer; contains synthetic PII-like fields.
+Customer dimension at one row per customer; contains synthetic PII-like fields. khi dùng cần lưu ý điểm này
 
 <details>
 <summary><strong>Table Definition</strong></summary>
