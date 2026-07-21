@@ -1,0 +1,207 @@
+{
+  "artifact_version": "candidate-v1",
+  "candidate_hash": "9928bb5e9ae414465a6f8da2b4a65b9ef21f69bb514b9f60cea4fbd4f9d810be",
+  "database": "commerce_demo",
+  "document": {
+    "aliases": [],
+    "appropriate_use": [
+      "Unknown — needs confirmation"
+    ],
+    "business_evidence": [
+      {
+        "kind": "clickhouse_comment",
+        "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+        "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment",
+        "status": "proposed"
+      }
+    ],
+    "business_rules": [],
+    "caveats": [
+      "Business meaning requires domain reviewer confirmation."
+    ],
+    "columns": [
+      {
+        "allowed_values": {},
+        "business_name": "Created At",
+        "caveats": [],
+        "data_type": "DateTime",
+        "description": "UTC timestamp when the order was created",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at",
+            "status": "proposed"
+          }
+        ],
+        "name": "created_at",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "timestamp",
+        "sensitivity": "internal",
+        "technical_comment": "UTC timestamp when the order was created",
+        "unit": "UTC"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Customer Id",
+        "caveats": [],
+        "data_type": "UUID",
+        "description": "Customer that placed the order; logical join to customers.customer_id",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id",
+            "status": "proposed"
+          }
+        ],
+        "name": "customer_id",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Customer that placed the order; logical join to customers.customer_id",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Order Id",
+        "caveats": [],
+        "data_type": "UUID",
+        "description": "Stable identifier for one order",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id",
+            "status": "proposed"
+          }
+        ],
+        "name": "order_id",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Stable identifier for one order",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Order Status",
+        "caveats": [
+          "Allowed values require reviewer confirmation."
+        ],
+        "data_type": "LowCardinality(String)",
+        "description": "Current lifecycle state: pending, paid, shipped, or cancelled",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status",
+            "status": "proposed"
+          }
+        ],
+        "name": "order_status",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "categorical",
+        "sensitivity": "internal",
+        "technical_comment": "Current lifecycle state: pending, paid, shipped, or cancelled",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Total Amount",
+        "caveats": [],
+        "data_type": "Decimal(18, 2)",
+        "description": "Order total in VND after discounts",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount",
+            "status": "proposed"
+          }
+        ],
+        "name": "total_amount",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "monetary_amount",
+        "sensitivity": "internal",
+        "technical_comment": "Order total in VND after discounts",
+        "unit": "VND"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Updated At",
+        "caveats": [],
+        "data_type": "DateTime",
+        "description": "UTC timestamp of the latest order update",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at",
+            "status": "proposed"
+          }
+        ],
+        "name": "updated_at",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "timestamp",
+        "sensitivity": "internal",
+        "technical_comment": "UTC timestamp of the latest order update",
+        "unit": "UTC"
+      }
+    ],
+    "contract_version": "reviewer-v1",
+    "data_quality": [
+      "Data quality expectations require reviewer confirmation."
+    ],
+    "database": "commerce_demo",
+    "description": "Order fact at one row per order_id; cancelled orders remain in the table.",
+    "display_name": "Orders",
+    "document_id": "commerce_demo.orders",
+    "document_status": "needs_review",
+    "freshness": "Unknown — needs confirmation",
+    "grain": "Unknown — needs confirmation",
+    "inappropriate_use": [
+      "Unknown — needs confirmation"
+    ],
+    "index_eligible": false,
+    "owner": "unassigned",
+    "provenance": {
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "workflow-neutral-narrative-v2",
+      "source_review_commit": "63ad2a8a0589318fad649e563ea6709e8d52d912",
+      "source_review_path": "catalog/commerce_demo/review/orders.yml",
+      "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
+    },
+    "purpose": [
+      "Unknown — needs confirmation"
+    ],
+    "qualified_name": "commerce_demo.orders",
+    "relationships": [],
+    "review_guideline_version": "reviewer-v1",
+    "reviewer": "unassigned",
+    "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06",
+    "security": [],
+    "summary": "Each row in the Orders table represents a single order identified by order_id. It includes UTC timestamps for when the order was created (created_at) and last updated (updated_at), the customer_id of the purchaser, the current order_status (pending, paid, shipped, or cancelled), and the total_amount in VND after discounts. Cancelled orders remain in the table. All columns are non‑nullable and have internal sensitivity. Grain, freshness, and appropriate use are not confirmed.",
+    "table": "orders",
+    "transformation_guideline_version": "retrieval-v1"
+  },
+  "fingerprint": {
+    "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
+    "generator_model": "gpt-oss-120b",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "b9fc3d5f9ea93742a10ffdbe3c5e839cecd5c7363e94d07f17a317515fbc7903",
+    "prompt_version": "workflow-neutral-narrative-v2",
+    "review_content_hash": "1ead3d8683991636a9e56cee0f7a95766fa48c8ad3cf99b35f9fe8492732f6f1",
+    "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
+  },
+  "reviewable_body_hash": "d6e5aa123c8a145543a886ec521ee9f9455896d1a4752ebcbc11c3c2789382cd",
+  "state": "review",
+  "table": "orders"
+}
