@@ -9,7 +9,7 @@ marked passed merely because its code path is covered by a mock.
 - Local environment: macOS, Python project virtual environment, Docker Desktop
 - Gateway contract: OpenAI-compatible LiteLLM endpoint at `https://ai-gateway.dev/v1`
 - Default model alias: `gpt-5.4-nano`
-- Prompt version: `approved-narrative-v1`
+- Prompt version: `workflow-neutral-narrative-v2`
 
 ## Evidence matrix
 
