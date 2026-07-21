@@ -9,7 +9,9 @@ GENERATION_SOURCE_PATTERNS = (
     "src/metadata_pipeline/application/publish_metadata.py",
     "src/metadata_pipeline/adapters/generator/deterministic.py",
     "src/metadata_pipeline/domain/published.py",
+    "src/metadata_pipeline/domain/review.py",
     "src/metadata_pipeline/io/published_markdown.py",
+    "src/metadata_pipeline/validation/review.py",
 )
 INPUT_PATTERNS = (
     "config/databases/**",

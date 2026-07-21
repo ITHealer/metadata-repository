@@ -419,6 +419,9 @@ document_status: approved
 Reviewer không phải đổi từng `evidence.status` từ `proposed` sang `confirmed`. Evidence status là
 thông tin provenance; chỉ evidence `conflicting` phải được xử lý trước approval.
 
+Reviewer cũng không phải thay `owner` hoặc `reviewer` chỉ để vượt qua CI. Nếu chưa xác định được,
+giữ nguyên giá trị template `unassigned`; `document_status` là approval control duy nhất.
+
 Không sửa business content trong commit approval. Bot kiểm tra fingerprint và promote đúng candidate
 đã được xem mà không gọi LLM lần nữa. Nếu vừa sửa content vừa approve, CI phải chặn.
 

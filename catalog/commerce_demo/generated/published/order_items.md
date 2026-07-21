@@ -6,23 +6,20 @@ qualified_name: commerce_demo.order_items
 owner: unassigned
 reviewer: unassigned
 document_status: approved
-index_eligible: false
+index_eligible: true
 schema_hash: 45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/order_items.yml
-source_review_commit: 63ad2a8a0589318fad649e563ea6709e8d52d912
+source_review_commit: bf1a1253b23629c6053e1cd42797bbbc6dcccd00
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.order_items — Order Items
-
-> [!WARNING]
-> Preview only: reviewer metadata still has `needs_review` status and must not be indexed.
 
 ## Summary
 
