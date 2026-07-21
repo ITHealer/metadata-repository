@@ -3,11 +3,15 @@
 from pathlib import Path
 
 from metadata_pipeline.application.candidate_summary import render_candidate_summary
+from metadata_pipeline.io.candidate_json import load_candidate
+from metadata_pipeline.io.review_yaml import load_review_document
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_summary_links_reviewer_input_preview_and_candidate_hash() -> None:
+    review = load_review_document(ROOT / "catalog/commerce_demo/review/orders.yml")
+    candidate = load_candidate(ROOT / "catalog/commerce_demo/generated/structured/orders.json")
     rendered = render_candidate_summary(
         repository_root=ROOT,
         database="commerce_demo",
@@ -18,7 +22,8 @@ def test_summary_links_reviewer_input_preview_and_candidate_hash() -> None:
     )
 
     assert "### Metadata candidates: `commerce_demo`" in rendered
-    assert "| `orders` | `needs_review` | `review` |" in rendered
+    expected_state = f"| `orders` | `{review.document_status.value}` | `{candidate.state.value}` |"
+    assert expected_state in rendered
     assert "blob/abc123/catalog/commerce_demo/review/orders.yml" in rendered
     assert "blob/abc123/catalog/commerce_demo/generated/published/orders.md" in rendered
     assert "edit only YAML" in rendered

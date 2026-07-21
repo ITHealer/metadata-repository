@@ -61,7 +61,9 @@ def test_fully_confirmed_approved_review_passes() -> None:
 
 
 def test_needs_review_conditional_gap_is_warning_but_approved_is_error() -> None:
-    review = load_review_document(REVIEW_DIR / "orders.yml")
+    review = load_review_document(REVIEW_DIR / "orders.yml").model_copy(
+        update={"document_status": DocumentStatus.NEEDS_REVIEW}
+    )
     columns = dict(review.columns)
     columns["total_amount"] = columns["total_amount"].model_copy(update={"unit": "not_applicable"})
     needs_review = review.model_copy(update={"columns": columns})
@@ -143,7 +145,9 @@ def test_conditional_rules_report_actionable_warning(
     updates: dict[str, object],
     expected_code: str,
 ) -> None:
-    review = load_review_document(REVIEW_DIR / filename)
+    review = load_review_document(REVIEW_DIR / filename).model_copy(
+        update={"document_status": DocumentStatus.NEEDS_REVIEW}
+    )
     columns = dict(review.columns)
     columns[column_name] = columns[column_name].model_copy(update=updates)
 
