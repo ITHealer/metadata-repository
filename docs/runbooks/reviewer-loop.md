@@ -65,6 +65,9 @@ Change only:
 document_status: approved
 ```
 
+Individual `evidence.status` values do not need to be changed from `proposed` to `confirmed`.
+Evidence is informational unless it is explicitly `conflicting`, which must be resolved first.
+
 Commit that status-only edit. The bot verifies the candidate fingerprint and promotes the exact
 Markdown already reviewed without calling the LLM again. A commit that changes both business
 content and status is rejected; first regenerate under `needs_review`, then approve separately.

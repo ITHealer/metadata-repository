@@ -262,17 +262,6 @@ def _validate_evidence(
                 severity,
             )
         )
-    if review.document_status is DocumentStatus.APPROVED and not any(
-        item.status is EvidenceStatus.CONFIRMED for item in evidence
-    ):
-        issues.append(
-            ValidationIssue(
-                "approved_without_confirmed_evidence",
-                path,
-                field,
-                "approved metadata requires at least one confirmed evidence item",
-            )
-        )
 
 
 def _approval_severity(review: ReviewDocument) -> IssueSeverity:

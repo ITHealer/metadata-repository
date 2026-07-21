@@ -82,15 +82,14 @@ def test_needs_review_conditional_gap_is_warning_but_approved_is_error() -> None
     assert error.severity is IssueSeverity.ERROR
 
 
-def test_approved_review_requires_confirmed_evidence() -> None:
+def test_approved_review_accepts_proposed_evidence() -> None:
     review = load_review_document(REVIEW_DIR / "orders.yml")
+
+    def proposed(items: tuple[Evidence, ...]) -> tuple[Evidence, ...]:
+        return tuple(item.model_copy(update={"status": EvidenceStatus.PROPOSED}) for item in items)
+
     proposed_business = review.business.model_copy(
-        update={
-            "evidence": tuple(
-                item.model_copy(update={"status": EvidenceStatus.PROPOSED})
-                for item in review.business.evidence
-            )
-        }
+        update={"evidence": proposed(review.business.evidence)}
     )
     review = review.model_copy(
         update={
@@ -98,12 +97,22 @@ def test_approved_review_requires_confirmed_evidence() -> None:
             "reviewer": "domain-reviewer",
             "document_status": DocumentStatus.APPROVED,
             "business": proposed_business,
+            "columns": {
+                name: column.model_copy(update={"evidence": proposed(column.evidence)})
+                for name, column in review.columns.items()
+            },
+            "relationships": tuple(
+                relationship.model_copy(update={"evidence": proposed(relationship.evidence)})
+                for relationship in review.relationships
+            ),
+            "business_rules": tuple(
+                rule.model_copy(update={"evidence": proposed(rule.evidence)})
+                for rule in review.business_rules
+            ),
         }
     )
 
-    codes = {issue.code for issue in _issues(review, "orders.yml")}
-
-    assert "approved_without_confirmed_evidence" in codes
+    assert _issues(review, "orders.yml") == ()
 
 
 def test_conflicting_evidence_blocks_approval() -> None:

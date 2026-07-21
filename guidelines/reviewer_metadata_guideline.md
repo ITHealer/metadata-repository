@@ -152,10 +152,15 @@ recognized-revenue calculations.
 
 Use one of these evidence states:
 
-- `confirmed`: verified by an accountable reviewer and supported by evidence.
-- `proposed`: believed to be correct but awaiting domain approval.
+- `confirmed`: optionally marks an individual evidence item as independently verified.
+- `proposed`: retained as source provenance and allowed when the document is approved; reviewers do
+  not need to update every evidence item.
 - `unknown`: no reliable evidence is available.
 - `conflicting`: available sources disagree and generation must stop for resolution.
+
+`document_status` is the single approval control. Once the generated Markdown is correct, the
+reviewer changes only `document_status: needs_review` to `document_status: approved`. Evidence
+statuses remain informational; only `conflicting` evidence blocks approval.
 
 Never convert `proposed`, `unknown`, or `conflicting` information into a confident statement merely
 to make validation pass.

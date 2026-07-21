@@ -16,11 +16,11 @@ from metadata_pipeline.cli import main
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PUBLICATION_ARGS = (
     "--schema",
-    "tests/fixtures/commerce_demo/schema.json",
+    str(ROOT / "tests/fixtures/commerce_demo/schema.json"),
     "--review-dir",
-    "tests/fixtures/commerce_demo/review",
+    str(ROOT / "tests/fixtures/commerce_demo/review"),
     "--contract",
-    "contracts/metadata_contract.yml",
+    str(ROOT / "contracts/metadata_contract.yml"),
 )
 
 
