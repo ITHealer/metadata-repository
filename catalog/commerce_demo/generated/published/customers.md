@@ -3,8 +3,8 @@ document_id: commerce_demo.customers
 database: commerce_demo
 table: customers
 qualified_name: commerce_demo.customers
-owner: unassigned
-reviewer: unassigned
+owner: customer-analytics
+reviewer: hoai.um
 document_status: needs_review
 index_eligible: false
 schema_hash: b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc
@@ -13,33 +13,34 @@ review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/customers.yml
-source_review_commit: 63ad2a8a0589318fad649e563ea6709e8d52d912
+source_review_commit: 95e2beb1427368168f6825cdf16e47b1801790aa
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
 ---
 
-# commerce_demo.customers — Customers
+# commerce_demo.customers — Customer Dimension
 
 > [!WARNING]
 > Preview only: reviewer metadata still has `needs_review` status and must not be indexed.
 
 ## Summary
 
-A customer dimension table with one row per synthetic demo customer, holding internal identifiers, a synthetic email and full name (PII-like), segment classification, and a UTC creation timestamp. The table’s grain and business purpose remain unconfirmed.
+The table provides one synthetic demo customer per row (grain: customer_id) with a creation timestamp, stable UUID, synthetic email and name (PII‑synthetic), and a segment label (retail, premium, or enterprise). It is intended for analyzing order behavior across these business segments, not for production master data or contacting the synthetic contacts.
 
 ## Grain and purpose
 
-**Grain:** Unknown — needs confirmation
-- Unknown — needs confirmation
+**Grain:** One row per customer_id.
+- Analyze order behavior by customer segment in the commerce demo.
 
 ## Appropriate use
 
-- Unknown — needs confirmation
+- Group order metrics by retail, premium, or enterprise customer segment.
 
 ## Inappropriate use
 
-- Unknown — needs confirmation
+- Do not use this table as a production customer master.
+- Do not use synthetic email or full name values to contact customers.
 
 ## Columns
 
@@ -74,7 +75,7 @@ Synthetic contact email classified as PII; always uses the .test domain
 - Semantic type: `email`
 - Unit/timezone: `not_applicable`
 - Null meaning: not_applicable
-- Sensitivity: `unknown`
+- Sensitivity: `pii_synthetic`
 
 ### `full_name` — Full Name
 
@@ -85,7 +86,7 @@ Display name; synthetic data used only by this demo
 - Semantic type: `person_name`
 - Unit/timezone: `not_applicable`
 - Null meaning: not_applicable
-- Sensitivity: `unknown`
+- Sensitivity: `pii_synthetic`
 
 ### `segment` — Segment
 
@@ -116,7 +117,7 @@ Not applicable — no reviewed business rule was supplied.
 ## Data quality and caveats
 
 - Data quality expectations require reviewer confirmation.
-- Business meaning requires domain reviewer confirmation.
+- Email and full name are synthetic PII-like test values.
 
 ## Security
 
