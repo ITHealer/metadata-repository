@@ -4,24 +4,27 @@ transformation_guideline_version: retrieval-v1
 source_scope: clickhouse
 database: commerce_demo
 table: customers
-owner: unassigned
-reviewer: unassigned
+owner: customer-analytics
+reviewer: hoai.um
 document_status: needs_review
 schema_hash: b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc
 business:
-  display_name: Customers
-  description: Customer dimension at one row per customer; contains synthetic PII-like fields.
-  grain: Unknown — needs confirmation
+  display_name: Customer Dimension
+  description: One row per synthetic demo customer used to compare order metrics across retail, premium, and enterprise segments.
+  grain: One row per customer_id.
   purpose:
-    - Unknown — needs confirmation
+    - Analyze order behavior by customer segment in the commerce demo.
   appropriate_use:
-    - Unknown — needs confirmation
+    - Group order metrics by retail, premium, or enterprise customer segment.
   inappropriate_use:
-    - Unknown — needs confirmation
-  aliases: []
-  freshness: Unknown — needs confirmation
+    - Do not use this table as a production customer master.
+    - Do not use synthetic email or full name values to contact customers.
+  aliases:
+    - Customer Profile
+    - Customer Segment Dimension
+  freshness: Refreshed when the Commerce Demo seed data is reloaded.
   caveats:
-    - Business meaning requires domain reviewer confirmation.
+    - Email and full name are synthetic PII-like test values.
   evidence:
     - kind: clickhouse_comment
       reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment
@@ -62,7 +65,7 @@ columns:
     semantic_type: email
     unit: not_applicable
     nullable_meaning: not_applicable
-    sensitivity: unknown
+    sensitivity: pii_synthetic
     allowed_values: {}
     caveats: []
     evidence:
@@ -76,7 +79,7 @@ columns:
     semantic_type: person_name
     unit: not_applicable
     nullable_meaning: not_applicable
-    sensitivity: unknown
+    sensitivity: pii_synthetic
     allowed_values: {}
     caveats: []
     evidence:
