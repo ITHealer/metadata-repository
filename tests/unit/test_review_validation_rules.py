@@ -81,11 +81,21 @@ def test_needs_review_conditional_gap_is_warning_but_approved_is_error() -> None
 
 
 def test_approved_review_requires_confirmed_evidence() -> None:
-    review = load_review_document(REVIEW_DIR / "orders.yml").model_copy(
+    review = load_review_document(REVIEW_DIR / "orders.yml")
+    proposed_business = review.business.model_copy(
+        update={
+            "evidence": tuple(
+                item.model_copy(update={"status": EvidenceStatus.PROPOSED})
+                for item in review.business.evidence
+            )
+        }
+    )
+    review = review.model_copy(
         update={
             "owner": "commerce-team",
             "reviewer": "domain-reviewer",
             "document_status": DocumentStatus.APPROVED,
+            "business": proposed_business,
         }
     )
 
