@@ -31,6 +31,9 @@ def test_workflow_guards_bot_output_and_fork_secrets() -> None:
     assert "make candidate-validate" in content
     assert "secrets.OPENAI_API_KEY" in content
     assert "vars.OPENAI_MODEL" in content
-    assert "catalog/*/generated/structured" in content
-    assert "git add 'catalog/*/generated/structured' 'catalog/*/generated/published'" in content
+    structured_pathspec = ":(glob)catalog/*/generated/structured/**"
+    published_pathspec = ":(glob)catalog/*/generated/published/**"
+    assert content.count(structured_pathspec) == 2
+    assert content.count(published_pathspec) == 2
+    assert "git add --" in content
     assert 'git push origin "HEAD:$HEAD_BRANCH"' in content

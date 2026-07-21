@@ -123,7 +123,9 @@ jobs:
           SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          if [[ -z "$(git status --porcelain -- 'catalog/*/generated/structured' 'catalog/*/generated/published')" ]]; then
+          if [[ -z "$(git status --porcelain -- \
+            ':(glob)catalog/*/generated/structured/**' \
+            ':(glob)catalog/*/generated/published/**')" ]]; then
             echo "No candidate output changed."
             exit 0
           fi
@@ -143,7 +145,9 @@ jobs:
           fi
           git config user.name "metadata-bot"
           git config user.email "metadata-bot@users.noreply.github.com"
-          git add 'catalog/*/generated/structured' 'catalog/*/generated/published'
+          git add -- \
+            ':(glob)catalog/*/generated/structured/**' \
+            ':(glob)catalog/*/generated/published/**'
           git commit -m "chore(metadata): sync reviewed candidates"
           git push origin "HEAD:$HEAD_BRANCH"
 
