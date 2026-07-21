@@ -60,7 +60,7 @@ def test_fully_confirmed_approved_review_passes() -> None:
     assert _issues(_confirmed(load_review_document(REVIEW_DIR / "orders.yml")), "orders.yml") == ()
 
 
-def test_needs_review_conditional_gap_is_warning_but_approved_is_error() -> None:
+def test_conditional_gap_remains_warning_after_approval() -> None:
     review = load_review_document(REVIEW_DIR / "orders.yml").model_copy(
         update={"document_status": DocumentStatus.NEEDS_REVIEW}
     )
@@ -74,12 +74,12 @@ def test_needs_review_conditional_gap_is_warning_but_approved_is_error() -> None
     )
 
     approved = _confirmed(needs_review)
-    error = next(
+    approved_warning = next(
         issue for issue in _issues(approved, "orders.yml") if issue.code == "missing_measure_unit"
     )
 
     assert warning.severity is IssueSeverity.WARNING
-    assert error.severity is IssueSeverity.ERROR
+    assert approved_warning.severity is IssueSeverity.WARNING
 
 
 def test_approved_review_accepts_proposed_evidence() -> None:

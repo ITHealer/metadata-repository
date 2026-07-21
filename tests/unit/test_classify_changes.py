@@ -54,6 +54,20 @@ def test_publish_orchestration_is_a_generation_source() -> None:
     assert classification.has_published is True
 
 
+@pytest.mark.parametrize(
+    "path",
+    (
+        "src/metadata_pipeline/domain/review.py",
+        "src/metadata_pipeline/validation/review.py",
+    ),
+)
+def test_review_contract_change_is_a_generation_source(path: str) -> None:
+    classification = classify_changed_paths((ChangedPath("M", path),))
+
+    assert classification.has_inputs is True
+    assert classification.has_generation_sources is True
+
+
 def test_database_profile_change_triggers_metadata_input_flow() -> None:
     classification = classify_changed_paths(
         (ChangedPath("M", "config/databases/commerce_demo/database.yml"),)

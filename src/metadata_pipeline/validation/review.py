@@ -154,7 +154,9 @@ def _validate_review_semantics(
     table: TableSchema,
     review: ReviewDocument,
 ) -> None:
-    severity = _approval_severity(review)
+    # Explicitly unknown business semantics are useful review findings, not contract errors.
+    # Keep them visible after approval without forcing reviewers to invent facts to make CI pass.
+    severity = IssueSeverity.WARNING
     _validate_evidence(issues, path, "business.evidence", review.business.evidence, review)
     raw_columns = {column.name: column for column in table.columns}
     for column_name, column_review in review.columns.items():

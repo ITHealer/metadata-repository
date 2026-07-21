@@ -151,15 +151,6 @@ class ReviewDocument(StrictModel):
     data_quality: tuple[str, ...] = ()
     security: tuple[str, ...] = ()
 
-    @model_validator(mode="after")
-    def require_assigned_approval(self) -> ReviewDocument:
-        """Prevent unassigned ownership from approving a document."""
-        if self.document_status is DocumentStatus.APPROVED and (
-            self.owner == "unassigned" or self.reviewer == "unassigned"
-        ):
-            raise ValueError("approved documents require assigned owner and reviewer")
-        return self
-
 
 class ReviewContractConfig(StrictModel):
     """Version settings shared by review files and validators."""

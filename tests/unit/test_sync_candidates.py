@@ -107,6 +107,33 @@ def test_approval_promotes_existing_candidate_without_generator(tmp_path: Path) 
     assert "Preview only" not in (published / "orders.md").read_text(encoding="utf-8")
 
 
+def test_status_only_approval_promotes_unassigned_candidate(tmp_path: Path) -> None:
+    workspace = _workspace(tmp_path)
+    _, reviews, _, _, structured, _ = workspace
+    review_path = reviews / "orders.yml"
+    review = load_review_document(review_path).model_copy(
+        update={"owner": "unassigned", "reviewer": "unassigned"}
+    )
+    write_review_document(review_path, review)
+    generated = _sync(workspace, lambda: DeterministicDocumentGenerator())
+    write_candidate_sync(generated)
+    review = load_review_document(review_path)
+    assert review.owner == "unassigned"
+    assert review.reviewer == "unassigned"
+    write_review_document(
+        review_path,
+        review.model_copy(update={"document_status": DocumentStatus.APPROVED}),
+    )
+
+    promoted = _sync(workspace, lambda: (_ for _ in ()).throw(AssertionError("LLM called")))
+    result = write_candidate_sync(promoted)[0]
+    candidate = load_candidate(structured / "orders.json")
+
+    assert result.action is CandidateSyncAction.PROMOTED
+    assert candidate.document.document_status is DocumentStatus.APPROVED
+    assert candidate.document.index_eligible is True
+
+
 def _approved(review: ReviewDocument) -> ReviewDocument:
     return review.model_copy(
         update={

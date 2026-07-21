@@ -162,6 +162,13 @@ Use one of these evidence states:
 reviewer changes only `document_status: needs_review` to `document_status: approved`. Evidence
 statuses remain informational; only `conflicting` evidence blocks approval.
 
+`owner` and `reviewer` should be recorded when known, but their template value `unassigned` does not
+block approval. Do not invent an owner or require another reviewer-field edit merely to satisfy CI.
+
+An explicitly unknown business detail remains visible as a CI warning after approval; it is not a
+blocker. Technical contract errors (for example an unknown table/column or stale schema hash) and
+`conflicting` evidence still block the workflow.
+
 Never convert `proposed`, `unknown`, or `conflicting` information into a confident statement merely
 to make validation pass.
 
@@ -334,7 +341,7 @@ Before changing `document_status` to `approved`, confirm:
 
 ```text
 [ ] Purpose and grain are explicit and do not contradict schema.json
-[ ] Owner and reviewer are assigned
+[ ] Owner and reviewer are recorded when known; otherwise they remain explicitly `unassigned`
 [ ] Important columns have business meaning
 [ ] Time, unit, status, filter, and aggregation semantics are documented where applicable
 [ ] Relationships include both sides, join condition, cardinality, and duplicate risk

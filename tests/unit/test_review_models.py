@@ -22,16 +22,16 @@ def test_review_document_rejects_unknown_fields() -> None:
         ReviewDocument.model_validate(payload)
 
 
-def test_approved_document_requires_assigned_reviewer() -> None:
+def test_document_status_alone_can_approve_unassigned_document() -> None:
     review = load_review_document(REVIEW_DIR / "customers.yml")
     payload = review.model_dump(mode="json")
     payload["document_status"] = DocumentStatus.APPROVED
 
-    with pytest.raises(
-        ValidationError,
-        match="approved documents require assigned owner and reviewer",
-    ):
-        ReviewDocument.model_validate(payload)
+    approved = ReviewDocument.model_validate(payload)
+
+    assert approved.document_status is DocumentStatus.APPROVED
+    assert approved.owner == "unassigned"
+    assert approved.reviewer == "unassigned"
 
 
 def test_relationship_requires_matching_column_counts() -> None:

@@ -42,9 +42,10 @@ owned by tbls or the metadata bot and CI rejects manual changes.
 ## What to provide
 
 Use [Guideline 1](../../guidelines/reviewer_metadata_guideline.md) for field-level examples. At a
-minimum, confirm the owner, reviewer, table grain and purpose, appropriate/inappropriate uses,
-column meanings, sensitivity, relationship risks, evidence, freshness, and caveats relevant to the
-table. Leave uncertainty explicit; do not guess.
+minimum, confirm the table grain and purpose, appropriate/inappropriate uses, column meanings,
+sensitivity, relationship risks, evidence, freshness, and caveats relevant to the table. Add the
+owner and reviewer when known; leaving their generated value as `unassigned` does not block
+approval. Leave uncertainty explicit; do not guess.
 
 ## How to respond to failures
 
