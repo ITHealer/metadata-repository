@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "b48a93c86cd6799a6671a8228b6257c5aa6fc15a516f6dc494109429cea6ecfc",
+  "candidate_hash": "df641b374c6abbd38564a50502ff80ed1686694926f755e93891f37abf9c80db",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -160,10 +160,10 @@
     "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
-      "generator_mode": "mock",
-      "generator_model": "deterministic-v1",
-      "prompt_version": "deterministic-v1",
-      "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "approved-narrative-v1",
+      "source_review_commit": "15eecf84074e9ba2d43b0e5513a5575fa7110ff0",
       "source_review_path": "catalog/commerce_demo/review/customers.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -178,20 +178,20 @@
     "security": [
       "Treat email and full_name as sensitive-looking data even though this fixture is synthetic."
     ],
-    "summary": "One technical row per customer represented in the ClickHouse demo dataset. Grain: One row per customer_id.",
+    "summary": "Each row in the ClickHouse demo table represents a single customer; the grain is one row per customer_id.",
     "table": "customers",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
-    "generator_model": "deterministic-v1",
+    "generator_model": "gpt-oss-120b",
     "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "440645bb043d576450e592446508df68fc5370e1b36d461d830ff2636283df93",
-    "prompt_version": "deterministic-v1",
+    "input_hash": "f10b8b2dc30eb95eeea84a68d6ad3c11ab0579a8bfc4dc1b44a13ea0abbca9f8",
+    "prompt_version": "approved-narrative-v1",
     "review_content_hash": "bdfd6c8ec1cdabf41fbb14df7883219697d82686bd03dc1f58815f53a27b03ab",
     "schema_hash": "b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc"
   },
-  "reviewable_body_hash": "cd205363d65b2d5611f1bd8d44de5a30de81319970d341217baf15beaefb2c2c",
+  "reviewable_body_hash": "1560c77f56f4e2ac8db97778dff486c9745cf39cd11df71e1c3ba966ff0ff0f5",
   "state": "review",
   "table": "customers"
 }

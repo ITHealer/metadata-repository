@@ -13,10 +13,10 @@ review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
-source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
-generator_mode: mock
-generator_model: deterministic-v1
-prompt_version: deterministic-v1
+source_review_commit: 15eecf84074e9ba2d43b0e5513a5575fa7110ff0
+generator_mode: live
+generator_model: gpt-oss-120b
+prompt_version: approved-narrative-v1
 ---
 
 # commerce_demo.orders — Orders
@@ -26,21 +26,20 @@ prompt_version: deterministic-v1
 
 ## Summary
 
-One technical row per order represented in the ClickHouse demo dataset. Grain: One row per order_id.
+Each row captures a single customer order (one per order_id), with near‑real‑time updates.
 
 ## Grain and purpose
 
 **Grain:** One row per order_id.
-- Support order lifecycle and value analysis in the demo dataset.
+- Analyze order volume and revenue.
 
 ## Appropriate use
 
-- Aggregate order totals after applying the documented status rules.
-- Join an order to customers by customer_id.
+- Daily order reporting.
 
 ## Inappropriate use
 
-- Assume cancelled orders are removed from the table.
+- Do not use as a payment settlement source.
 
 ## Columns
 

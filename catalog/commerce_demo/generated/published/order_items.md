@@ -13,10 +13,10 @@ review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/order_items.yml
-source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
-generator_mode: mock
-generator_model: deterministic-v1
-prompt_version: deterministic-v1
+source_review_commit: 15eecf84074e9ba2d43b0e5513a5575fa7110ff0
+generator_mode: live
+generator_model: gpt-oss-120b
+prompt_version: approved-narrative-v1
 ---
 
 # commerce_demo.order_items — Order items
@@ -26,7 +26,7 @@ prompt_version: deterministic-v1
 
 ## Summary
 
-One technical row per order line represented in the ClickHouse demo dataset. Grain: One row per order_id and line_number.
+One row per order line (order_id + line_number) in the ClickHouse demo dataset.
 
 ## Grain and purpose
 

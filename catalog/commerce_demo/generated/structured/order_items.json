@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "e36bf3d1fe07270657798e61ca92333025e094d919c58b9ed9d99c9d5999b1d5",
+  "candidate_hash": "4a392069d34307aa755a8917b82c324f6b2bdeeadb9fb442e0279bed59f84263",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -173,10 +173,10 @@
     "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
-      "generator_mode": "mock",
-      "generator_model": "deterministic-v1",
-      "prompt_version": "deterministic-v1",
-      "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "approved-narrative-v1",
+      "source_review_commit": "15eecf84074e9ba2d43b0e5513a5575fa7110ff0",
       "source_review_path": "catalog/commerce_demo/review/order_items.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -216,20 +216,20 @@
     "reviewer": "unassigned",
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db",
     "security": [],
-    "summary": "One technical row per order line represented in the ClickHouse demo dataset. Grain: One row per order_id and line_number.",
+    "summary": "One row per order line (order_id + line_number) in the ClickHouse demo dataset.",
     "table": "order_items",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
-    "generator_model": "deterministic-v1",
+    "generator_model": "gpt-oss-120b",
     "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "f579bf6f25434ce3abf604a12b21e38910f22b39046cf76628cb2ecd8f6a1e47",
-    "prompt_version": "deterministic-v1",
+    "input_hash": "3c108736967398d855a75dc979f63d6de5be41bcbf1bcafdf7a3af38d201a452",
+    "prompt_version": "approved-narrative-v1",
     "review_content_hash": "34af159a42833bb498257330d99627d064c97d2fc196f19137aed1cec41d2ff0",
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db"
   },
-  "reviewable_body_hash": "057879d15b417f9f447efee7b57b5047197b1529b3bcd0b7a5c02d3c92c878b9",
+  "reviewable_body_hash": "d9fdd5a49b7865aac5f1d4f0fb04ecbe824644e7bd9da3d0d09b2288a1dfe31b",
   "state": "review",
   "table": "order_items"
 }
