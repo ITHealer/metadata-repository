@@ -1,20 +1,21 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "abf58193bbd41ccb1228f58471ea4368fa7b8d23513435b44b907daf7b574407",
+  "candidate_hash": "5e9be0691be3f07002ce749033339e7bfb4bd937e0eb9a6f0301751427145755",
   "database": "commerce_demo",
   "document": {
     "aliases": [
       "order fact"
     ],
     "appropriate_use": [
-      "Daily order reporting."
+      "Daily order reporting.",
+      "Join an order to customers by customer_id."
     ],
     "business_evidence": [
       {
         "kind": "clickhouse_comment",
         "note": "Technical ClickHouse comment; business meaning still requires reviewer confirmation.",
         "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment",
-        "status": "proposed"
+        "status": "confirmed"
       }
     ],
     "business_rules": [
@@ -25,7 +26,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse table comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "Cancelled orders remain present"
@@ -46,7 +47,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "created_at",
@@ -70,7 +71,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "customer_id",
@@ -92,7 +93,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "order_id",
@@ -121,7 +122,7 @@
             "kind": "clickhouse_comment",
             "note": "Values are listed in the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "order_status",
@@ -145,7 +146,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "total_amount",
@@ -167,7 +168,7 @@
             "kind": "clickhouse_comment",
             "note": "Derived from the ClickHouse column comment.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "name": "updated_at",
@@ -194,12 +195,12 @@
       "Do not use as a payment settlement source."
     ],
     "index_eligible": false,
-    "owner": "unassigned",
+    "owner": "commerce-team",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "approved-narrative-v1",
-      "source_review_commit": "15eecf84074e9ba2d43b0e5513a5575fa7110ff0",
+      "source_review_commit": "5c36ab30dc35eed1ebe5555b336423b3c62c519f",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -215,7 +216,7 @@
             "kind": "tbls_relation",
             "note": "Logical relation configured for tbls; cardinality requires data validation.",
             "reference": "catalog/commerce_demo/generated/raw/schema.json#relations.orders_to_customers",
-            "status": "proposed"
+            "status": "confirmed"
           }
         ],
         "from_columns": [
@@ -236,10 +237,10 @@
       }
     ],
     "review_guideline_version": "reviewer-v1",
-    "reviewer": "unassigned",
+    "reviewer": "ITHealer",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06",
     "security": [],
-    "summary": "Each row captures a single customer order (one per order_id), with near‑real‑time updates.",
+    "summary": "One row per order (order_id) representing a customer order; includes UTC timestamps (created_at, updated_at), order status (pending, paid, shipped, cancelled), total amount in VND, and a logical customer_id join; data is refreshed near real time and currently marked needs_review.",
     "table": "orders",
     "transformation_guideline_version": "retrieval-v1"
   },
@@ -247,12 +248,12 @@
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
     "generator_model": "gpt-oss-120b",
     "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "bf5fff18fb1673234ba6746ce2879f8a2154ee6ca35e8be958672570e9466aa8",
+    "input_hash": "f31936e7dce5b3dbe88a6e56677daeba4dc5d41c67e8ccad34842a863bd681f1",
     "prompt_version": "approved-narrative-v1",
-    "review_content_hash": "10069ce075766a42f2230e37afb5b9aa4332ade665b16d454a8b8501f211e6c7",
+    "review_content_hash": "b289e8533a33ae28299a0e8b71cf0920bd839e001f8d2c355be4b34a9e724c7a",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
   },
-  "reviewable_body_hash": "59dc55f43e0096e58f46189bd88d46a8abd9f3ae778a37f1844f89a212844aa8",
+  "reviewable_body_hash": "a3c0badb8fc14a84b24bc43a83cf8f6f8b9b42f962881d7210b13702b05b8fc1",
   "state": "review",
   "table": "orders"
 }
