@@ -1,0 +1,109 @@
+contract_version: reviewer-v1
+review_guideline_version: reviewer-v1
+transformation_guideline_version: retrieval-v1
+source_scope: clickhouse
+database: commerce_demo
+table: customers
+owner: customer-analytics
+reviewer: hoai.um
+document_status: approved
+schema_hash: b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc
+business:
+  display_name: Customer Dimension
+  description: One row per synthetic demo customer used to compare order metrics across retail, premium, and enterprise segments.
+  grain: One row per customer_id.
+  purpose:
+    - Analyze order behavior by customer segment in the commerce demo.
+  appropriate_use:
+    - Group order metrics by retail, premium, or enterprise customer segment.
+  inappropriate_use:
+    - Do not use this table as a production customer master.
+    - Do not use synthetic email or full name values to contact customers.
+  aliases:
+    - Customer Profile
+    - Customer Segment Dimension
+  freshness: Refreshed when the Commerce Demo seed data is reloaded.
+  caveats:
+    - Email and full name are synthetic PII-like test values.
+  evidence:
+    - kind: clickhouse_comment
+      reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.comment
+      status: proposed
+      note: Generated from the ClickHouse comment; domain confirmation is required.
+columns:
+  created_at:
+    business_name: Created At
+    description: UTC timestamp when the customer profile was created
+    semantic_type: timestamp
+    unit: UTC
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.created_at
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  customer_id:
+    business_name: Customer Id
+    description: Stable identifier for one demo customer
+    semantic_type: identifier
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.customer_id
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  email:
+    business_name: Email
+    description: Synthetic contact email classified as PII; always uses the .test domain
+    semantic_type: email
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: pii_synthetic
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.email
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  full_name:
+    business_name: Full Name
+    description: Display name; synthetic data used only by this demo
+    semantic_type: person_name
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: pii_synthetic
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.full_name
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  segment:
+    business_name: Segment
+    description: 'Business segment: retail, premium, or enterprise'
+    semantic_type: categorical
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats:
+      - Allowed values require reviewer confirmation.
+    evidence:
+      - kind: clickhouse_comment
+        reference: catalog/commerce_demo/generated/raw/schema.json#tables.customers.columns.segment
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+relationships: []
+business_rules: []
+data_quality:
+  - Data quality expectations require reviewer confirmation.
+security: []

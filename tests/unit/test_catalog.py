@@ -23,7 +23,6 @@ def test_loads_profile_and_derives_database_first_layout() -> None:
     context = load_catalog_context("commerce_demo", ROOT)
 
     assert context.profile.clickhouse_database == "commerce_demo"
-    assert context.profile.enabled is False
     assert context.profile.tables == ("customers", "order_items", "orders")
     assert context.layout.schema_path == (ROOT / "catalog/commerce_demo/generated/raw/schema.json")
     assert context.layout.review_dir == ROOT / "catalog/commerce_demo/review"

@@ -20,3 +20,6 @@ Then create `tbls.yml`, extract raw schema into `catalog/<key>/generated/raw`, g
 templates, and run the database-scoped checks while the profile remains disabled. Only afterward set
 `enabled: true` to opt into CI generation. Never commit a DSN, password, sampled production row, or
 inferred table name.
+
+The complete developer, CI/bot, and zero-tool reviewer procedure is documented in
+[`docs/runbooks/database-onboarding-end-to-end.md`](../../docs/runbooks/database-onboarding-end-to-end.md).

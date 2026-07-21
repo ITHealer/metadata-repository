@@ -33,6 +33,8 @@ owned by tbls or the metadata bot and CI rejects manual changes.
    document_status: approved
    ```
 
+   Do not update every `evidence.status`; `proposed` evidence is allowed. Only resolve an evidence
+   item when it is explicitly marked `conflicting`.
 9. Commit the status-only change. The bot promotes the exact candidate without calling the LLM
    again. If business content changed in the same commit, CI blocks the approval.
 10. Confirm the candidate state is `promoted`, checks are green, then approve the Pull Request.

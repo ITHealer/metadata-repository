@@ -119,6 +119,8 @@ automation. Commerce Demo has its local fixture allowlist; the two production pl
 `tables: []`. Follow the
 [database onboarding checklist](./config/databases/README.md) after the real table allowlist and
 read-only ClickHouse connection are supplied; do not infer production tables from the demo.
+For the command-by-command workflow, use the
+[end-to-end database onboarding runbook](./docs/runbooks/database-onboarding-end-to-end.md).
 
 ## Raw schema documentation with tbls
 
