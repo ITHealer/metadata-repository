@@ -144,20 +144,20 @@
     "description": "One row per synthetic demo customer used to compare order metrics across retail, premium, and enterprise segments.",
     "display_name": "Customer Dimension",
     "document_id": "commerce_demo.customers",
-    "document_status": "needs_review",
+    "document_status": "approved",
     "freshness": "Refreshed when the Commerce Demo seed data is reloaded.",
     "grain": "One row per customer_id.",
     "inappropriate_use": [
       "Do not use this table as a production customer master.",
       "Do not use synthetic email or full name values to contact customers."
     ],
-    "index_eligible": false,
+    "index_eligible": true,
     "owner": "customer-analytics",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "95e2beb1427368168f6825cdf16e47b1801790aa",
+      "source_review_commit": "a385bea4b5f55ce1ea38f463a99cdf049bc124bc",
       "source_review_path": "catalog/commerce_demo/review/customers.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -184,6 +184,6 @@
     "schema_hash": "b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc"
   },
   "reviewable_body_hash": "9c7d43b5c8ad8d6404751886213d10dbf24b5b7e3ef2ec06adcd471e7c0db688",
-  "state": "review",
+  "state": "promoted",
   "table": "customers"
 }
