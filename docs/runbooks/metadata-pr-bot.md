@@ -35,6 +35,10 @@ Configure the gateway separately:
   `OPENAI_PROMPT_VERSION`.
 - Variable `METADATA_GENERATOR_MODE=live` for production candidate generation.
 
+`OPENAI_PROMPT_VERSION` is part of the candidate fingerprint. Increment it whenever prompt behavior
+changes; `workflow-neutral-narrative-v2` keeps review, approval, preview, and indexing state out of
+LLM narrative so a status-only promotion cannot make the reviewed body stale.
+
 Do not store the API key in an Actions variable or repository file. The workflow has no fallback
 from `live` to `mock`; missing gateway configuration fails visibly. An approval-only sync does not
 load gateway settings or create an LLM client.
