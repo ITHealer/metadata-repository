@@ -5,15 +5,15 @@ table: orders
 qualified_name: commerce_demo.orders
 owner: commerce-team
 reviewer: ITHealer
-document_status: approved
-index_eligible: true
+document_status: needs_review
+index_eligible: false
 schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
-source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
+source_review_commit: db313a05e2bb40d4710101b1dbee860bf15360e4
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
@@ -21,9 +21,12 @@ prompt_version: workflow-neutral-narrative-v2
 
 # commerce_demo.orders — Orders
 
+> [!WARNING]
+> Preview only: reviewer metadata still has `needs_review` status and must not be indexed.
+
 ## Summary
 
-The orders table stores one technical row per order_id in the ClickHouse demo dataset. Each row includes UTC timestamps for creation (created_at) and latest update (updated_at), a UUID order_id, a logical UUID customer_id for joining to customers, a LowCardinality(String) order_status with values pending, paid, shipped, or cancelled (cancelled rows remain in the table), and a Decimal(18,2) total_amount expressed in VND after discounts. Grain is one row per order_id; order_id uniqueness should be confirmed before assuming a one‑row‑per‑order grain. Appropriate uses include aggregating order totals after applying status rules and joining orders to customers via customer_id. It is inappropriate to assume cancelled orders are removed. Freshness is unknown and requires confirmation.
+Each row in the orders table captures a single customer order (grain = one row per order_id). The table stores UTC timestamps for creation (created_at) and last update (updated_at), a logical customer reference (customer_id) for joining to customers, a stable order identifier (order_id), the order status (pending, paid, shipped, cancelled) – with cancelled orders remaining present – and the total amount in VND. It is appropriate for daily order reporting, analysis of order volume and revenue, and can be joined to customers by customer_id. It is not suitable as a payment settlement source. Data is refreshed near real time.
 
 ## Grain and purpose
 
