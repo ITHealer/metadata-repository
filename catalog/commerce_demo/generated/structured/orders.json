@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "5e9be0691be3f07002ce749033339e7bfb4bd937e0eb9a6f0301751427145755",
+  "candidate_hash": "c3b42239c4ed73807e7c44c54ff76e783d81fe097e5c3fee3607ea67c509c3d6",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -199,8 +199,8 @@
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
-      "prompt_version": "approved-narrative-v1",
-      "source_review_commit": "12866cc6d5f235fb0d3ff0257fb4a0855e82f89c",
+      "prompt_version": "workflow-neutral-narrative-v2",
+      "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -240,20 +240,20 @@
     "reviewer": "ITHealer",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06",
     "security": [],
-    "summary": "One row per order (order_id) representing a customer order; includes UTC timestamps (created_at, updated_at), order status (pending, paid, shipped, cancelled), total amount in VND, and a logical customer_id join; data is refreshed near real time and currently marked needs_review.",
+    "summary": "The orders table stores one technical row per order_id in the ClickHouse demo dataset. Each row includes UTC timestamps for creation (created_at) and latest update (updated_at), a UUID order_id, a logical UUID customer_id for joining to customers, a LowCardinality(String) order_status with values pending, paid, shipped, or cancelled (cancelled rows remain in the table), and a Decimal(18,2) total_amount expressed in VND after discounts. Grain is one row per order_id; order_id uniqueness should be confirmed before assuming a one‑row‑per‑order grain. Appropriate uses include aggregating order totals after applying status rules and joining orders to customers via customer_id. It is inappropriate to assume cancelled orders are removed. Freshness is unknown and requires confirmation.",
     "table": "orders",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
     "generator_model": "gpt-oss-120b",
-    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "f31936e7dce5b3dbe88a6e56677daeba4dc5d41c67e8ccad34842a863bd681f1",
-    "prompt_version": "approved-narrative-v1",
-    "review_content_hash": "b289e8533a33ae28299a0e8b71cf0920bd839e001f8d2c355be4b34a9e724c7a",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "a486e6d539137bcaaa494af7f0cab3b8797594f28bef083c163c08504c3b60c3",
+    "prompt_version": "workflow-neutral-narrative-v2",
+    "review_content_hash": "17b6e39eba535d6074925eb5592aeb2d1b439a94c9298afaed9d5fef4e73ba87",
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
   },
-  "reviewable_body_hash": "a3c0badb8fc14a84b24bc43a83cf8f6f8b9b42f962881d7210b13702b05b8fc1",
-  "state": "promoted",
+  "reviewable_body_hash": "addb4b8dd0a0684843f5c6c0745b806e824d9b0ba0232c2376fe9d8e09943f2c",
+  "state": "review",
   "table": "orders"
 }

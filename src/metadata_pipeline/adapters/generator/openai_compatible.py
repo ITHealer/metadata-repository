@@ -38,7 +38,7 @@ from metadata_pipeline.ports.document_generator import (
 
 DEFAULT_BASE_URL = "https://ai-gateway.dev/v1"
 DEFAULT_MODEL = "gpt-5.4-nano"
-DEFAULT_PROMPT_VERSION = "approved-narrative-v1"
+DEFAULT_PROMPT_VERSION = "workflow-neutral-narrative-v2"
 
 
 class ResponseFormatMode(str, Enum):
@@ -184,7 +184,9 @@ class OpenAICompatibleDocumentGenerator:
                     "narrative fields of a validated ClickHouse metadata document. Use only facts "
                     "in the supplied document, preserve uncertainty and restrictions, keep every "
                     "list cardinality and object key unchanged, and do not invent owners, rules, "
-                    "joins, units, values, sources, upstream systems, or confidence. Return JSON."
+                    "joins, units, values, sources, upstream systems, or confidence. Do not "
+                    "mention review, approval, preview, publication, indexing, document_status, "
+                    "index_eligible, or any metadata workflow state in narrative text. Return JSON."
                 ),
             },
             {
@@ -194,10 +196,10 @@ class OpenAICompatibleDocumentGenerator:
                         "task": (
                             "Rewrite approved narrative fields without changing facts."
                             if expected.document_status is DocumentStatus.APPROVED
-                            else "Return a concise self-contained preview summary only."
+                            else "Return a concise self-contained technical and business summary."
                         ),
                         "output_schema": response_model.model_json_schema(),
-                        "published_document": expected.model_dump(mode="json"),
+                        "published_document": _narrative_source(expected),
                     },
                     ensure_ascii=False,
                     sort_keys=True,
@@ -218,6 +220,7 @@ class OpenAICompatibleDocumentGenerator:
             if not content:
                 raise DocumentGenerationError("gateway returned no structured narrative content")
             response = response_model.model_validate_json(content)
+            _reject_workflow_state_narrative(response)
         except DocumentGenerationError:
             raise
         except APITimeoutError as error:
@@ -248,6 +251,45 @@ class OpenAICompatibleDocumentGenerator:
         return PublishedDocument.model_validate(
             expected.model_copy(update={"summary": response.summary}).model_dump()
         )
+
+
+def _narrative_source(document: PublishedDocument) -> dict[str, object]:
+    """Remove pipeline-only lifecycle fields before sending grounded facts to the model."""
+    payload = document.model_dump(mode="json")
+    payload.pop("document_status")
+    payload.pop("index_eligible")
+    return payload
+
+
+def _reject_workflow_state_narrative(
+    response: _SummaryResponse | _ApprovedNarrativeResponse,
+) -> None:
+    """Reject reserved lifecycle terms that would become stale after candidate promotion."""
+    reserved_terms = ("needs_review", "needs review", "document_status", "index_eligible")
+    for value in _narrative_values(response):
+        normalized = value.casefold()
+        if any(term in normalized for term in reserved_terms):
+            raise DocumentGenerationError(
+                "gateway narrative mentions metadata workflow state; regenerate without review or "
+                "indexing status"
+            )
+
+
+def _narrative_values(
+    response: _SummaryResponse | _ApprovedNarrativeResponse,
+) -> tuple[str, ...]:
+    if isinstance(response, _SummaryResponse):
+        return (response.summary,)
+    return (
+        response.summary,
+        response.description,
+        *response.purpose,
+        *response.appropriate_use,
+        *response.inappropriate_use,
+        *response.column_descriptions.values(),
+        *response.relationship_meanings.values(),
+        *response.rule_descriptions.values(),
+    )
 
 
 def _response_format(

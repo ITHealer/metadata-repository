@@ -13,17 +13,17 @@ review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
-source_review_commit: 12866cc6d5f235fb0d3ff0257fb4a0855e82f89c
+source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
 generator_mode: live
 generator_model: gpt-oss-120b
-prompt_version: approved-narrative-v1
+prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.orders — Orders
 
 ## Summary
 
-One row per order (order_id) representing a customer order; includes UTC timestamps (created_at, updated_at), order status (pending, paid, shipped, cancelled), total amount in VND, and a logical customer_id join; data is refreshed near real time and currently marked needs_review.
+The orders table stores one technical row per order_id in the ClickHouse demo dataset. Each row includes UTC timestamps for creation (created_at) and latest update (updated_at), a UUID order_id, a logical UUID customer_id for joining to customers, a LowCardinality(String) order_status with values pending, paid, shipped, or cancelled (cancelled rows remain in the table), and a Decimal(18,2) total_amount expressed in VND after discounts. Grain is one row per order_id; order_id uniqueness should be confirmed before assuming a one‑row‑per‑order grain. Appropriate uses include aggregating order totals after applying status rules and joining orders to customers via customer_id. It is inappropriate to assume cancelled orders are removed. Freshness is unknown and requires confirmation.
 
 ## Grain and purpose
 

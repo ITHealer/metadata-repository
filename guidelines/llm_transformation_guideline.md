@@ -71,6 +71,9 @@ An LLM may improve readability, normalize headings, or combine duplicate wording
 - remove a caveat because it makes the summary less concise;
 - copy secrets, credentials, DSNs, or real row data into output;
 - use model memory as evidence.
+- mention review, approval, preview, publication, indexing, `document_status`, `index_eligible`, or
+  another metadata workflow state in narrative fields; lifecycle state belongs only in generated
+  provenance and UI notices because it changes without rewriting the reviewed body.
 
 When reviewer prose contradicts raw technical facts, stop with an actionable conflict. Example:
 reviewer says `orders.total_amount` is nullable while raw `schema.json` says it is non-nullable.

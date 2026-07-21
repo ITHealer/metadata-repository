@@ -13,10 +13,10 @@ review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/order_items.yml
-source_review_commit: 15eecf84074e9ba2d43b0e5513a5575fa7110ff0
+source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
 generator_mode: live
 generator_model: gpt-oss-120b
-prompt_version: approved-narrative-v1
+prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.order_items — Order items
@@ -26,7 +26,7 @@ prompt_version: approved-narrative-v1
 
 ## Summary
 
-One row per order line (order_id + line_number) in the ClickHouse demo dataset.
+Each row represents a single order line in the commerce_demo ClickHouse demo dataset, identified by order_id and line_number (uniqueness needs confirmation). The table can be logically joined to orders on order_id (foreign key not enforced) and is intended for product‑quantity and line‑value analysis; a technical line amount may be calculated as quantity × unit_price, though tax, discount, return, and cancellation handling require reviewer confirmation. Business ownership, refresh expectations, product master semantics, and dataset freshness are also pending confirmation.
 
 ## Grain and purpose
 

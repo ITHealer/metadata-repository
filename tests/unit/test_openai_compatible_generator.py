@@ -129,7 +129,12 @@ def test_gateway_generates_only_summary_through_chat_completions(
     assert document.summary == "Orders support lifecycle analysis at order grain."
     assert document.provenance.generator_mode is GeneratorMode.LIVE
     assert document.provenance.generator_model == "gpt-5.4-nano"
-    assert document.provenance.prompt_version == "approved-narrative-v1"
+    assert document.provenance.prompt_version == "workflow-neutral-narrative-v2"
+    prompt_document = body["messages"][1]["content"]
+    assert isinstance(prompt_document, str)
+    prompt_payload = json.loads(prompt_document)
+    assert "document_status" not in prompt_payload["published_document"]
+    assert "index_eligible" not in prompt_payload["published_document"]
     total_amount = next(column for column in document.columns if column.name == "total_amount")
     assert total_amount.unit == "VND"
 
@@ -164,6 +169,46 @@ def test_gateway_rejects_invalid_structured_response(
     )
     try:
         with pytest.raises(DocumentGenerationError, match="structured output contract"):
+            OpenAICompatibleDocumentGenerator(settings, client).generate(publication_context)
+    finally:
+        client.close()
+
+
+def test_gateway_rejects_workflow_state_in_narrative(
+    publication_context: PublicationContext,
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "chatcmpl-workflow-state",
+                "object": "chat.completion",
+                "created": 1,
+                "model": "gpt-5.4-nano",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": json.dumps(
+                                {"summary": "Orders are currently marked needs_review."}
+                            ),
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    settings = OpenAICompatibleSettings(api_key="gateway-test-key", max_retries=0)
+    client = OpenAI(
+        api_key=settings.api_key,
+        base_url=settings.base_url,
+        max_retries=0,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    try:
+        with pytest.raises(DocumentGenerationError, match="mentions metadata workflow state"):
             OpenAICompatibleDocumentGenerator(settings, client).generate(publication_context)
     finally:
         client.close()
