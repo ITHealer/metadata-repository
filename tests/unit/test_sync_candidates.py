@@ -28,6 +28,11 @@ def _workspace(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path, Path]:
     copy2(ROOT / "catalog/commerce_demo/generated/raw/schema.json", schema)
     reviews = tmp_path / "review"
     copytree(ROOT / "catalog/commerce_demo/review", reviews)
+    orders_path = reviews / "orders.yml"
+    orders = load_review_document(orders_path).model_copy(
+        update={"document_status": DocumentStatus.NEEDS_REVIEW}
+    )
+    write_review_document(orders_path, orders)
     contract = tmp_path / "metadata_contract.yml"
     guideline = tmp_path / "guideline.md"
     copy2(ROOT / "contracts/metadata_contract.yml", contract)
