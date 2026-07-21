@@ -54,6 +54,15 @@ def test_publish_orchestration_is_a_generation_source() -> None:
     assert classification.has_published is True
 
 
+def test_database_profile_change_triggers_metadata_input_flow() -> None:
+    classification = classify_changed_paths(
+        (ChangedPath("M", "config/databases/commerce_demo/database.yml"),)
+    )
+
+    assert classification.has_inputs is True
+    assert classification.has_published is False
+
+
 def test_only_published_requires_nonempty_allowlisted_change_set() -> None:
     empty = classify_changed_paths(())
     published = classify_changed_paths(

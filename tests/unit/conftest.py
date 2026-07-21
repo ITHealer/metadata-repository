@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 @pytest.fixture
 def publication_context() -> PublicationContext:
     """Return a validated orders context backed by committed demo inputs."""
-    schema_path = ROOT / "catalog/commerce_demo/generated/raw/schema.json"
-    review_path = ROOT / "catalog/commerce_demo/review/orders.yml"
+    schema_path = ROOT / "tests/fixtures/commerce_demo/schema.json"
+    review_path = ROOT / "tests/fixtures/commerce_demo/review/orders.yml"
     schema = TblsSchemaSource(schema_path).load()
     table = next(table for table in schema.tables if table.name == "orders")
     review = load_review_document(review_path).model_copy(

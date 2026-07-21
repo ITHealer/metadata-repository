@@ -113,9 +113,10 @@ not need to assemble paths manually. `catalog-check` fails if tbls returned an u
 an allowlisted table is missing, or the raw database name differs from the profile. Production
 profiles should use the exact table list supplied by the data owner rather than a wildcard.
 
-UrGift and UrCard are currently committed as safe pending profiles: `enabled: false` and
-`tables: []`. They are visible in `catalog-check-all` but excluded from reviewer/generator
-automation. Follow the
+Commerce Demo, UrGift, and UrCard are currently committed as safe pending profiles with
+`enabled: false`. They are visible in `catalog-check-all` but excluded from generator/indexing
+automation. Commerce Demo has its local fixture allowlist; the two production placeholders keep
+`tables: []`. Follow the
 [database onboarding checklist](./config/databases/README.md) after the real table allowlist and
 read-only ClickHouse connection are supplied; do not infer production tables from the demo.
 
@@ -168,7 +169,7 @@ every declared table, column, and relationship endpoint must exist in the raw tb
 make review-schema    # Regenerate JSON Schema from Pydantic
 make review-draft     # Create/refresh drafts without overwriting human metadata
 make review-validate  # Validate the three reviewer files against raw schema.json
-make review-check     # Run both; this is the GitHub Actions gate
+make review-check     # Export the contract and validate every enabled database in CI
 ```
 
 `make review-draft` is deterministic: unchanged schema produces no file rewrite. A new column is
@@ -205,10 +206,11 @@ the same value. For a reproducibility check or a non-Git environment, pass it ex
 make knowledge-check SOURCE_REVIEW_COMMIT=<40-character-commit-sha>
 ```
 
-Files under `catalog/commerce_demo/generated/published` are generated and committed so reviewers can see
-the exact output diff. Do not edit them manually. Change reviewer YAML, run `make knowledge-check`,
-inspect both input and output, then commit them together. The JSONL file under `build/chunks` is a
-local/CI artifact and is intentionally ignored by Git.
+Files under `catalog/commerce_demo/generated/published` are generated and committed by the metadata
+bot so reviewers can see the exact output diff. Do not edit or commit them manually. A reviewer
+changes only `catalog/<database>/review/<table>.yml`; GitHub Actions validates the input and the bot
+updates structured JSON plus Markdown on the same PR branch. The JSONL file under `build/chunks` is
+a local/CI artifact and is intentionally ignored by Git.
 
 Documents still marked `needs_review` are published as preview files with
 `index_eligible: false`. A document can become index-eligible only after its reviewer contract is

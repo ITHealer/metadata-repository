@@ -17,9 +17,9 @@ from metadata_pipeline.application.publish_metadata import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA = ROOT / "catalog/commerce_demo/generated/raw/schema.json"
+SCHEMA = ROOT / "tests/fixtures/commerce_demo/schema.json"
 CONTRACT = ROOT / "contracts/metadata_contract.yml"
-REVIEWS = ROOT / "catalog/commerce_demo/review"
+REVIEWS = ROOT / "tests/fixtures/commerce_demo/review"
 COMMIT = "b" * 40
 
 

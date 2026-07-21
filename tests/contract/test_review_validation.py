@@ -13,8 +13,8 @@ from metadata_pipeline.application.review_contract import (
 from metadata_pipeline.io.review_yaml import load_review_contract, load_review_document
 from metadata_pipeline.validation.review import validate_review_document
 
-SCHEMA_PATH = Path("catalog/commerce_demo/generated/raw/schema.json")
-REVIEW_DIR = Path("catalog/commerce_demo/review")
+SCHEMA_PATH = Path("tests/fixtures/commerce_demo/schema.json")
+REVIEW_DIR = Path("tests/fixtures/commerce_demo/review")
 CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 
 

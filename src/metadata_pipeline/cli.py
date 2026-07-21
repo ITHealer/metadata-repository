@@ -282,7 +282,7 @@ def run_doctor() -> int:
 
 def run_catalog_check(context: CatalogContext, schema_path: Path) -> int:
     """Validate one database boundary and print a concise operator result."""
-    if not context.profile.enabled:
+    if not context.profile.enabled and not schema_path.is_file():
         print(f"catalog validation skipped: {context.profile.key} (onboarding disabled)")
         return 0
     try:
@@ -290,8 +290,10 @@ def run_catalog_check(context: CatalogContext, schema_path: Path) -> int:
     except CatalogConfigurationError as error:
         print(f"catalog configuration error: {error}", file=sys.stderr)
         return 1
+    state = "onboarding" if not context.profile.enabled else "enabled"
     print(
-        f"catalog validation passed: {context.profile.key} ({len(context.profile.tables)} table(s))"
+        f"catalog validation passed: {context.profile.key} "
+        f"({len(context.profile.tables)} table(s), {state})"
     )
     return 0
 
@@ -798,16 +800,14 @@ def _load_catalog_context(database: str, repository_root: Path) -> CatalogContex
 def _resolve_catalog_paths(
     args: argparse.Namespace,
 ) -> tuple[CatalogContext, Path, Path, Path, Path] | None:
-    """Resolve optional CLI path overrides against one validated database layout."""
+    """Resolve paths for explicit developer commands, including disabled onboarding profiles.
+
+    ``enabled`` controls automated catalog discovery. It must not prevent a
+    developer from extracting, drafting, and validating a database before the
+    profile is ready to participate in CI generation.
+    """
     context = _load_catalog_context(args.database, args.repository_root)
     if context is None:
-        return None
-    if not context.profile.enabled:
-        print(
-            f"catalog configuration error: database {args.database!r} is disabled; "
-            "complete its table allowlist and tbls configuration before running metadata commands",
-            file=sys.stderr,
-        )
         return None
     root = context.layout.repository_root
     return (

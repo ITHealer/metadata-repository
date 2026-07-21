@@ -3,21 +3,24 @@
 from __future__ import annotations
 
 from pathlib import Path
+from shutil import copy2
 
 from metadata_pipeline.application.create_drafts import DraftAction, create_review_drafts
 from metadata_pipeline.application.review_contract import validate_review_directory
 from metadata_pipeline.validation.review import IssueSeverity
 
-SCHEMA_PATH = Path("catalog/commerce_demo/generated/raw/schema.json")
+SCHEMA_PATH = Path("tests/fixtures/commerce_demo/schema.json")
 CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 GOLDEN_DIR = Path("tests/golden/review/commerce_demo")
 
 
 def test_three_demo_drafts_match_golden_and_are_idempotent(tmp_path: Path) -> None:
+    schema_path = tmp_path / "schema.json"
+    copy2(SCHEMA_PATH, schema_path)
     review_dir = tmp_path / "review"
 
-    created = create_review_drafts(SCHEMA_PATH, review_dir, CONTRACT_PATH)
-    unchanged = create_review_drafts(SCHEMA_PATH, review_dir, CONTRACT_PATH)
+    created = create_review_drafts(schema_path, review_dir, CONTRACT_PATH)
+    unchanged = create_review_drafts(schema_path, review_dir, CONTRACT_PATH)
 
     assert {result.action for result in created} == {DraftAction.CREATED}
     assert {result.action for result in unchanged} == {DraftAction.UNCHANGED}

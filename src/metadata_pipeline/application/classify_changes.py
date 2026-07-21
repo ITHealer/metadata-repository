@@ -12,6 +12,7 @@ GENERATION_SOURCE_PATTERNS = (
     "src/metadata_pipeline/io/published_markdown.py",
 )
 INPUT_PATTERNS = (
+    "config/databases/**",
     "catalog/*/generated/raw/**",
     "catalog/*/review/**",
     "prompts/**",

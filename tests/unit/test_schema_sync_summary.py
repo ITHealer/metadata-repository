@@ -12,7 +12,7 @@ from metadata_pipeline.ports.schema_source import ColumnSchema, TableSchema
 
 
 def test_additive_schema_scenario_lists_tables_and_reviewer_files() -> None:
-    before = TblsSchemaSource(Path("catalog/commerce_demo/generated/raw/schema.json")).load()
+    before = TblsSchemaSource(Path("tests/fixtures/commerce_demo/schema.json")).load()
     orders = next(table for table in before.tables if table.name == "orders")
     changed_orders = replace(
         orders,
@@ -56,7 +56,7 @@ def test_additive_schema_scenario_lists_tables_and_reviewer_files() -> None:
 
 
 def test_deleted_table_remains_in_reviewer_attention() -> None:
-    before = TblsSchemaSource(Path("catalog/commerce_demo/generated/raw/schema.json")).load()
+    before = TblsSchemaSource(Path("tests/fixtures/commerce_demo/schema.json")).load()
     after = replace(
         before,
         tables=tuple(table for table in before.tables if table.name != "customers"),

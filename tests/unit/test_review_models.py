@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from metadata_pipeline.domain.review import DocumentStatus, ReviewDocument
 from metadata_pipeline.io.review_yaml import load_review_document
 
-REVIEW_DIR = Path("catalog/commerce_demo/review")
+REVIEW_DIR = Path("tests/fixtures/commerce_demo/review")
 
 
 def test_review_document_rejects_unknown_fields() -> None:

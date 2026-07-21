@@ -14,6 +14,14 @@ from metadata_pipeline import __version__
 from metadata_pipeline.cli import main
 
 ROOT = Path(__file__).resolve().parents[2]
+FIXTURE_PUBLICATION_ARGS = (
+    "--schema",
+    "tests/fixtures/commerce_demo/schema.json",
+    "--review-dir",
+    "tests/fixtures/commerce_demo/review",
+    "--contract",
+    "contracts/metadata_contract.yml",
+)
 
 
 def test_cli_shows_version(capsys: pytest.CaptureFixture[str]) -> None:
@@ -43,7 +51,7 @@ def test_validate_review_returns_failure_for_unknown_table(
 ) -> None:
     review_dir = tmp_path / "review"
     review_dir.mkdir()
-    source = Path("catalog/commerce_demo/review/customers.yml")
+    source = Path("tests/fixtures/commerce_demo/review/customers.yml")
     payload: dict[str, Any] = yaml.safe_load(source.read_text(encoding="utf-8"))
     payload["table"] = "customers_typo"
     (review_dir / "customers.yml").write_text(
@@ -55,7 +63,7 @@ def test_validate_review_returns_failure_for_unknown_table(
         [
             "validate-review",
             "--schema",
-            "catalog/commerce_demo/generated/raw/schema.json",
+            "tests/fixtures/commerce_demo/schema.json",
             "--review-dir",
             str(review_dir),
             "--contract",
@@ -74,7 +82,7 @@ def test_draft_cli_is_idempotent_and_warning_only_validation_passes(
     review_dir = tmp_path / "review"
     common_arguments = [
         "--schema",
-        "catalog/commerce_demo/generated/raw/schema.json",
+        "tests/fixtures/commerce_demo/schema.json",
         "--review-dir",
         str(review_dir),
         "--contract",
@@ -98,13 +106,13 @@ def test_publish_validate_and_chunk_commands_share_one_contract(
 ) -> None:
     review_dir = tmp_path / "review"
     review_dir.mkdir()
-    for source in Path("catalog/commerce_demo/review").glob("*.yml"):
+    for source in Path("tests/fixtures/commerce_demo/review").glob("*.yml"):
         copy2(source, review_dir / source.name)
     published_dir = tmp_path / "published"
     chunk_path = tmp_path / "chunks.jsonl"
     common_arguments = [
         "--schema",
-        "catalog/commerce_demo/generated/raw/schema.json",
+        "tests/fixtures/commerce_demo/schema.json",
         "--review-dir",
         str(review_dir),
         "--contract",
@@ -163,6 +171,7 @@ def test_live_publish_requires_gateway_key(
     exit_code = main(
         [
             "publish",
+            *FIXTURE_PUBLICATION_ARGS,
             "--repository-root",
             str(ROOT),
             "--published-dir",
@@ -191,6 +200,7 @@ def test_publish_can_select_one_table_without_deleting_other_output(
     exit_code = main(
         [
             "publish",
+            *FIXTURE_PUBLICATION_ARGS,
             "--published-dir",
             str(published_dir),
             "--source-review-commit",
@@ -223,6 +233,7 @@ def test_publish_rejects_unknown_selected_table(
     exit_code = main(
         [
             "publish",
+            *FIXTURE_PUBLICATION_ARGS,
             "--published-dir",
             str(published_dir),
             "--source-review-commit",

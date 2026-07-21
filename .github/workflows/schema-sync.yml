@@ -48,7 +48,13 @@ jobs:
       - name: Preserve the committed schema for the PR summary
         run: |
           mkdir -p build
-          git show HEAD:catalog/commerce_demo/generated/raw/schema.json > build/schema-before.json
+          if git cat-file -e HEAD:catalog/commerce_demo/generated/raw/schema.json; then
+            git show HEAD:catalog/commerce_demo/generated/raw/schema.json > build/schema-before.json
+          else
+            printf '%s\n' \
+              '{"name":"commerce_demo","desc":"Initial empty catalog","tables":[],"relations":[]}' \
+              > build/schema-before.json
+          fi
 
       - name: Start the reproducible ClickHouse source
         run: make db-up
@@ -109,7 +115,7 @@ jobs:
             echo "METADATA_BOT_TOKEN is required to publish the schema sync Draft PR."
             exit 1
           fi
-          unexpected="$(git status --porcelain | awk '$2 !~ /^(schema\/raw|metadata\/review)\// {print}')"
+          unexpected="$(git status --porcelain | awk '$2 !~ /^catalog\/[^/]+\/(generated\/raw|review)\// {print}')"
           if [[ -n "$unexpected" ]]; then
             echo "Schema sync changed files outside its allowlist:"
             echo "$unexpected"
