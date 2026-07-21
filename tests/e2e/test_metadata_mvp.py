@@ -23,8 +23,8 @@ from metadata_pipeline.application.retrieval_evaluation import (
 from metadata_pipeline.domain.published import Chunk
 from metadata_pipeline.io.review_yaml import load_review_document
 
-SCHEMA = Path("catalog/commerce_demo/generated/raw/schema.json")
-REVIEWS = Path("catalog/commerce_demo/review")
+SCHEMA = Path("tests/fixtures/commerce_demo/schema.json")
+REVIEWS = Path("tests/fixtures/commerce_demo/review")
 CONTRACT = Path("contracts/metadata_contract.yml")
 QUESTIONS = Path("tests/fixtures/golden_questions.yml")
 

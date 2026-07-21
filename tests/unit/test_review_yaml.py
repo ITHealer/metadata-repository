@@ -12,7 +12,7 @@ from metadata_pipeline.io.review_yaml import (
 
 
 def test_review_yaml_round_trips_and_skips_unchanged_write(tmp_path: Path) -> None:
-    review = load_review_document(Path("catalog/commerce_demo/review/orders.yml"))
+    review = load_review_document(Path("tests/fixtures/commerce_demo/review/orders.yml"))
     output = tmp_path / "orders.yml"
 
     assert write_review_document(output, review) is True
@@ -25,7 +25,7 @@ def test_review_yaml_round_trips_and_skips_unchanged_write(tmp_path: Path) -> No
 
 
 def test_dump_uses_stable_field_order_and_indented_lists() -> None:
-    review = load_review_document(Path("catalog/commerce_demo/review/customers.yml"))
+    review = load_review_document(Path("tests/fixtures/commerce_demo/review/customers.yml"))
 
     content = dump_review_document(review)
 

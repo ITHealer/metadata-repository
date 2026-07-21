@@ -80,12 +80,12 @@ def _build_repository(root: Path) -> None:
         root / "guidelines/llm_transformation_guideline.md",
     )
     source_payload: dict[str, Any] = json.loads(
-        (ROOT / "catalog/commerce_demo/generated/raw/schema.json").read_text(encoding="utf-8")
+        (ROOT / "tests/fixtures/commerce_demo/schema.json").read_text(encoding="utf-8")
     )
     customer_table = next(
         table for table in source_payload["tables"] if table["name"] == "customers"
     )
-    source_review = load_review_document(ROOT / "catalog/commerce_demo/review/customers.yml")
+    source_review = load_review_document(ROOT / "tests/fixtures/commerce_demo/review/customers.yml")
     for key, clickhouse_name in (("urgift", "UrGift"), ("urcard", "UrCard")):
         profile_dir = root / f"config/databases/{key}"
         profile_dir.mkdir(parents=True)

@@ -10,7 +10,7 @@ from metadata_pipeline.application.create_drafts import DraftAction, create_revi
 from metadata_pipeline.domain.review import DocumentStatus
 from metadata_pipeline.io.review_yaml import load_review_document, write_review_document
 
-SCHEMA_PATH = Path("catalog/commerce_demo/generated/raw/schema.json")
+SCHEMA_PATH = Path("tests/fixtures/commerce_demo/schema.json")
 CONTRACT_PATH = Path("contracts/metadata_contract.yml")
 
 

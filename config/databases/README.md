@@ -4,9 +4,10 @@ Directory names are stable lowercase repository keys. `clickhouse_database` pres
 case-sensitive ClickHouse database name.
 
 A production database starts as a disabled profile with `tables: []`. Disabled profiles are visible
-to `make catalog-check-all` but are skipped by automation and cannot run draft, generation, or
-publishing commands. This is intentional: an empty tbls `include` list can be interpreted as “no
-filter” by tools, which is unsafe for a large production database.
+to `make catalog-check-all` but are excluded from automatic generation, publishing, and indexing.
+Explicit database-scoped developer commands remain available so onboarding can extract a schema,
+create reviewer drafts, and validate them before activation. An empty tbls `include` list can be
+interpreted as “no filter” by tools, so never extract until an explicit table allowlist is configured.
 
 To enable a profile, the developer must obtain and verify:
 
@@ -16,5 +17,6 @@ To enable a profile, the developer must obtain and verify:
 4. Any reviewed logical relationships for allowlisted tables.
 
 Then create `tbls.yml`, extract raw schema into `catalog/<key>/generated/raw`, generate reviewer YAML
-templates, run the database-scoped checks, and only afterward set `enabled: true`. Never commit a
-DSN, password, sampled production row, or inferred table name.
+templates, and run the database-scoped checks while the profile remains disabled. Only afterward set
+`enabled: true` to opt into CI generation. Never commit a DSN, password, sampled production row, or
+inferred table name.

@@ -120,6 +120,8 @@ jobs:
   tbls-schema:
     name: tbls schema extraction
     runs-on: ubuntu-latest
+    env:
+      TBLS_DOC_PATH: build/tbls/commerce_demo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -128,8 +130,8 @@ jobs:
           cache: pip
       - run: make install
       - run: make db-up schema-check
-      - name: Verify generated schema is committed
-        run: git diff --exit-code -- catalog/commerce_demo/generated/raw
+      - name: Verify isolated schema output exists
+        run: test -s build/tbls/commerce_demo/schema.json
       - name: Show ClickHouse logs on failure
         if: failure()
         run: make db-logs

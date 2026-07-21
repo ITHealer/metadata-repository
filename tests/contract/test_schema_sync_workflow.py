@@ -27,3 +27,11 @@ def test_schema_sync_has_write_allowlist_and_always_cleans_up() -> None:
     assert "if: failure()\n        run: make db-logs" in content
     assert "if: always()\n        run: make db-down" in content
     assert "pull_request_target" not in content
+
+
+def test_schema_sync_supports_the_first_run_without_committed_catalog() -> None:
+    content = WORKFLOW.read_text(encoding="utf-8")
+
+    assert "git cat-file -e HEAD:catalog/commerce_demo/generated/raw/schema.json" in content
+    assert '"tables":[],"relations":[]' in content
+    assert "^catalog\\/[^/]+\\/(generated\\/raw|review)\\/" in content

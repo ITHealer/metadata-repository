@@ -70,7 +70,7 @@ smoke: ## Verify that the CLI starts and the local environment is supported
 	$(PYTHON) -m metadata_pipeline.cli --version
 	$(PYTHON) -m metadata_pipeline.cli doctor
 
-verify: lint typecheck coverage smoke review-validate ## Run all local quality gates
+verify: lint typecheck coverage smoke review-check ## Run all local quality gates
 
 db-up: ## Start the ClickHouse demo fixture and wait until it is ready
 	$(COMPOSE) up -d clickhouse
@@ -116,7 +116,10 @@ review-validate: ## Validate reviewer YAML against the raw tbls schema
 	./scripts/metadata validate-review \
 		--database $(DATABASE)
 
-review-check: review-schema review-validate ## Generate and validate the reviewer contract
+review-check: review-schema ## Generate the contract and validate every enabled database
+	@for database in $$(./scripts/metadata list-databases); do \
+		$(MAKE) review-validate DATABASE="$$database"; \
+	done
 
 catalog-check: ## Validate the selected database profile and table allowlist
 	./scripts/metadata catalog-check --database $(DATABASE)

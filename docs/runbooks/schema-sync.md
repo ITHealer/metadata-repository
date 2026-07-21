@@ -6,6 +6,11 @@ The workflow is manual-first. Run **Schema Sync** from the Actions tab with `sce
 When the committed raw schema matches ClickHouse, the job exits successfully without creating a
 branch or empty Pull Request.
 
+The first run may start without `catalog/commerce_demo/generated/raw/schema.json`. In that case the
+workflow compares the extracted schema with an internal empty baseline, creates reviewer drafts, and
+opens the first Draft Pull Request. Missing committed output is an expected onboarding state, not a
+CI error.
+
 For UAT, select `scenario=additive_test`. The fixture adds `orders.channel` and the `order_events`
 table inside the disposable ClickHouse container, then proves that tbls and draft generation produce
 a reviewable diff. This fixture must never run against an external database.

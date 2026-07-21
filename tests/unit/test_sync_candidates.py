@@ -25,9 +25,9 @@ ROOT = Path(__file__).resolve().parents[2]
 def _workspace(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path, Path]:
     schema = tmp_path / "raw/schema.json"
     schema.parent.mkdir()
-    copy2(ROOT / "catalog/commerce_demo/generated/raw/schema.json", schema)
+    copy2(ROOT / "tests/fixtures/commerce_demo/schema.json", schema)
     reviews = tmp_path / "review"
-    copytree(ROOT / "catalog/commerce_demo/review", reviews)
+    copytree(ROOT / "tests/fixtures/commerce_demo/review", reviews)
     orders_path = reviews / "orders.yml"
     orders = load_review_document(orders_path).model_copy(
         update={"document_status": DocumentStatus.NEEDS_REVIEW}

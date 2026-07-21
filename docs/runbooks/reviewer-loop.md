@@ -1,25 +1,28 @@
-# Reviewer loop: one table from raw schema to approved Markdown
+# Reviewer loop: one table from YAML to approved Markdown
 
-This example updates the business meaning of `orders.total_amount`. Reviewer YAML is the human-owned
-source; generated Markdown is never edited directly.
+This example updates the business meaning of `orders.total_amount`. Reviewer YAML is the
+human-owned source; generated JSON and Markdown are bot-owned outputs.
 
-## 1. Prepare a review branch
+## 1. Developer prepares the onboarding Pull Request
+
+The developer extracts the allowlisted ClickHouse schema and creates deterministic YAML templates
+while the database profile is still disabled:
 
 ```bash
-git switch main
-git pull --ff-only origin main
-git switch -c review/orders-total-amount
-make install
-make review-validate
+make schema-check DATABASE=commerce_demo
+make review-draft DATABASE=commerce_demo
+make review-validate DATABASE=commerce_demo
 ```
 
-Confirm `catalog/commerce_demo/generated/raw/schema.json` already contains `orders.total_amount`. If the raw
-schema changed, regenerate it through the schema-sync flow before reviewing business meaning.
+After inspecting the raw output, the developer changes
+`config/databases/commerce_demo/database.yml` to `enabled: true`, commits the profile, raw schema,
+and reviewer templates, then opens a Draft Pull Request. This activation commit opts the database
+into the Metadata PR workflow.
 
-## 2. Edit reviewer-owned metadata
+## 2. Reviewer edits only YAML in GitHub
 
-Open `catalog/commerce_demo/review/orders.yml` and change only the relevant business fields. For
-example:
+The reviewer opens `catalog/commerce_demo/review/orders.yml` in the PR and changes only confirmed
+business fields. Keep `document_status: needs_review`:
 
 ```yaml
 columns:
@@ -30,110 +33,58 @@ columns:
       - Cancelled orders remain present; exclude them when calculating completed revenue.
 ```
 
-Do not change `data_type`, raw ClickHouse comments, schema hash, or generated Markdown to force the
-desired output. Add evidence and uncertainty explicitly when the statement is not confirmed.
+Commit the edit to the same PR branch through GitHub. The reviewer does not clone the repository,
+run Make, configure an API key, or edit generated files.
 
-## 3. Validate and preview only this table
+## 3. CI validates and the bot generates
 
-```bash
-make review-validate
-make publish TABLE=orders
+`Metadata PR / pr-gate` validates the table and column names against raw `schema.json`. For a valid
+input change, the configured gateway generates a structured candidate and Markdown preview. The bot
+commits only:
+
+```text
+catalog/commerce_demo/generated/structured/orders.json
+catalog/commerce_demo/generated/published/orders.md
 ```
 
-Inspect:
+The workflow runs again on the bot commit in validation-only mode, preventing a generation loop.
 
-```bash
-git diff -- catalog/commerce_demo/review/orders.yml
-git diff -- catalog/commerce_demo/generated/published/orders.md
+## 4. Reviewer checks the Markdown
+
+Open `catalog/commerce_demo/generated/published/orders.md` from the PR diff or Actions summary.
+
+- If it is incorrect, edit `orders.yml` again, keep `needs_review`, and commit. CI generates a new
+  candidate.
+- If it is correct, continue to the approval step. Never fix wording directly in Markdown.
+
+## 5. Reviewer approves the exact candidate
+
+Change only:
+
+```yaml
+document_status: approved
 ```
 
-`make publish TABLE=orders` uses the deterministic renderer and updates only `orders.md`. It does
-not delete or regenerate the other table files.
+Commit that status-only edit. The bot verifies the candidate fingerprint and promotes the exact
+Markdown already reviewed without calling the LLM again. A commit that changes both business
+content and status is rejected; first regenerate under `needs_review`, then approve separately.
 
-## 4. Optional LLM wording preview
+## 6. Merge and index
 
-Set the gateway values in the ignored `.env` file. The model name must be one returned by the
-gateway `/v1/models` endpoint. For the tested development key, `gpt-oss-120b` supports strict
-`json_schema` output.
+When `Quality` and `Metadata PR / pr-gate` are green and the candidate state is `promoted`, approve
+and merge the Pull Request. The Index Manifest workflow runs after merge because approved structured
+and published artifacts changed. Documents still in `needs_review` remain excluded from indexing.
 
-```dotenv
-OPENAI_BASE_URL=https://ai-gateway.urbox.dev/v1
-OPENAI_API_KEY=<your-key>
-OPENAI_MODEL=gpt-oss-120b
-OPENAI_RESPONSE_FORMAT=json_schema
-```
+## Required GitHub configuration
 
-Generate an isolated preview:
+An Owner configures these under **Settings → Secrets and variables → Actions**:
 
-```bash
-make live-uat TABLE=orders
-```
+- Secret `METADATA_BOT_TOKEN`: fine-grained token with repository Contents write access.
+- Secret `OPENAI_API_KEY`: gateway credential.
+- Variable `METADATA_BOT_LOGIN`: account that owns the bot token.
+- Variables `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_RESPONSE_FORMAT`, and
+  `OPENAI_PROMPT_VERSION`.
+- Variable `METADATA_GENERATOR_MODE=live` when real LLM generation is required.
 
-Review `build/live/published/commerce_demo/orders.md`. This file is ignored and must not be copied
-over the canonical document. If the model suggests better wording, put the accepted meaning back
-into `orders.yml`, then rerun validation and deterministic publish. This keeps reviewer intent as
-the authoritative source instead of making model prose authoritative.
-
-## 5. Repeat the feedback loop
-
-If the preview is wrong:
-
-1. Edit `orders.yml` again.
-2. Run `make review-validate`.
-3. Run `make publish TABLE=orders`.
-4. Optionally run `make live-uat TABLE=orders`.
-5. Inspect both source and generated diffs.
-
-Repeat until the meaning, restrictions, unit, evidence, and safe-use guidance are correct.
-
-## 6. Request human approval
-
-Before setting `document_status: approved`, confirm the Guideline 1 checklist:
-
-- `owner` and `reviewer` are assigned.
-- Purpose, grain, appropriate use, and inappropriate use are correct.
-- Column meaning, unit/time semantics, allowed values, and caveats are complete.
-- Relationship cardinality and row-count risk are confirmed or explicitly uncertain.
-- Required evidence has `status: confirmed`; no evidence is `conflicting`.
-
-Then change the status and run the full local gate:
-
-```bash
-make review-validate
-make publish TABLE=orders
-make knowledge-check
-make retrieval-smoke
-```
-
-## 7. Push the reviewer change
-
-Commit the human-owned input, not a hand-edited Markdown file:
-
-```bash
-git add catalog/commerce_demo/review/orders.yml
-git commit -m "docs(metadata): review orders total amount"
-git push -u origin review/orders-total-amount
-```
-
-Open a Pull Request into `main`. With `METADATA_BOT_TOKEN` and `METADATA_BOT_LOGIN` configured, the
-`Metadata PR / pr-gate` workflow validates the YAML, regenerates deterministic Markdown, and adds at
-most one bot-only commit. Because the renderer is idempotent, changing only `orders.yml` normally
-changes only `orders.md`.
-
-Review the bot commit in the Pull Request:
-
-- If incorrect, push another reviewer YAML commit and repeat the loop.
-- If correct, approve and merge the Pull Request.
-- After merge, the Index Manifest workflow includes the document only when its status is
-  `approved`; `needs_review` documents remain excluded.
-
-## 8. Repository setup required for the bot
-
-The repository currently has no Actions secrets or variables. An Owner must configure them in
-**GitHub → Repository Settings → Secrets and variables → Actions**:
-
-- Secret `METADATA_BOT_TOKEN`: expiring fine-grained token with repository Contents write access.
-- Variable `METADATA_BOT_LOGIN`: login name that owns that token.
-
-The GitHub CLI command `gh` is only an alternative to this web setup. Local `.env` loading and local
-review do not require `gh`.
+The local `.env` is only for developer-run UAT and is never used as a substitute for GitHub Actions
+secrets.

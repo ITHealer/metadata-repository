@@ -12,6 +12,7 @@ from metadata_pipeline.application.catalog import (
     load_catalog_context,
     validate_database_scope,
 )
+from metadata_pipeline.cli import run_catalog_check
 from metadata_pipeline.domain.catalog import DatabaseProfile
 from metadata_pipeline.io.database_profile import DatabaseProfileError, load_database_profile
 
@@ -22,6 +23,7 @@ def test_loads_profile_and_derives_database_first_layout() -> None:
     context = load_catalog_context("commerce_demo", ROOT)
 
     assert context.profile.clickhouse_database == "commerce_demo"
+    assert context.profile.enabled is False
     assert context.profile.tables == ("customers", "order_items", "orders")
     assert context.layout.schema_path == (ROOT / "catalog/commerce_demo/generated/raw/schema.json")
     assert context.layout.review_dir == ROOT / "catalog/commerce_demo/review"
@@ -57,7 +59,7 @@ def test_rejects_duplicate_table_allowlist(tmp_path: Path) -> None:
 
 def test_scope_rejects_raw_tables_outside_allowlist(tmp_path: Path) -> None:
     schema_path = tmp_path / "schema.json"
-    copy2(ROOT / "catalog/commerce_demo/generated/raw/schema.json", schema_path)
+    copy2(ROOT / "tests/fixtures/commerce_demo/schema.json", schema_path)
     profile = DatabaseProfile(
         key="commerce_demo",
         display_name="Commerce Demo",
@@ -122,3 +124,23 @@ def test_disabled_onboarding_profile_can_have_no_tables(tmp_path: Path) -> None:
 
     assert context.profile.enabled is False
     assert context.profile.tables == ()
+
+
+def test_disabled_profile_validates_scope_once_raw_schema_exists(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    profile_dir = tmp_path / "config/databases/commerce_demo"
+    profile_dir.mkdir(parents=True)
+    profile_dir.joinpath("database.yml").write_text(
+        "enabled: false\nkey: commerce_demo\ndisplay_name: Commerce Demo\n"
+        "clickhouse_database: commerce_demo\ndescription: Pending onboarding\n"
+        "tables: [customers, order_items, orders]\n",
+        encoding="utf-8",
+    )
+    context = load_catalog_context("commerce_demo", tmp_path)
+    schema_path = tmp_path / "schema.json"
+    copy2(ROOT / "tests/fixtures/commerce_demo/schema.json", schema_path)
+
+    assert run_catalog_check(context, schema_path) == 0
+    assert "3 table(s), onboarding" in capsys.readouterr().out
