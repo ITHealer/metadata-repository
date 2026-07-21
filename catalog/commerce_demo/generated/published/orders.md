@@ -5,7 +5,7 @@ table: orders
 qualified_name: commerce_demo.orders
 owner: unassigned
 reviewer: unassigned
-document_status: needs_review
+document_status: approved
 index_eligible: false
 schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 contract_version: reviewer-v1
