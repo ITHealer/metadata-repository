@@ -14,9 +14,9 @@ transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/customers.yml
 source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
-generator_mode: mock
-generator_model: deterministic-v1
-prompt_version: deterministic-v1
+generator_mode: live
+generator_model: gpt-oss-120b
+prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.customers — Customers
@@ -26,7 +26,7 @@ prompt_version: deterministic-v1
 
 ## Summary
 
-One technical row per customer represented in the ClickHouse demo dataset. Grain: One row per customer_id.
+The customers table provides one technical row per customer (grain: one row per customer_id) in the ClickHouse commerce_demo dataset. It includes a UTC creation timestamp (created_at), a stable UUID identifier (customer_id), synthetic contact fields—email and display name (full_name)—marked as synthetic PII and not for real contact, and a categorical segment (enterprise, premium, retail) whose assignment rules require reviewer confirmation. The table supports customer‑level analysis and can be joined to orders on customer_id, but uniqueness of customer_id and data freshness are currently unconfirmed.
 
 ## Grain and purpose
 

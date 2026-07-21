@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "e36bf3d1fe07270657798e61ca92333025e094d919c58b9ed9d99c9d5999b1d5",
+  "candidate_hash": "54c5d7d618a972559560f88dbfbba9b70c98efb987186f91acc3f238953d8418",
   "database": "commerce_demo",
   "document": {
     "aliases": [
@@ -173,9 +173,9 @@
     "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
-      "generator_mode": "mock",
-      "generator_model": "deterministic-v1",
-      "prompt_version": "deterministic-v1",
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "workflow-neutral-narrative-v2",
       "source_review_commit": "18a7bafb9856ef0cc01180933c697b9ea85ee0df",
       "source_review_path": "catalog/commerce_demo/review/order_items.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
@@ -216,20 +216,20 @@
     "reviewer": "unassigned",
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db",
     "security": [],
-    "summary": "One technical row per order line represented in the ClickHouse demo dataset. Grain: One row per order_id and line_number.",
+    "summary": "Each row represents a single order line in the commerce_demo ClickHouse demo dataset, identified by order_id and line_number (uniqueness needs confirmation). The table can be logically joined to orders on order_id (foreign key not enforced) and is intended for product‑quantity and line‑value analysis; a technical line amount may be calculated as quantity × unit_price, though tax, discount, return, and cancellation handling require reviewer confirmation. Business ownership, refresh expectations, product master semantics, and dataset freshness are also pending confirmation.",
     "table": "order_items",
     "transformation_guideline_version": "retrieval-v1"
   },
   "fingerprint": {
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
-    "generator_model": "deterministic-v1",
-    "guideline_hash": "83c87b672d4c8725d65d6a844ff080040738747dac676e408c340ce5dae64533",
-    "input_hash": "f579bf6f25434ce3abf604a12b21e38910f22b39046cf76628cb2ecd8f6a1e47",
-    "prompt_version": "deterministic-v1",
+    "generator_model": "gpt-oss-120b",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "36cd963f3b216c35b321fca64a0f2c7cbfd482711b4a645cc7b9523079756545",
+    "prompt_version": "workflow-neutral-narrative-v2",
     "review_content_hash": "34af159a42833bb498257330d99627d064c97d2fc196f19137aed1cec41d2ff0",
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db"
   },
-  "reviewable_body_hash": "057879d15b417f9f447efee7b57b5047197b1529b3bcd0b7a5c02d3c92c878b9",
+  "reviewable_body_hash": "78ada623187b2e4f6d5d0f0d8d7252a399091f16f4e536a25cb30ca4d57c560c",
   "state": "review",
   "table": "order_items"
 }
