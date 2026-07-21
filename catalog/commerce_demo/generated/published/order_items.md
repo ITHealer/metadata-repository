@@ -16,7 +16,7 @@ source_review_path: catalog/commerce_demo/review/order_items.yml
 source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
 generator_mode: live
 generator_model: gpt-oss-120b
-prompt_version: approved-narrative-v1
+prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.order_items — Order items
@@ -26,7 +26,7 @@ prompt_version: approved-narrative-v1
 
 ## Summary
 
-The `order_items` table in the `commerce_demo` ClickHouse dataset provides one technical row per order line, with the grain defined as one row per `order_id` and `line_number`. Each row includes the line position (`line_number` UInt16, ordinal), a logical foreign key to the parent order (`order_id` UUID), a synthetic product code (`product_code` String), the ordered quantity (`quantity` UInt16, product units) and the unit price (`unit_price` Decimal(18,2) in VND). A technical line amount can be derived as `quantity × unit_price`, though this calculation requires reviewer confirmation. The table is intended for joining order lines to orders and for product‑quantity and order‑line value analysis. Reviewers must confirm uniqueness of the (`order_id`, `line_number`) combination, ownership and refresh expectations, and the treatment of product master semantics, returns, cancellations, taxes and discounts. Freshness is currently unknown. All columns are marked internal sensitivity.
+Each row represents a single order line in the commerce_demo ClickHouse demo dataset, identified by order_id and line_number (uniqueness needs confirmation). The table can be logically joined to orders on order_id (foreign key not enforced) and is intended for product‑quantity and line‑value analysis; a technical line amount may be calculated as quantity × unit_price, though tax, discount, return, and cancellation handling require reviewer confirmation. Business ownership, refresh expectations, product master semantics, and dataset freshness are also pending confirmation.
 
 ## Grain and purpose
 

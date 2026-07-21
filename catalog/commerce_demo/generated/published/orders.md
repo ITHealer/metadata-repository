@@ -16,7 +16,7 @@ source_review_path: catalog/commerce_demo/review/orders.yml
 source_review_commit: 18a7bafb9856ef0cc01180933c697b9ea85ee0df
 generator_mode: live
 generator_model: gpt-oss-120b
-prompt_version: approved-narrative-v1
+prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.orders — Orders
@@ -26,14 +26,7 @@ prompt_version: approved-narrative-v1
 
 ## Summary
 
-The table provides one technical row per order (grain: one row per order_id) in the ClickHouse demo dataset. Key columns are:
-- created_at (DateTime, UTC timestamp when the order was created)
-- updated_at (DateTime, UTC timestamp of the latest update)
-- order_id (UUID, stable identifier for the order)
-- customer_id (UUID, logical foreign identifier for joining to customers.customer_id)
-- order_status (LowCardinality(String) with allowed values pending, paid, shipped, cancelled; a cancelled status does not imply the row is deleted)
-- total_amount (Decimal(18,2) in VND, the order total after discounts).
-Appropriate uses include aggregating order totals after applying the documented status rules and joining orders to customers via customer_id. Caveats note that business ownership, refresh expectations, status transition rules, tax/shipping/refund handling, and confirmation of order_id uniqueness require reviewer validation. It is inappropriate to assume cancelled orders are removed from the table. All data is marked with internal sensitivity.
+The orders table stores one technical row per order_id in the ClickHouse demo dataset. Each row includes UTC timestamps for creation (created_at) and latest update (updated_at), a UUID order_id, a logical UUID customer_id for joining to customers, a LowCardinality(String) order_status with values pending, paid, shipped, or cancelled (cancelled rows remain in the table), and a Decimal(18,2) total_amount expressed in VND after discounts. Grain is one row per order_id; order_id uniqueness should be confirmed before assuming a one‑row‑per‑order grain. Appropriate uses include aggregating order totals after applying status rules and joining orders to customers via customer_id. It is inappropriate to assume cancelled orders are removed. Freshness is unknown and requires confirmation.
 
 ## Grain and purpose
 
