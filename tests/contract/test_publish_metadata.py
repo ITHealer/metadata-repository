@@ -26,7 +26,11 @@ COMMIT = "b" * 40
 def _copy_reviews(target: Path) -> None:
     target.mkdir(parents=True)
     for source in REVIEWS.glob("*.yml"):
-        copy2(source, target / source.name)
+        target_path = target / source.name
+        copy2(source, target_path)
+        payload = yaml.safe_load(target_path.read_text(encoding="utf-8"))
+        payload["document_status"] = "needs_review"
+        target_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
 def test_publish_all_documents_is_idempotent_and_chunkable(tmp_path: Path) -> None:
