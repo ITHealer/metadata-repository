@@ -4,8 +4,8 @@ transformation_guideline_version: retrieval-v1
 source_scope: clickhouse
 database: commerce_demo
 table: orders
-owner: unassigned
-reviewer: unassigned
+owner: commerce-team
+reviewer: ITHealer
 document_status: needs_review
 schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 business:
@@ -16,6 +16,7 @@ business:
     - Analyze order volume and revenue.
   appropriate_use:
     - Daily order reporting.
+    - Join an order to customers by customer_id.
   inappropriate_use:
     - Do not use as a payment settlement source.
   aliases:
@@ -26,7 +27,7 @@ business:
   evidence:
     - kind: clickhouse_comment
       reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
-      status: proposed
+      status: confirmed
       note: Technical ClickHouse comment; business meaning still requires reviewer confirmation.
 columns:
   created_at:
@@ -41,7 +42,7 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at
-        status: proposed
+        status: confirmed
         note: Derived from the ClickHouse column comment.
   customer_id:
     business_name: Customer identifier
@@ -56,7 +57,7 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id
-        status: proposed
+        status: confirmed
         note: Derived from the ClickHouse column comment.
   order_id:
     business_name: Order identifier
@@ -70,7 +71,7 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id
-        status: proposed
+        status: confirmed
         note: Derived from the ClickHouse column comment.
   order_status:
     business_name: Order status
@@ -89,7 +90,7 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_status
-        status: proposed
+        status: confirmed
         note: Values are listed in the ClickHouse column comment.
   total_amount:
     business_name: Order total amount
@@ -104,7 +105,7 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.total_amount
-        status: proposed
+        status: confirmed
         note: Derived from the ClickHouse column comment.
   updated_at:
     business_name: Order updated time
@@ -118,7 +119,7 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at
-        status: proposed
+        status: confirmed
         note: Derived from the ClickHouse column comment.
 relationships:
   - name: orders_to_customers
@@ -135,7 +136,7 @@ relationships:
     evidence:
       - kind: tbls_relation
         reference: catalog/commerce_demo/generated/raw/schema.json#relations.orders_to_customers
-        status: proposed
+        status: confirmed
         note: Logical relation configured for tbls; cardinality requires data validation.
 business_rules:
   - name: Cancelled orders remain present
@@ -143,7 +144,7 @@ business_rules:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.comment
-        status: proposed
+        status: confirmed
         note: Derived from the ClickHouse table comment.
 data_quality:
   - Confirm order_id uniqueness before relying on one-row-per-order grain.
