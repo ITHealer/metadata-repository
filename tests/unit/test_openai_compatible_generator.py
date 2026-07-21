@@ -205,13 +205,26 @@ def test_approved_document_rewrites_full_narrative_but_locks_facts(
                                 {
                                     "summary": "Each row represents one reviewed order.",
                                     "description": "Reviewed order facts for lifecycle analysis.",
-                                    "purpose": ["Analyze order lifecycle and value."],
+                                    "purpose": [
+                                        f"Rewritten purpose {index}."
+                                        for index, _ in enumerate(
+                                            approved_context.review.business.purpose,
+                                            start=1,
+                                        )
+                                    ],
                                     "appropriate_use": [
-                                        "Aggregate values with documented status rules.",
-                                        "Join orders to customers using customer_id.",
+                                        f"Rewritten appropriate use {index}."
+                                        for index, _ in enumerate(
+                                            approved_context.review.business.appropriate_use,
+                                            start=1,
+                                        )
                                     ],
                                     "inappropriate_use": [
-                                        "Do not assume cancelled rows are deleted."
+                                        f"Rewritten inappropriate use {index}."
+                                        for index, _ in enumerate(
+                                            approved_context.review.business.inappropriate_use,
+                                            start=1,
+                                        )
                                     ],
                                     "column_descriptions": {
                                         "created_at": "UTC creation timestamp for the order.",
