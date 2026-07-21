@@ -188,19 +188,19 @@
     "description": "One row represents one customer order.",
     "display_name": "Orders",
     "document_id": "commerce_demo.orders",
-    "document_status": "needs_review",
+    "document_status": "approved",
     "freshness": "Updated near real time.",
     "grain": "One row per order_id.",
     "inappropriate_use": [
       "Do not use as a payment settlement source."
     ],
-    "index_eligible": false,
+    "index_eligible": true,
     "owner": "commerce-team",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "db313a05e2bb40d4710101b1dbee860bf15360e4",
+      "source_review_commit": "d638d62cc7aa92e4c52fce0ec3f0871b3e0b7170",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -254,6 +254,6 @@
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
   },
   "reviewable_body_hash": "5a52eab50768a7c49a81514929f4b106e3cf4cf78a53e262b88a70ee10dee931",
-  "state": "review",
+  "state": "promoted",
   "table": "orders"
 }
