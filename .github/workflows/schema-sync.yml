@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: read
 
 concurrency:
@@ -23,6 +24,7 @@ concurrency:
 env:
   PYTHONDONTWRITEBYTECODE: "1"
   PYTHONUNBUFFERED: "1"
+  TELEGRAM_NOTIFICATIONS_ENABLED: ${{ vars.TELEGRAM_NOTIFICATIONS_ENABLED || 'false' }}
 
 jobs:
   sync:
@@ -93,6 +95,67 @@ jobs:
             --pr-body build/schema-sync/pr-body.md \
             --run-id "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --github-output "$GITHUB_OUTPUT"
+
+      - name: Resolve pr_review notification context
+        id: notification
+        if: >-
+          env.TELEGRAM_NOTIFICATIONS_ENABLED == 'true' &&
+          (steps.publish.outputs.action == 'created' || steps.publish.outputs.action == 'updated')
+        env:
+          GH_TOKEN: ${{ secrets.METADATA_BOT_TOKEN }}
+          PR_URL: ${{ steps.publish.outputs.pr_url }}
+          COMMIT: ${{ steps.publish.outputs.commit }}
+        run: |
+          pr_number="$(gh pr view "$PR_URL" --json number --jq '.number')"
+          marker="<!-- metadata-notification:pr_review:${COMMIT} -->"
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "marker=$marker" >> "$GITHUB_OUTPUT"
+          if gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
+            --jq '.[].body' | grep --fixed-strings --quiet -- "$marker"; then
+            echo "should_send=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_send=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build validated pr_review event
+        if: steps.notification.outputs.should_send == 'true'
+        env:
+          ACTION: ${{ steps.publish.outputs.action }}
+          BRANCH: ${{ steps.publish.outputs.branch }}
+          COMMIT: ${{ steps.publish.outputs.commit }}
+          PR_NUMBER: ${{ steps.notification.outputs.pr_number }}
+          PR_URL: ${{ steps.publish.outputs.pr_url }}
+        run: |
+          ./scripts/metadata build-pr-review-notification \
+            --report build/schema-sync/report.json \
+            --action "$ACTION" \
+            --pr-number "$PR_NUMBER" \
+            --pr-url "$PR_URL" \
+            --repository "$GITHUB_REPOSITORY" \
+            --branch "$BRANCH" \
+            --commit "$COMMIT" \
+            --workflow "$GITHUB_WORKFLOW" \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --output build/schema-sync/pr-review-notification.json
+
+      - name: Notify reviewer through Telegram
+        if: steps.notification.outputs.should_send == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+        run: |
+          ./scripts/metadata notify \
+            --event-file build/schema-sync/pr-review-notification.json
+
+      - name: Record successful pr_review delivery
+        if: steps.notification.outputs.should_send == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.METADATA_BOT_TOKEN }}
+          MARKER: ${{ steps.notification.outputs.marker }}
+          PR_NUMBER: ${{ steps.notification.outputs.pr_number }}
+        run: gh pr comment "$PR_NUMBER" --body "$MARKER"
 
       - name: Write schema-sync summary
         if: always()

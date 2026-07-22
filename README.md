@@ -366,7 +366,11 @@ The command resolves every required DSN before starting tbls, generates each dat
 `build/schema-sync/staging/<run-id>/`, and validates all raw snapshots before refreshing reviewer
 drafts or changing `catalog/`. A failure leaves the committed catalog untouched. A successful run
 writes a non-secret JSON report and PR-body Markdown under `build/schema-sync/`. Telegram
-notification remains a separate follow-up.
+notification is independently gated by `TELEGRAM_NOTIFICATIONS_ENABLED`. When enabled, each newly
+pushed schema-sync commit sends one `pr_review` message and records a hidden PR-comment marker only
+after Telegram accepts it. See the
+[Telegram notification runbook](./docs/runbooks/telegram-notifications.md) for secrets, rollout,
+deduplication, and recovery.
 
 ## Index manifest and retrieval smoke test
 
