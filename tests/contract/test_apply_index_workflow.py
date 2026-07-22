@@ -36,6 +36,9 @@ def test_apply_workflow_maps_secrets_directly_and_never_commits_artifacts() -> N
     content = WORKFLOW.read_text(encoding="utf-8")
 
     assert "runs-on: [self-hosted, schema-sync]" in content
+    assert "actions/setup-python" not in content
+    assert 'make install PYTHON_BOOTSTRAP="$(uv python find 3.11)"' in content
+    assert "Validate self-hosted runner contract" in content
     assert "OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}" in content
     assert "OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}" in content
     assert "QDRANT_URL: ${{ vars.QDRANT_URL || 'http://localhost:6333' }}" in content
