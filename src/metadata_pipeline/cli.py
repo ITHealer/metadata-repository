@@ -8,6 +8,7 @@ import platform
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from typing import Literal
 
 from metadata_pipeline import __version__
 from metadata_pipeline.adapters.generator.deterministic import DeterministicDocumentGenerator
@@ -26,6 +27,7 @@ from metadata_pipeline.adapters.github.schema_sync_runtime import (
     SchemaSyncGitHubRuntimeError,
 )
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
+from metadata_pipeline.adapters.notification.telegram import TelegramNotifier
 from metadata_pipeline.adapters.schema.tbls_json import (
     TblsSchemaSource,
     parse_tbls_schema_text,
@@ -83,17 +85,28 @@ from metadata_pipeline.application.schema_sync_summary import (
     render_schema_sync_pr_body,
     summarize_schema_change,
 )
+from metadata_pipeline.application.send_notification import send_notification
 from metadata_pipeline.application.sync_candidates import (
     GeneratorIdentity,
     prepare_candidate_sync,
     write_candidate_sync,
 )
+from metadata_pipeline.domain.notification import PrReviewNotification
 from metadata_pipeline.domain.schema_sync import ScheduledSchemaSyncReport
 from metadata_pipeline.domain.schema_sync_pr import SchemaSyncPullRequestState
 from metadata_pipeline.io.atomic_text import write_text_if_changed
 from metadata_pipeline.io.candidate_json import CandidateFileError
 from metadata_pipeline.io.chunk_jsonl import load_chunks
 from metadata_pipeline.io.database_profile import DatabaseProfileError
+from metadata_pipeline.io.notification_json import (
+    NotificationEventError,
+    load_notification_event,
+    write_notification_event,
+)
+from metadata_pipeline.io.notification_settings import (
+    NotificationConfigurationError,
+    NotificationSettings,
+)
 from metadata_pipeline.io.review_yaml import ReviewFileError
 from metadata_pipeline.io.schema_sync_pr_state_json import (
     SchemaSyncPullRequestStateError,
@@ -112,6 +125,7 @@ from metadata_pipeline.io.schema_sync_settings import (
 )
 from metadata_pipeline.ports.document_generator import DocumentGenerator
 from metadata_pipeline.ports.index_store import IndexStoreError
+from metadata_pipeline.ports.notifier import NotificationDeliveryError
 from metadata_pipeline.ports.schema_documenter import SchemaDocumenterError
 from metadata_pipeline.ports.schema_source import DatabaseSchema, SchemaSourceError
 from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
@@ -278,6 +292,27 @@ def build_parser() -> argparse.ArgumentParser:
     publish_schema_sync_pr.add_argument("--pr-body", type=Path, required=True)
     publish_schema_sync_pr.add_argument("--run-id", required=True)
     publish_schema_sync_pr.add_argument("--github-output", type=Path)
+    build_pr_review_notification = commands.add_parser(
+        "build-pr-review-notification",
+        help="Build a validated pr_review event from a schema-sync report.",
+    )
+    build_pr_review_notification.add_argument("--report", type=Path, required=True)
+    build_pr_review_notification.add_argument(
+        "--action", choices=("created", "updated"), required=True
+    )
+    build_pr_review_notification.add_argument("--pr-number", type=int, required=True)
+    build_pr_review_notification.add_argument("--pr-url", required=True)
+    build_pr_review_notification.add_argument("--repository", required=True)
+    build_pr_review_notification.add_argument("--branch", required=True)
+    build_pr_review_notification.add_argument("--commit", required=True)
+    build_pr_review_notification.add_argument("--workflow", required=True)
+    build_pr_review_notification.add_argument("--run-url", required=True)
+    build_pr_review_notification.add_argument("--output", type=Path, required=True)
+    notify = commands.add_parser(
+        "notify",
+        help="Deliver one validated notification event through the configured provider.",
+    )
+    notify.add_argument("--event-file", type=Path, required=True)
     index_manifest = commands.add_parser(
         "index-manifest",
         help="Reconcile approved chunks into a versioned manifest and Git action report.",
@@ -831,6 +866,70 @@ def run_index_manifest(
     return 0
 
 
+def run_build_pr_review_notification(
+    *,
+    report_path: Path,
+    action: Literal["created", "updated"],
+    pr_number: int,
+    pr_url: str,
+    repository: str,
+    branch: str,
+    commit: str,
+    workflow: str,
+    run_url: str,
+    output: Path,
+) -> int:
+    """Build a non-secret, deterministic event for a changed schema-sync PR."""
+    try:
+        report = load_schema_sync_report(report_path)
+        changed_tables = tuple(
+            sorted(
+                {
+                    f"{database.key}.{table}"
+                    for database in report.databases
+                    for table in (*database.added, *database.modified, *database.deleted)
+                }
+            )
+        )
+        event = PrReviewNotification(
+            event_id=f"pr_review:{commit}",
+            action=action,
+            pr_number=pr_number,
+            pr_url=pr_url,
+            repository=repository,
+            branch=branch,
+            commit=commit,
+            workflow=workflow,
+            run_url=run_url,
+            changed_tables=changed_tables,
+        )
+        write_notification_event(output, event)
+    except (OSError, SchemaSyncReportError, ValueError) as error:
+        print(f"pr_review event build failed: {error}", file=sys.stderr)
+        return 1
+    print(f"pr_review event written: {output}; id={event.event_id}")
+    return 0
+
+
+def run_notify(event_file: Path) -> int:
+    """Load settings and deliver a validated event without exposing secrets."""
+    try:
+        settings = NotificationSettings.from_env()
+        event = load_notification_event(event_file)
+        notifier = TelegramNotifier(settings) if settings.enabled else None
+        outcome = send_notification(event, settings, notifier)
+    except (
+        NotificationConfigurationError,
+        NotificationDeliveryError,
+        NotificationEventError,
+        ValueError,
+    ) as error:
+        print(f"notification failed: {error}", file=sys.stderr)
+        return 1
+    print(f"notification {outcome.value}: {event.event_type}; id={event.event_id}")
+    return 0
+
+
 def _generator(mode: str) -> DeterministicDocumentGenerator | OpenAICompatibleDocumentGenerator:
     if mode == "live":
         return OpenAICompatibleDocumentGenerator.from_settings(OpenAICompatibleSettings.from_env())
@@ -1036,6 +1135,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             run_id=args.run_id,
             github_output=args.github_output,
         )
+    if args.command == "build-pr-review-notification":
+        return run_build_pr_review_notification(
+            report_path=args.report,
+            action=args.action,
+            pr_number=args.pr_number,
+            pr_url=args.pr_url,
+            repository=args.repository,
+            branch=args.branch,
+            commit=args.commit,
+            workflow=args.workflow,
+            run_url=args.run_url,
+            output=args.output,
+        )
+    if args.command == "notify":
+        return run_notify(args.event_file)
     if args.command == "index-manifest":
         return run_index_manifest(
             args.chunks,

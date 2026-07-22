@@ -49,7 +49,8 @@ Compose, Python 3, outbound GitHub access, and network reach to every scheduled 
 
 Configure:
 
-- Repository variable `SCHEMA_SYNC_ENABLED=true` to allocate the scheduled job.
+- Repository variable `SCHEMA_SYNC_ENABLED=false` until both UAT scenarios pass, then change it to
+  `true` to allocate the scheduled job.
 - Repository secret `METADATA_BOT_TOKEN` from a fine-grained bot identity with Contents and Pull
   Request write permissions.
 - One read-only secret such as `TBLS_DSN_URCARD` for each profile whose `tbls_dsn_env` names it.
@@ -64,6 +65,10 @@ runner label are deployment configuration in workflow YAML, not `.env` settings.
 
 Do not create a `.env` file in CI. Secrets are mapped directly into the job environment and are not
 included in command arguments, reports, summaries, or commits.
+
+Telegram review reminders have a separate feature flag and secret set. A disabled notification
+channel never disables schema sync. See `docs/runbooks/telegram-notifications.md` before enabling
+it.
 
 ## Single active PR lifecycle
 

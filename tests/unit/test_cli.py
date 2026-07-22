@@ -443,3 +443,64 @@ def test_schema_sync_pr_publish_creates_or_updates_one_pr(
         encoding="utf-8"
     )
     assert "schema-sync PR" in capsys.readouterr().out
+
+
+def test_cli_builds_pr_review_event_and_disabled_delivery_is_a_noop(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report_path = tmp_path / "report.json"
+    write_schema_sync_report(
+        report_path,
+        ScheduledSchemaSyncReport(
+            run_id="123-1",
+            outcome=SchemaSyncOutcome.CHANGED,
+            databases=(
+                DatabaseSchemaSyncReport(
+                    key="commerce_demo",
+                    clickhouse_database="commerce_demo",
+                    added=("payments",),
+                    modified=("orders",),
+                ),
+            ),
+        ),
+    )
+    event_path = tmp_path / "notification.json"
+    commit = "a" * 40
+
+    assert (
+        main(
+            [
+                "build-pr-review-notification",
+                "--report",
+                str(report_path),
+                "--action",
+                "created",
+                "--pr-number",
+                "28",
+                "--pr-url",
+                "https://github.example/pr/28",
+                "--repository",
+                "acme/metadata",
+                "--branch",
+                "automation/schema-sync-123-1",
+                "--commit",
+                commit,
+                "--workflow",
+                "Scheduled Schema Sync",
+                "--run-url",
+                "https://github.example/runs/123",
+                "--output",
+                str(event_path),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(event_path.read_text(encoding="utf-8"))
+    assert payload["event_id"] == f"pr_review:{commit}"
+    assert payload["changed_tables"] == ["commerce_demo.orders", "commerce_demo.payments"]
+
+    monkeypatch.setenv("TELEGRAM_NOTIFICATIONS_ENABLED", "false")
+    assert main(["notify", "--event-file", str(event_path)]) == 0
+    assert "notification disabled: pr_review" in capsys.readouterr().out

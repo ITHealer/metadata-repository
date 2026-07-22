@@ -39,6 +39,19 @@ def test_production_has_two_layer_gate_runner_contract_and_direct_secret_mapping
     assert ".env" not in content
 
 
+def test_schema_sync_notifies_once_per_published_commit_when_enabled() -> None:
+    content = PRODUCTION.read_text(encoding="utf-8")
+
+    assert "TELEGRAM_NOTIFICATIONS_ENABLED" in content
+    assert "steps.publish.outputs.action == 'created'" in content
+    assert "build-pr-review-notification" in content
+    assert "metadata-notification:pr_review:${COMMIT}" in content
+    assert "grep --fixed-strings --quiet" in content
+    assert "./scripts/metadata notify" in content
+    assert "TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}" in content
+    assert 'gh pr comment "$PR_NUMBER" --body "$MARKER"' in content
+
+
 def test_single_active_pr_runtime_never_force_pushes_or_changes_ready_state() -> None:
     workflow = PRODUCTION.read_text(encoding="utf-8")
     runtime = RUNTIME.read_text(encoding="utf-8")
