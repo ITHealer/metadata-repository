@@ -9,6 +9,11 @@ on:
       - catalog/*/generated/structured/**
   workflow_dispatch:
     inputs:
+      force_run:
+        description: Run one controlled UAT while the repository feature flag is disabled
+        type: boolean
+        required: true
+        default: false
       bootstrap_collection:
         description: Create the configured collection only when absent
         type: boolean
@@ -29,10 +34,12 @@ env:
 jobs:
   apply:
     name: apply-and-verify
-    if: vars.INDEX_APPLY_ENABLED == 'true'
+    if: >-
+      vars.INDEX_APPLY_ENABLED == 'true' ||
+      (github.event_name == 'workflow_dispatch' && inputs.force_run)
     runs-on: ubuntu-latest
     env:
-      INDEX_APPLY_ENABLED: "true"
+      INDEX_APPLY_ENABLED: ${{ vars.INDEX_APPLY_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_run) }}
       EMBEDDING_PROVIDER: ${{ vars.EMBEDDING_PROVIDER || 'gemini' }}
       EMBEDDING_MODEL: ${{ vars.EMBEDDING_MODEL || 'gemini-embedding-001' }}
       EMBEDDING_DIMENSION: ${{ vars.EMBEDDING_DIMENSION || '768' }}

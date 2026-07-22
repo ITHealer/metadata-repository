@@ -124,6 +124,10 @@ Production reuses the single labeled automation PR; fixture UAT uses a separate
 Neither pushes to `main`. Generated structured and published documents remain handled by
 `Metadata PR / pr-gate`.
 
+Use the [Phase 2 production validation guide](./phase-2-production-validation.md) to record the
+production baseline, comment/additive drift, active-PR reuse, reviewer loop, and real scheduled
+event before enabling the repository flag.
+
 ## Reviewing the generated PR
 
 1. Check the PR table summary for added, modified, and deleted tables.

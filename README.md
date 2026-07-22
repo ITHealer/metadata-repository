@@ -383,11 +383,10 @@ make index-build      # writes build/index/manifest.json and actions.json
 make retrieval-smoke # evaluates 10 golden questions and required facts
 ```
 
-Only `approved` chunks enter the manifest. The three committed demo reviews remain `needs_review`,
-so the real demo manifest is currently empty by design. Retrieval CI uses the same metadata with an
-in-memory approved test status; it never modifies reviewer-owned YAML. The deterministic lexical
-smoke test requires at least 90% top-3 document accuracy and all required facts in the retrieved
-chunks.
+Only `approved` chunks enter the manifest. The three committed Commerce Demo reviews are approved;
+the current desired package contains 3 documents and 22 deterministic chunks. The deterministic
+lexical smoke test requires at least 90% top-3 document accuracy and all required facts in the
+retrieved chunks.
 
 See [the index manifest runbook](./docs/runbooks/index-manifest.md) for lifecycle, version
 replacement, report interpretation, and recovery.
@@ -398,6 +397,10 @@ state, and runs the same golden questions with query embeddings. It emits `index
 changed apply and retrieval verification both pass. See the
 [vector index operations runbook](./docs/runbooks/vector-index-operations.md); keep
 `INDEX_APPLY_ENABLED=false` until its non-production UAT is complete.
+
+For the complete operator and reviewer walkthrough, use the
+[Phase 2 production validation guide](./docs/runbooks/phase-2-production-validation.md) and record
+run URLs in the [Phase 2 UAT record](./docs/uat/metadata-phase-2.md).
 
 ## GitHub setup
 
