@@ -1,8 +1,9 @@
 enabled: true
-scheduled_sync: false
+scheduled_sync: true
 key: commerce_demo
 display_name: Commerce Demo
 clickhouse_database: commerce_demo
+tbls_dsn_env: TBLS_DSN_COMMERCE_DEMO
 description: Local deterministic ClickHouse fixture used by the metadata pipeline tests.
 tables:
   - customers
