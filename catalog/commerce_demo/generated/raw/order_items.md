@@ -45,6 +45,7 @@ erDiagram
   Decimal_18__2_ unit_price "Price per unit in VND when the order was placed"
 }
 "orders" {
+  LowCardinality_String_ channel "Order acquisition channel: web, mobile, or partner"
   DateTime created_at "UTC timestamp when the order was created"
   UUID customer_id "Customer that placed the order; logical join to customers.customer_id"
   UUID order_id "Stable identifier for one order"

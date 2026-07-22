@@ -126,6 +126,12 @@
       "comment": "Order fact at one row per order_id; cancelled orders remain in the table.",
       "columns": [
         {
+          "name": "channel",
+          "type": "LowCardinality(String)",
+          "nullable": false,
+          "comment": "Order acquisition channel: web, mobile, or partner"
+        },
+        {
           "name": "created_at",
           "type": "DateTime",
           "nullable": false,
@@ -193,7 +199,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE commerce_demo.orders (`order_id` UUID COMMENT 'Stable identifier for one order', `customer_id` UUID COMMENT 'Customer that placed the order; logical join to customers.customer_id', `order_status` LowCardinality(String) COMMENT 'Current lifecycle state: pending, paid, shipped, or cancelled', `total_amount` Decimal(18, 2) COMMENT 'Order total in VND after discounts', `created_at` DateTime COMMENT 'UTC timestamp when the order was created', `updated_at` DateTime COMMENT 'UTC timestamp of the latest order update') ENGINE = MergeTree PARTITION BY toYYYYMM(created_at) ORDER BY (created_at, order_id) SETTINGS index_granularity = 8192 COMMENT 'Order fact at one row per order_id; cancelled orders remain in the table.'"
+      "def": "CREATE TABLE commerce_demo.orders (`order_id` UUID COMMENT 'Stable identifier for one order', `customer_id` UUID COMMENT 'Customer that placed the order; logical join to customers.customer_id', `order_status` LowCardinality(String) COMMENT 'Current lifecycle state: pending, paid, shipped, or cancelled', `channel` LowCardinality(String) COMMENT 'Order acquisition channel: web, mobile, or partner', `total_amount` Decimal(18, 2) COMMENT 'Order total in VND after discounts', `created_at` DateTime COMMENT 'UTC timestamp when the order was created', `updated_at` DateTime COMMENT 'UTC timestamp of the latest order update') ENGINE = MergeTree PARTITION BY toYYYYMM(created_at) ORDER BY (created_at, order_id) SETTINGS index_granularity = 8192 COMMENT 'Order fact at one row per order_id; cancelled orders remain in the table.'"
     }
   ],
   "relations": [
