@@ -8,7 +8,7 @@ Order fact at one row per order_id; cancelled orders remain in the table.
 <summary><strong>Table Definition</strong></summary>
 
 ```sql
-CREATE TABLE commerce_demo.orders (`order_id` UUID COMMENT 'Stable identifier for one order', `customer_id` UUID COMMENT 'Customer that placed the order; logical join to customers.customer_id', `order_status` LowCardinality(String) COMMENT 'Current lifecycle state: pending, paid, shipped, or cancelled', `channel` LowCardinality(String) COMMENT 'Order acquisition channel: web, mobile, or partner', `total_amount` Decimal(18, 2) COMMENT 'Order total in VND after discounts', `created_at` DateTime COMMENT 'UTC timestamp when the order was created', `updated_at` DateTime COMMENT 'UTC timestamp of the latest order update') ENGINE = MergeTree PARTITION BY toYYYYMM(created_at) ORDER BY (created_at, order_id) SETTINGS index_granularity = 8192 COMMENT 'Order fact at one row per order_id; cancelled orders remain in the table.'
+CREATE TABLE commerce_demo.orders (`order_id` UUID COMMENT 'Stable identifier for one order', `customer_id` UUID COMMENT 'Customer that placed the order; logical join to customers.customer_id', `order_status` LowCardinality(String) COMMENT 'Current lifecycle state reviewed by PR-12 UAT', `channel` LowCardinality(String) COMMENT 'Order acquisition channel: web, mobile, or partner', `total_amount` Decimal(18, 2) COMMENT 'Order total in VND after discounts', `created_at` DateTime COMMENT 'UTC timestamp when the order was created', `updated_at` DateTime COMMENT 'UTC timestamp of the latest order update') ENGINE = MergeTree PARTITION BY toYYYYMM(created_at) ORDER BY (created_at, order_id) SETTINGS index_granularity = 8192 COMMENT 'Order fact at one row per order_id; cancelled orders remain in the table.'
 ```
 
 </details>
@@ -21,7 +21,7 @@ CREATE TABLE commerce_demo.orders (`order_id` UUID COMMENT 'Stable identifier fo
 | created_at | DateTime |  | false |  |  | UTC timestamp when the order was created |
 | customer_id | UUID |  | false |  | [customers](customers.md) | Customer that placed the order; logical join to customers.customer_id |
 | order_id | UUID |  | false | [order_items](order_items.md) |  | Stable identifier for one order |
-| order_status | LowCardinality(String) |  | false |  |  | Current lifecycle state: pending, paid, shipped, or cancelled |
+| order_status | LowCardinality(String) |  | false |  |  | Current lifecycle state reviewed by PR-12 UAT |
 | total_amount | Decimal(18, 2) |  | false |  |  | Order total in VND after discounts |
 | updated_at | DateTime |  | false |  |  | UTC timestamp of the latest order update |
 
@@ -46,7 +46,7 @@ erDiagram
   DateTime created_at "UTC timestamp when the order was created"
   UUID customer_id "Customer that placed the order; logical join to customers.customer_id"
   UUID order_id "Stable identifier for one order"
-  LowCardinality_String_ order_status "Current lifecycle state: pending, paid, shipped, or cancelled"
+  LowCardinality_String_ order_status "Current lifecycle state reviewed by PR-12 UAT"
   Decimal_18__2_ total_amount "Order total in VND after discounts"
   DateTime updated_at "UTC timestamp of the latest order update"
 }

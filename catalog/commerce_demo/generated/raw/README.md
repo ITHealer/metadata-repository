@@ -39,7 +39,7 @@ erDiagram
   DateTime created_at "UTC timestamp when the order was created"
   UUID customer_id "Customer that placed the order; logical join to customers.customer_id"
   UUID order_id "Stable identifier for one order"
-  LowCardinality_String_ order_status "Current lifecycle state: pending, paid, shipped, or cancelled"
+  LowCardinality_String_ order_status "Current lifecycle state reviewed by PR-12 UAT"
   Decimal_18__2_ total_amount "Order total in VND after discounts"
   DateTime updated_at "UTC timestamp of the latest order update"
 }
