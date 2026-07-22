@@ -331,26 +331,28 @@ branch-protection rollout, and recovery steps.
 
 ## Automated schema synchronization
 
-The existing `Schema Sync` workflow is manual-first and uses only the disposable ClickHouse fixture
-in this MVP. A baseline run exits without creating an empty PR. The `additive_test` UAT scenario adds
-`orders.channel` and `order_events`, regenerates tbls output, refreshes reviewer drafts, and opens a
-Draft PR containing a table-level impact summary.
+The production `Scheduled Schema Sync` workflow runs daily at 01:17 Asia/Ho_Chi_Minh on a dedicated
+`self-hosted, schema-sync` runner. It resolves at most one open PR carrying the
+`automation:schema-sync` label, checks out that branch when present, then runs the staged
+multi-database core.
 
 ```text
-workflow_dispatch / gated schedule
-  -> disposable ClickHouse
-  -> tbls doc + lint
-  -> deterministic reviewer draft refresh
-  -> source diff allowlist
-  -> timestamped branch + Draft PR
+daily schedule / forced manual dispatch
+  -> resolve zero or one active schema-sync PR
+  -> preserve existing reviewer commits on its branch
+  -> staged tbls doc + lint for every opted-in database
+  -> complete multi-database preflight
+  -> no-op, create one Draft PR, or push one commit to the existing PR
 ```
 
-The workflow can commit only `catalog/*/generated/raw/**` and `catalog/*/review/**`; it never pushes directly to
-`main`. Set `ENABLE_SCHEMA_SYNC=true` only after baseline and additive manual UAT pass. Publishing
-from a changed run also needs `METADATA_BOT_TOKEN`. See the
-[schema sync runbook](./docs/runbooks/schema-sync.md) for rollout and review steps.
+The workflow can commit only `catalog/*/generated/raw/**` and `catalog/*/review/**`; it never force
+pushes, pushes directly to `main`, changes Draft/Ready state, or merges. Set repository variable
+`SCHEMA_SYNC_ENABLED=true` only after the separate manual `Schema Sync UAT` baseline and additive
+fixture scenarios pass. Publishing requires `METADATA_BOT_TOKEN` and a read-only DSN secret for
+each opted-in database. See the [schema sync runbook](./docs/runbooks/schema-sync.md) for runner,
+secret, rollout, review, and recovery details.
 
-PR-11 adds the provider-neutral, staged multi-database core used by the next workflow iteration.
+The provider-neutral, staged multi-database core is also available locally.
 Each source opts in independently with `enabled: true`, `scheduled_sync: true`, and a
 `tbls_dsn_env` variable name in its database profile. The runtime feature flag defaults to off:
 
@@ -363,8 +365,8 @@ make scheduled-sync SCHEMA_SYNC_RUN_ID=local-$(date +%Y%m%d)
 The command resolves every required DSN before starting tbls, generates each database below
 `build/schema-sync/staging/<run-id>/`, and validates all raw snapshots before refreshing reviewer
 drafts or changing `catalog/`. A failure leaves the committed catalog untouched. A successful run
-writes a non-secret JSON report and PR-body Markdown under `build/schema-sync/`; Git branch, commit,
-Pull Request, and notification automation remain outside PR-11.
+writes a non-secret JSON report and PR-body Markdown under `build/schema-sync/`. Telegram
+notification remains a separate follow-up.
 
 ## Index manifest and retrieval smoke test
 

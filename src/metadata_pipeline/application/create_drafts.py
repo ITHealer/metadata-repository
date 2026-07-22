@@ -54,13 +54,15 @@ def create_review_drafts(
     schema_path: Path,
     review_dir: Path,
     contract_path: Path,
+    *,
+    schema_reference: str | None = None,
 ) -> tuple[DraftResult, ...]:
     """Create or refresh reviewer YAML without overwriting human-owned content."""
     schema = TblsSchemaSource(schema_path).load()
     contract = load_review_contract(contract_path)
     existing = _load_existing_reviews(review_dir)
     raw_tables = {table.name: table for table in schema.tables}
-    schema_reference = _stable_schema_reference(schema_path, schema.name)
+    evidence_reference = schema_reference or _stable_schema_reference(schema_path, schema.name)
     results: list[DraftResult] = []
 
     for table_name in sorted(raw_tables):
@@ -68,13 +70,13 @@ def create_review_drafts(
         current = existing.get(table_name)
         if current is None:
             path = review_dir / f"{table_name}.yml"
-            draft = _new_review_document(schema, table, contract, schema_reference)
+            draft = _new_review_document(schema, table, contract, evidence_reference)
             write_review_document(path, draft)
             results.append(DraftResult(table_name, path, DraftAction.CREATED))
             continue
 
         path, review = current
-        results.append(_refresh_review(schema, table, review, path, contract, schema_reference))
+        results.append(_refresh_review(schema, table, review, path, contract, evidence_reference))
 
     for orphaned_table in sorted(set(existing) - set(raw_tables)):
         path, _ = existing[orphaned_table]

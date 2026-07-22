@@ -152,6 +152,9 @@ def test_multi_database_change_publishes_only_after_full_preflight(tmp_path: Pat
     assert refreshed.business.purpose == ("Reviewer-owned beta purpose.",)
     assert refreshed.document_status is DocumentStatus.NEEDS_REVIEW
     assert "channel" in refreshed.columns
+    assert refreshed.columns["channel"].evidence[0].reference == (
+        "catalog/beta/generated/raw/schema.json#tables.customers.columns.channel"
+    )
 
 
 def test_second_database_failure_never_publishes_first_database_stage(tmp_path: Path) -> None:

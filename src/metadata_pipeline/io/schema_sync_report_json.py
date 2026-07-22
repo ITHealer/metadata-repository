@@ -5,8 +5,23 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from metadata_pipeline.domain.schema_sync import ScheduledSchemaSyncReport
 from metadata_pipeline.io.atomic_text import write_text_if_changed
+
+
+class SchemaSyncReportError(ValueError):
+    """Raised when a persisted scheduled-sync report is missing or invalid."""
+
+
+def load_schema_sync_report(path: Path) -> ScheduledSchemaSyncReport:
+    """Load the strict report contract consumed by PR automation."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return ScheduledSchemaSyncReport.model_validate(payload)
+    except (FileNotFoundError, OSError, json.JSONDecodeError, ValidationError) as error:
+        raise SchemaSyncReportError(f"unable to load schema-sync report {path}: {error}") from error
 
 
 def write_schema_sync_report(path: Path, report: ScheduledSchemaSyncReport) -> bool:

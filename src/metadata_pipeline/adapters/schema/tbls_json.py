@@ -37,20 +37,27 @@ class TblsSchemaSource:
     def load(self) -> DatabaseSchema:
         """Read, validate, and convert the tbls JSON document."""
         try:
-            payload: object = json.loads(self.path.read_text(encoding="utf-8"))
+            content = self.path.read_text(encoding="utf-8")
         except FileNotFoundError as error:
             raise SchemaSourceError(f"{self.path}: file not found") from error
-        except json.JSONDecodeError as error:
-            raise SchemaSourceError(
-                f"{self.path}: line {error.lineno}, column {error.colno}: invalid JSON"
-            ) from error
         except OSError as error:
             raise SchemaSourceError(f"{self.path}: unable to read file: {error}") from error
+        return parse_tbls_schema_text(content, str(self.path))
 
-        try:
-            return _parse_database_schema(payload)
-        except _SchemaContractError as error:
-            raise SchemaSourceError(f"{self.path}: {error}") from error
+
+def parse_tbls_schema_text(content: str, source: str) -> DatabaseSchema:
+    """Parse a tbls schema from Git or disk while retaining an actionable source label."""
+    try:
+        payload: object = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise SchemaSourceError(
+            f"{source}: line {error.lineno}, column {error.colno}: invalid JSON"
+        ) from error
+
+    try:
+        return _parse_database_schema(payload)
+    except _SchemaContractError as error:
+        raise SchemaSourceError(f"{source}: {error}") from error
 
 
 def _parse_database_schema(payload: object) -> DatabaseSchema:

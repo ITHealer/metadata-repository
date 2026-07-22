@@ -207,6 +207,10 @@ def _prepare_review(
             staged.staged_raw_dir / "schema.json",
             staged_review_dir,
             repository_root / "contracts" / "metadata_contract.yml",
+            schema_reference=_repository_path(
+                staged.context.layout.schema_path,
+                repository_root,
+            ),
         )
     return _PreparedDatabase(
         context=staged.context,
