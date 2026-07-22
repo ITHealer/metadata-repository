@@ -5,24 +5,21 @@ table: customers
 qualified_name: commerce_demo.customers
 owner: unassigned
 reviewer: unassigned
-document_status: needs_review
-index_eligible: false
+document_status: approved
+index_eligible: true
 schema_hash: b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/customers.yml
-source_review_commit: b3cd2b5f5b941e655a403335a8d1ace77a8c77d2
+source_review_commit: 56cdc87abcb2ec7292ff061def6c94f26c7542c2
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.customers — Customers
-
-> [!WARNING]
-> Preview only: reviewer metadata still has `needs_review` status and must not be indexed.
 
 ## Summary
 

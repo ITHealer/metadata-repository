@@ -139,19 +139,19 @@
     "description": "Order detail fact at one row per order_id and line_number.",
     "display_name": "Order Items",
     "document_id": "commerce_demo.order_items",
-    "document_status": "needs_review",
+    "document_status": "approved",
     "freshness": "Unknown — needs confirmation",
     "grain": "Unknown — needs confirmation",
     "inappropriate_use": [
       "Unknown — needs confirmation"
     ],
-    "index_eligible": false,
+    "index_eligible": true,
     "owner": "unassigned",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "b3cd2b5f5b941e655a403335a8d1ace77a8c77d2",
+      "source_review_commit": "56cdc87abcb2ec7292ff061def6c94f26c7542c2",
       "source_review_path": "catalog/commerce_demo/review/order_items.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -178,6 +178,6 @@
     "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db"
   },
   "reviewable_body_hash": "4433826a9d1219a36b320d67b8ad2d9eb9cd1e50aad574e321a732476e648936",
-  "state": "review",
+  "state": "promoted",
   "table": "order_items"
 }
