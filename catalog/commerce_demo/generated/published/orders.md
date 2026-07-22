@@ -5,24 +5,21 @@ table: orders
 qualified_name: commerce_demo.orders
 owner: unassigned
 reviewer: unassigned
-document_status: needs_review
-index_eligible: false
+document_status: approved
+index_eligible: true
 schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
-source_review_commit: b3cd2b5f5b941e655a403335a8d1ace77a8c77d2
+source_review_commit: 64d36bd78bc4a66bee8f61ccb113a255b26982c5
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
 ---
 
 # commerce_demo.orders — Orders
-
-> [!WARNING]
-> Preview only: reviewer metadata still has `needs_review` status and must not be indexed.
 
 ## Summary
 

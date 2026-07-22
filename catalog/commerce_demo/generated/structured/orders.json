@@ -163,19 +163,19 @@
     "description": "Order fact at one row per order_id; cancelled orders remain in the table.",
     "display_name": "Orders",
     "document_id": "commerce_demo.orders",
-    "document_status": "needs_review",
+    "document_status": "approved",
     "freshness": "Unknown — needs confirmation",
     "grain": "Unknown — needs confirmation",
     "inappropriate_use": [
       "Unknown — needs confirmation"
     ],
-    "index_eligible": false,
+    "index_eligible": true,
     "owner": "unassigned",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "b3cd2b5f5b941e655a403335a8d1ace77a8c77d2",
+      "source_review_commit": "64d36bd78bc4a66bee8f61ccb113a255b26982c5",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -202,6 +202,6 @@
     "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
   },
   "reviewable_body_hash": "77548797aaa1eb8e65c0cff16dea6cf4eb0af7c1fb38055d1393b7be61690de7",
-  "state": "review",
+  "state": "promoted",
   "table": "orders"
 }
