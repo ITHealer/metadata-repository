@@ -67,6 +67,7 @@ def test_fixture_uat_remains_manual_and_always_cleans_up_clickhouse() -> None:
     assert "grep --fixed-strings --quiet" in content
     assert '"name": "channel"' in content
     assert "git status --porcelain=v1 --untracked-files=all -- catalog" in content
+    assert "git add -- catalog" in content
     assert "if: failure()\n        run: make db-logs" in content
     assert "if: always()\n        run: make db-down" in content
 
