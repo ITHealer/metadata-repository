@@ -69,9 +69,9 @@ jobs:
           SCENARIO: ${{ inputs.scenario }}
         run: |
           if [[ "$SCENARIO" == "additive_test" ]]; then
-            rg --fixed-strings --quiet '"name": "channel"' \
+            grep --fixed-strings --quiet '"name": "channel"' \
               catalog/commerce_demo/generated/raw/schema.json
-          elif rg --fixed-strings --quiet '"name": "channel"' \
+          elif grep --fixed-strings --quiet '"name": "channel"' \
             catalog/commerce_demo/generated/raw/schema.json; then
             echo "Baseline unexpectedly contains commerce_demo.orders.channel."
             exit 1

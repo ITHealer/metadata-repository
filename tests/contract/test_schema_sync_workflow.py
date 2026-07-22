@@ -64,6 +64,7 @@ def test_fixture_uat_remains_manual_and_always_cleans_up_clickhouse() -> None:
     assert "apply_schema_sync_fixture.sh" in content
     assert "Assert selected UAT schema scenario" in content
     assert "inputs.scenario" in content
+    assert "grep --fixed-strings --quiet" in content
     assert '"name": "channel"' in content
     assert "if: failure()\n        run: make db-logs" in content
     assert "if: always()\n        run: make db-down" in content
