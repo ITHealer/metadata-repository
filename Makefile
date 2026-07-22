@@ -21,6 +21,8 @@ SOURCE_COMMIT ?= $(shell git rev-parse HEAD)
 RETRIEVAL_REPORT ?= build/index/retrieval-report.json
 VECTOR_APPLY_SUMMARY ?= build/index/apply-summary.json
 VECTOR_RETRIEVAL_REPORT ?= build/index/vector-retrieval-report.json
+QDRANT_URL ?= http://localhost:6333
+QDRANT_COMPOSE_PROJECT ?= metadata-vector
 SCHEMA_SYNC_RUN_ID ?= local
 SCHEMA_SYNC_REPORT ?= build/schema-sync/report.json
 SCHEMA_SYNC_PR_BODY ?= build/schema-sync/pr-body.md
@@ -33,6 +35,7 @@ TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 
 .PHONY: help install format lint typecheck test coverage smoke verify clean \
 	db-up db-wait db-check db-reset db-down db-logs \
+	qdrant-up qdrant-wait qdrant-check qdrant-logs \
 	schema-doc schema-lint schema-diff schema-check \
 	review-schema review-draft review-validate review-check \
 	publish published-validate chunk-dry-run knowledge-check \
@@ -88,6 +91,20 @@ db-wait: ## Wait up to 90 seconds for ClickHouse to accept queries
 
 db-check: db-wait ## Validate schema, comments, row counts, and fake-data cases
 	RUN_CLICKHOUSE_INTEGRATION=1 $(VENV)/bin/pytest -m integration tests/integration
+
+qdrant-up: ## Start the persistent local Qdrant service and wait until it is ready
+	$(COMPOSE) --project-name $(QDRANT_COMPOSE_PROJECT) up -d qdrant
+	$(MAKE) qdrant-wait
+
+qdrant-wait: ## Wait up to 90 seconds for the Qdrant HTTP readiness endpoint
+	QDRANT_URL=$(QDRANT_URL) ./scripts/wait_for_qdrant.sh
+
+qdrant-check: qdrant-wait ## Confirm that the local Qdrant API is reachable
+	@curl --fail --silent --show-error "$(QDRANT_URL)/collections" >/dev/null
+	@echo "Qdrant API is reachable."
+
+qdrant-logs: ## Show recent Qdrant logs
+	$(COMPOSE) --project-name $(QDRANT_COMPOSE_PROJECT) logs --tail=100 qdrant
 
 db-reset: ## Delete the ClickHouse container and volume for a clean initialization
 	$(COMPOSE) down --volumes --remove-orphans

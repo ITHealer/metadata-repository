@@ -24,7 +24,7 @@ def _settings(*, enabled: bool = True, dimension: int = 3) -> IndexSettings:
         qdrant_url="https://qdrant.example",
         qdrant_api_key="secret",
         qdrant_collection=f"metadata__test_model__{dimension}",
-        gemini_api_key="secret",
+        openai_api_key="secret",
     )
 
 

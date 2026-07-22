@@ -30,15 +30,16 @@ jobs:
   apply:
     name: apply-and-verify
     if: vars.INDEX_APPLY_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, schema-sync]
     env:
       INDEX_APPLY_ENABLED: "true"
-      EMBEDDING_PROVIDER: ${{ vars.EMBEDDING_PROVIDER || 'gemini' }}
+      EMBEDDING_PROVIDER: ${{ vars.EMBEDDING_PROVIDER || 'openai_compatible' }}
       EMBEDDING_MODEL: ${{ vars.EMBEDDING_MODEL || 'gemini-embedding-001' }}
       EMBEDDING_DIMENSION: ${{ vars.EMBEDDING_DIMENSION || '768' }}
       QDRANT_COLLECTION: ${{ vars.QDRANT_COLLECTION || 'metadata__gemini_embedding_001__768' }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      QDRANT_URL: ${{ vars.QDRANT_URL || 'http://localhost:6333' }}
       QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
       TELEGRAM_NOTIFICATIONS_ENABLED: ${{ vars.TELEGRAM_NOTIFICATIONS_ENABLED || 'false' }}
     steps:
@@ -52,6 +53,9 @@ jobs:
           cache: pip
 
       - run: make install
+
+      - name: Start and verify persistent Qdrant
+        run: make qdrant-up
 
       - name: Build complete approved-only desired state
         run: |
