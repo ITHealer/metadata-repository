@@ -12,6 +12,17 @@ import yaml
 
 from metadata_pipeline import __version__
 from metadata_pipeline.cli import main
+from metadata_pipeline.domain.schema_sync import (
+    DatabaseSchemaSyncReport,
+    ScheduledSchemaSyncReport,
+    SchemaSyncOutcome,
+)
+from metadata_pipeline.domain.schema_sync_pr import (
+    SchemaSyncPullRequest,
+    SchemaSyncPullRequestState,
+)
+from metadata_pipeline.io.schema_sync_pr_state_json import write_schema_sync_pr_state
+from metadata_pipeline.io.schema_sync_report_json import write_schema_sync_report
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PUBLICATION_ARGS = (
@@ -277,3 +288,158 @@ def test_scheduled_sync_disabled_writes_a_machine_readable_no_work_report(
     assert json.loads(report_path.read_text(encoding="utf-8"))["outcome"] == "disabled"
     assert "No reviewer file requires changes" in pr_body_path.read_text(encoding="utf-8")
     assert "scheduled schema sync disabled" in capsys.readouterr().out
+
+
+def test_schema_sync_pr_publish_skips_noop_without_calling_git_or_gh(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    state_path = tmp_path / "pr-state.json"
+    state_path.write_text(
+        '{"format_version":"schema-sync-pr-state-v1","active":null}\n',
+        encoding="utf-8",
+    )
+    report_path = tmp_path / "report.json"
+    report_path.write_text(
+        '{"format_version":"schema-sync-report-v1","run_id":"unit",'
+        '"outcome":"noop","databases":[],"warnings":[],"manual_cleanup":[]}\n',
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "schema-sync-pr-publish",
+            "--repository-root",
+            str(tmp_path),
+            "--state",
+            str(state_path),
+            "--report",
+            str(report_path),
+            "--pr-body",
+            str(tmp_path / "pr-body.md"),
+            "--run-id",
+            "unit",
+        ]
+    )
+
+    assert exit_code == 0
+    assert "publish skipped: outcome=noop" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("existing_pr", (False, True))
+def test_schema_sync_pr_publish_creates_or_updates_one_pr(
+    existing_pr: bool,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    baseline: dict[str, Any] = json.loads(
+        (ROOT / "tests/fixtures/commerce_demo/schema.json").read_text(encoding="utf-8")
+    )
+    baseline["name"] = "alpha"
+    current: dict[str, Any] = json.loads(json.dumps(baseline))
+    customers = next(table for table in current["tables"] if table["name"] == "customers")
+    customers["comment"] = "Changed customer contract"
+    schema_path = tmp_path / "catalog/alpha/generated/raw/schema.json"
+    schema_path.parent.mkdir(parents=True)
+    schema_path.write_text(json.dumps(current), encoding="utf-8")
+    active = (
+        SchemaSyncPullRequest(
+            number=17,
+            url="https://github.example/pr/17",
+            head_ref="automation/schema-sync-existing",
+            is_draft=False,
+        )
+        if existing_pr
+        else None
+    )
+    state_path = tmp_path / "build/schema-sync/pr-state.json"
+    write_schema_sync_pr_state(state_path, SchemaSyncPullRequestState(active=active))
+    report_path = tmp_path / "build/schema-sync/report.json"
+    write_schema_sync_report(
+        report_path,
+        ScheduledSchemaSyncReport(
+            run_id="123-1",
+            outcome=SchemaSyncOutcome.CHANGED,
+            databases=(
+                DatabaseSchemaSyncReport(
+                    key="alpha",
+                    clickhouse_database="alpha",
+                    modified=("customers",),
+                ),
+            ),
+        ),
+    )
+    actions: list[str] = []
+
+    class FakeRuntime:
+        def __init__(self, _: Path) -> None:
+            pass
+
+        def worktree_paths(self) -> tuple[str, ...]:
+            return (
+                "catalog/alpha/generated/raw/schema.json",
+                "catalog/alpha/review/customers.yml",
+            )
+
+        def create_branch(self, branch: str) -> None:
+            actions.append(f"create:{branch}")
+
+        def commit_schema_sync(self) -> str:
+            actions.append("commit")
+            return "c" * 40
+
+        def read_text_at_revision(self, revision: str, path: str) -> str:
+            assert revision == "origin/main"
+            assert path == "catalog/alpha/generated/raw/schema.json"
+            return json.dumps(baseline)
+
+        def cumulative_changed_paths(self) -> tuple[str, ...]:
+            return (
+                "catalog/alpha/generated/raw/schema.json",
+                "catalog/alpha/review/customers.yml",
+            )
+
+        def push(self, branch: str) -> None:
+            actions.append(f"push:{branch}")
+
+        def create_draft_pull_request(self, *, branch: str, body_path: Path) -> str:
+            assert body_path.is_file()
+            actions.append(f"open:{branch}")
+            return "https://github.example/pr/18"
+
+        def update_pull_request_body(self, number: int, body_path: Path) -> None:
+            assert body_path.is_file()
+            actions.append(f"update:{number}")
+
+    monkeypatch.setattr("metadata_pipeline.cli.GitHubSchemaSyncRuntime", FakeRuntime)
+    github_output = tmp_path / "github-output.txt"
+
+    exit_code = main(
+        [
+            "schema-sync-pr-publish",
+            "--repository-root",
+            str(tmp_path),
+            "--state",
+            str(state_path),
+            "--report",
+            str(report_path),
+            "--pr-body",
+            str(tmp_path / "build/schema-sync/pr-body.md"),
+            "--run-id",
+            "123-1",
+            "--github-output",
+            str(github_output),
+        ]
+    )
+
+    assert exit_code == 0
+    branch = "automation/schema-sync-existing" if existing_pr else "automation/schema-sync-123-1"
+    assert f"push:{branch}" in actions
+    assert ("update:17" in actions) is existing_pr
+    assert (f"open:{branch}" in actions) is (not existing_pr)
+    assert (f"create:{branch}" in actions) is (not existing_pr)
+    assert f"action={'updated' if existing_pr else 'created'}" in github_output.read_text(
+        encoding="utf-8"
+    )
+    assert "schema-sync PR" in capsys.readouterr().out

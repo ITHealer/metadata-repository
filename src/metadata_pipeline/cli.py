@@ -6,7 +6,7 @@ import argparse
 import json
 import platform
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 from metadata_pipeline import __version__
@@ -21,8 +21,15 @@ from metadata_pipeline.adapters.git.changed_paths import (
     read_changed_paths,
     read_commit_changes,
 )
+from metadata_pipeline.adapters.github.schema_sync_runtime import (
+    GitHubSchemaSyncRuntime,
+    SchemaSyncGitHubRuntimeError,
+)
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
-from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
+from metadata_pipeline.adapters.schema.tbls_json import (
+    TblsSchemaSource,
+    parse_tbls_schema_text,
+)
 from metadata_pipeline.adapters.schema.tbls_runner import TblsDockerDocumenter
 from metadata_pipeline.application.candidate_state import CandidateStateError
 from metadata_pipeline.application.candidate_summary import (
@@ -64,6 +71,14 @@ from metadata_pipeline.application.scheduled_schema_sync import (
     ScheduledSchemaSyncError,
     synchronize_scheduled_schemas,
 )
+from metadata_pipeline.application.schema_sync_pr import (
+    SchemaSyncPullRequestError,
+    build_cumulative_schema_sync_report,
+    requires_schema_sync_publication,
+    resolve_active_schema_sync_pull_request,
+    schema_sync_branch_name,
+    validate_schema_sync_changed_paths,
+)
 from metadata_pipeline.application.schema_sync_summary import (
     render_schema_sync_pr_body,
     summarize_schema_change,
@@ -73,12 +88,21 @@ from metadata_pipeline.application.sync_candidates import (
     prepare_candidate_sync,
     write_candidate_sync,
 )
+from metadata_pipeline.domain.schema_sync import ScheduledSchemaSyncReport
+from metadata_pipeline.domain.schema_sync_pr import SchemaSyncPullRequestState
 from metadata_pipeline.io.atomic_text import write_text_if_changed
 from metadata_pipeline.io.candidate_json import CandidateFileError
 from metadata_pipeline.io.chunk_jsonl import load_chunks
 from metadata_pipeline.io.database_profile import DatabaseProfileError
 from metadata_pipeline.io.review_yaml import ReviewFileError
+from metadata_pipeline.io.schema_sync_pr_state_json import (
+    SchemaSyncPullRequestStateError,
+    load_schema_sync_pr_state,
+    write_schema_sync_pr_state,
+)
 from metadata_pipeline.io.schema_sync_report_json import (
+    SchemaSyncReportError,
+    load_schema_sync_report,
     write_schema_sync_pr_body,
     write_schema_sync_report,
 )
@@ -89,7 +113,7 @@ from metadata_pipeline.io.schema_sync_settings import (
 from metadata_pipeline.ports.document_generator import DocumentGenerator
 from metadata_pipeline.ports.index_store import IndexStoreError
 from metadata_pipeline.ports.schema_documenter import SchemaDocumenterError
-from metadata_pipeline.ports.schema_source import SchemaSourceError
+from metadata_pipeline.ports.schema_source import DatabaseSchema, SchemaSourceError
 from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
 
 MINIMUM_PYTHON = (3, 9)
@@ -237,6 +261,23 @@ def build_parser() -> argparse.ArgumentParser:
     scheduled_sync.add_argument("--report", type=Path)
     scheduled_sync.add_argument("--pr-body", type=Path)
     scheduled_sync.add_argument("--run-id", default="local")
+    prepare_schema_sync_pr = commands.add_parser(
+        "schema-sync-pr-prepare",
+        help="Resolve and check out the single active schema-sync Pull Request branch.",
+    )
+    prepare_schema_sync_pr.add_argument("--repository-root", type=Path, default=Path("."))
+    prepare_schema_sync_pr.add_argument("--state", type=Path, required=True)
+    prepare_schema_sync_pr.add_argument("--github-output", type=Path)
+    publish_schema_sync_pr = commands.add_parser(
+        "schema-sync-pr-publish",
+        help="Commit a validated schema sync and create or update its Draft Pull Request.",
+    )
+    publish_schema_sync_pr.add_argument("--repository-root", type=Path, default=Path("."))
+    publish_schema_sync_pr.add_argument("--state", type=Path, required=True)
+    publish_schema_sync_pr.add_argument("--report", type=Path, required=True)
+    publish_schema_sync_pr.add_argument("--pr-body", type=Path, required=True)
+    publish_schema_sync_pr.add_argument("--run-id", required=True)
+    publish_schema_sync_pr.add_argument("--github-output", type=Path)
     index_manifest = commands.add_parser(
         "index-manifest",
         help="Reconcile approved chunks into a versioned manifest and Git action report.",
@@ -630,6 +671,136 @@ def run_scheduled_schema_sync(
     return 0
 
 
+def run_prepare_schema_sync_pr(
+    *,
+    repository_root: Path,
+    state_path: Path,
+    github_output: Path | None,
+) -> int:
+    """Resolve zero or one active PR and prepare its branch for schema extraction."""
+    runtime = GitHubSchemaSyncRuntime(repository_root.resolve())
+    try:
+        active = resolve_active_schema_sync_pull_request(runtime.list_open_pull_requests())
+        if active is not None:
+            runtime.checkout_and_merge_main(active)
+        state = SchemaSyncPullRequestState(active=active)
+        write_schema_sync_pr_state(state_path, state)
+        _append_github_outputs(
+            github_output,
+            {
+                "active": str(active is not None).lower(),
+                "branch": active.head_ref if active is not None else "",
+                "number": str(active.number) if active is not None else "",
+                "url": active.url if active is not None else "",
+            },
+        )
+    except (OSError, SchemaSyncGitHubRuntimeError, SchemaSyncPullRequestError) as error:
+        print(f"schema-sync PR prepare failed: {error}", file=sys.stderr)
+        return 1
+    state_name = f"PR #{active.number}" if active is not None else "no active PR"
+    print(f"schema-sync PR prepare completed: {state_name}; state={state_path}")
+    return 0
+
+
+def run_publish_schema_sync_pr(
+    *,
+    repository_root: Path,
+    state_path: Path,
+    report_path: Path,
+    pr_body_path: Path,
+    run_id: str,
+    github_output: Path | None,
+) -> int:
+    """Publish one allowlisted schema commit and create or update its active PR."""
+    root = repository_root.resolve()
+    runtime = GitHubSchemaSyncRuntime(root)
+    try:
+        state = load_schema_sync_pr_state(state_path)
+        latest = load_schema_sync_report(report_path)
+        if not requires_schema_sync_publication(latest):
+            print(f"schema-sync PR publish skipped: outcome={latest.outcome.value}")
+            return 0
+        changed_paths = validate_schema_sync_changed_paths(runtime.worktree_paths())
+        if not changed_paths:
+            raise SchemaSyncPullRequestError(
+                "schema-sync report requires publication but the worktree has no changes"
+            )
+        active = state.active
+        branch = active.head_ref if active is not None else schema_sync_branch_name(run_id)
+        if active is None:
+            runtime.create_branch(branch)
+        commit = runtime.commit_schema_sync()
+        baseline, current = _load_cumulative_schemas(runtime, root, latest)
+        cumulative = build_cumulative_schema_sync_report(
+            latest=latest,
+            baseline=baseline,
+            current=current,
+            cumulative_changed_paths=runtime.cumulative_changed_paths(),
+        )
+        write_schema_sync_pr_body(pr_body_path, cumulative)
+        runtime.push(branch)
+        if active is None:
+            pr_url = runtime.create_draft_pull_request(branch=branch, body_path=pr_body_path)
+            action = "created"
+        else:
+            runtime.update_pull_request_body(active.number, pr_body_path)
+            pr_url = active.url
+            action = "updated"
+        _append_github_outputs(
+            github_output,
+            {"action": action, "branch": branch, "commit": commit, "pr_url": pr_url},
+        )
+    except (
+        OSError,
+        SchemaSourceError,
+        SchemaSyncGitHubRuntimeError,
+        SchemaSyncPullRequestError,
+        SchemaSyncPullRequestStateError,
+        SchemaSyncReportError,
+    ) as error:
+        print(f"schema-sync PR publish failed: {error}", file=sys.stderr)
+        return 1
+    print(f"schema-sync PR {action}: {pr_url}; branch={branch}; commit={commit}")
+    return 0
+
+
+def _load_cumulative_schemas(
+    runtime: GitHubSchemaSyncRuntime,
+    repository_root: Path,
+    report: ScheduledSchemaSyncReport,
+) -> tuple[dict[str, DatabaseSchema], dict[str, DatabaseSchema]]:
+    baseline: dict[str, DatabaseSchema] = {}
+    current: dict[str, DatabaseSchema] = {}
+    for database in report.databases:
+        relative_path = f"catalog/{database.key}/generated/raw/schema.json"
+        baseline_content = runtime.read_text_at_revision("origin/main", relative_path)
+        baseline[database.key] = (
+            parse_tbls_schema_text(baseline_content, f"origin/main:{relative_path}")
+            if baseline_content is not None
+            else _empty_database_schema(database.clickhouse_database)
+        )
+        current_path = repository_root / relative_path
+        current[database.key] = (
+            TblsSchemaSource(current_path).load()
+            if current_path.is_file()
+            else _empty_database_schema(database.clickhouse_database)
+        )
+    return baseline, current
+
+
+def _empty_database_schema(name: str) -> DatabaseSchema:
+    return DatabaseSchema(name=name, description="", tables=(), relations=())
+
+
+def _append_github_outputs(path: Path | None, values: Mapping[str, str]) -> None:
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="\n") as stream:
+        for key, value in values.items():
+            stream.write(f"{key}={value}\n")
+
+
 def run_index_manifest(
     chunks_path: Path,
     manifest_path: Path,
@@ -849,6 +1020,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             report_path=(args.report or build_root / "report.json").resolve(),
             pr_body_path=(args.pr_body or build_root / "pr-body.md").resolve(),
             run_id=args.run_id,
+        )
+    if args.command == "schema-sync-pr-prepare":
+        return run_prepare_schema_sync_pr(
+            repository_root=args.repository_root,
+            state_path=args.state,
+            github_output=args.github_output,
+        )
+    if args.command == "schema-sync-pr-publish":
+        return run_publish_schema_sync_pr(
+            repository_root=args.repository_root,
+            state_path=args.state,
+            report_path=args.report,
+            pr_body_path=args.pr_body,
+            run_id=args.run_id,
+            github_output=args.github_output,
         )
     if args.command == "index-manifest":
         return run_index_manifest(
