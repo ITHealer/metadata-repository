@@ -24,6 +24,13 @@ the scheduled-sync command before it resolves any database secret or starts tbls
 implementation runs tbls once per opted-in database, stages and validates every result, then writes
 only supported schema changes. Tables outside the explicit profile allowlist remain out of scope.
 
+For a deliberate first-run bootstrap, an enabled scheduled profile may be committed before its
+`catalog/<key>/generated/raw/schema.json` exists. Catalog validation reports that state as
+`scheduled bootstrap pending`, and reviewer/candidate automation skips the database until the first
+successful scheduled sync creates raw schema and reviewer drafts together. This exception applies
+only to `scheduled_sync: true` profiles with an explicit allowlist, tbls config, and named DSN; an
+enabled non-scheduled profile with missing catalog remains invalid.
+
 To enable a profile, the developer must obtain and verify:
 
 1. The exact ClickHouse database name.
