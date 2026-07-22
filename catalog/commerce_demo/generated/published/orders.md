@@ -5,15 +5,15 @@ table: orders
 qualified_name: commerce_demo.orders
 owner: unassigned
 reviewer: unassigned
-document_status: approved
-index_eligible: true
-schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
+document_status: needs_review
+index_eligible: false
+schema_hash: 41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
-source_review_commit: bf1a1253b23629c6053e1cd42797bbbc6dcccd00
+source_review_commit: 3549b02c729d9071a1a01fd638b94daa0e62eb30
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
@@ -21,9 +21,12 @@ prompt_version: workflow-neutral-narrative-v2
 
 # commerce_demo.orders — Orders
 
+> [!WARNING]
+> Preview only: reviewer metadata still has `needs_review` status and must not be indexed.
+
 ## Summary
 
-Each row in the Orders table represents a single order identified by order_id. It includes UTC timestamps for when the order was created (created_at) and last updated (updated_at), the customer_id of the purchaser, the current order_status (pending, paid, shipped, or cancelled), and the total_amount in VND after discounts. Cancelled orders remain in the table. All columns are non‑nullable and have internal sensitivity. Grain, freshness, and appropriate use are not confirmed.
+The Orders table captures each order (one row per order_id) with fields such as order_id, customer_id, created_at, updated_at, channel, order_status, and total_amount (VND); cancelled orders are retained. The data grain has not been confirmed.
 
 ## Grain and purpose
 
@@ -39,6 +42,17 @@ Each row in the Orders table represents a single order identified by order_id. I
 - Unknown — needs confirmation
 
 ## Columns
+
+### `channel` — Channel
+
+Order acquisition channel: web, mobile, or partner
+
+- Technical type: `LowCardinality(String)`
+- Nullable: `false`
+- Semantic type: `unknown`
+- Unit/timezone: `not_applicable`
+- Null meaning: not_applicable
+- Sensitivity: `internal`
 
 ### `created_at` — Created At
 
@@ -134,6 +148,7 @@ Not applicable — no table-level security instruction was supplied.
 
 ## Evidence
 
+- `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.channel`: Generated from the ClickHouse comment; domain confirmation is required.
 - `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.created_at`: Generated from the ClickHouse comment; domain confirmation is required.
 - `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.customer_id`: Generated from the ClickHouse comment; domain confirmation is required.
 - `proposed` `clickhouse_comment` — `catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.order_id`: Generated from the ClickHouse comment; domain confirmation is required.
