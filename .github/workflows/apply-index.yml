@@ -43,16 +43,23 @@ jobs:
       QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
       TELEGRAM_NOTIFICATIONS_ENABLED: ${{ vars.TELEGRAM_NOTIFICATIONS_ENABLED || 'false' }}
     steps:
+      - name: Validate self-hosted runner contract
+        run: |
+          for tool in docker uv; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "Required runner tool is missing: $tool"
+              exit 1
+            fi
+          done
+          docker compose version >/dev/null
+          "$(uv python find 3.11)" --version
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - run: make install
+      - name: Install with the runner-managed Python 3.11
+        run: make install PYTHON_BOOTSTRAP="$(uv python find 3.11)"
 
       - name: Start and verify persistent Qdrant
         run: make qdrant-up
