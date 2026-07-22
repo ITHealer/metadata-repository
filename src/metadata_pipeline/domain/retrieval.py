@@ -22,7 +22,7 @@ class RetrievalHit(StrictModel):
     rank: int = Field(ge=1)
     chunk_id: str = Field(min_length=1)
     document_id: str = Field(min_length=1)
-    score: int = Field(ge=0)
+    score: float = Field(ge=0)
     content: str = Field(min_length=1)
 
 

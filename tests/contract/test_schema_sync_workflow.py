@@ -33,7 +33,10 @@ def test_production_has_two_layer_gate_runner_contract_and_direct_secret_mapping
     assert "force_run:" in content
     assert "SCHEMA_SYNC_ENABLED:" in content
     assert "TBLS_DSN_URCARD: ${{ secrets.TBLS_DSN_URCARD }}" in content
-    assert "for tool in git gh docker python3" in content
+    assert "for tool in git gh docker uv" in content
+    assert '"$(uv python find 3.11)" --version' in content
+    assert 'PYTHON_BOOTSTRAP="$(uv python find 3.11)"' in content
+    assert "actions/setup-python" not in content
     assert "docker compose version" in content
     assert "METADATA_BOT_TOKEN is required" in content
     assert ".env" not in content

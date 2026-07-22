@@ -38,13 +38,14 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.METADATA_BOT_TOKEN }}
         run: |
-          for tool in git gh docker python3; do
+          for tool in git gh docker uv; do
             if ! command -v "$tool" >/dev/null 2>&1; then
               echo "Required runner tool is missing: $tool"
               exit 1
             fi
           done
           docker compose version >/dev/null
+          "$(uv python find 3.11)" --version
           if [[ -z "$BOT_TOKEN" ]]; then
             echo "METADATA_BOT_TOKEN is required for schema-sync PR automation."
             exit 1
@@ -57,12 +58,8 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.METADATA_BOT_TOKEN }}
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - run: make install
+      - name: Install with the runner-managed Python 3.11
+        run: make install PYTHON_BOOTSTRAP="$(uv python find 3.11)"
 
       - name: Resolve the single active schema-sync PR
         id: prepare

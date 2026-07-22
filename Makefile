@@ -19,6 +19,8 @@ INDEX_BASE ?= HEAD^
 INDEX_HEAD ?= HEAD
 SOURCE_COMMIT ?= $(shell git rev-parse HEAD)
 RETRIEVAL_REPORT ?= build/index/retrieval-report.json
+VECTOR_APPLY_SUMMARY ?= build/index/apply-summary.json
+VECTOR_RETRIEVAL_REPORT ?= build/index/vector-retrieval-report.json
 SCHEMA_SYNC_RUN_ID ?= local
 SCHEMA_SYNC_REPORT ?= build/schema-sync/report.json
 SCHEMA_SYNC_PR_BODY ?= build/schema-sync/pr-body.md
@@ -35,7 +37,8 @@ TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 	review-schema review-draft review-validate review-check \
 	publish published-validate chunk-dry-run knowledge-check \
 	index-build retrieval-smoke live-uat catalog-check catalog-check-all \
-	candidate-sync candidate-validate catalog-chunks scheduled-sync
+	candidate-sync candidate-validate catalog-chunks scheduled-sync \
+	index-bootstrap index-apply vector-retrieval
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -189,6 +192,19 @@ index-build: catalog-chunks ## Reconcile approved candidate chunks into a determ
 retrieval-smoke: ## Run 10 golden questions against an approved in-memory fixture
 	RETRIEVAL_REPORT=$(RETRIEVAL_REPORT) \
 		$(VENV)/bin/pytest tests/retrieval/test_golden_retrieval.py
+
+index-bootstrap: ## Explicitly create or validate the configured VectorDB collection
+	./scripts/metadata bootstrap-vector-index
+
+index-apply: ## Reconcile the desired manifest against actual VectorDB state
+	./scripts/metadata apply-index \
+		--manifest $(INDEX_MANIFEST) \
+		--summary $(VECTOR_APPLY_SUMMARY)
+
+vector-retrieval: ## Run golden questions against the configured live VectorDB
+	./scripts/metadata verify-vector-retrieval \
+		--questions tests/fixtures/golden_questions.yml \
+		--report $(VECTOR_RETRIEVAL_REPORT)
 
 live-uat: ## Manually call the configured gateway once per document and write isolated artifacts
 	./scripts/metadata publish \

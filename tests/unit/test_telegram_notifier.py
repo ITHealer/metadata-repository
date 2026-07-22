@@ -107,6 +107,7 @@ def test_all_event_templates_include_operator_context() -> None:
         chunk_count=20,
         upserted_count=4,
         deleted_count=1,
+        skipped_count=15,
     )
     failed_event = JobFailedNotification(
         event_id="job_failed:3:1",
