@@ -383,19 +383,20 @@ make index-build      # writes build/index/manifest.json and actions.json
 make retrieval-smoke # evaluates 10 golden questions and required facts
 ```
 
-Only `approved` chunks enter the manifest. The three committed demo reviews remain `needs_review`,
-so the real demo manifest is currently empty by design. Retrieval CI uses the same metadata with an
-in-memory approved test status; it never modifies reviewer-owned YAML. The deterministic lexical
-smoke test requires at least 90% top-3 document accuracy and all required facts in the retrieved
-chunks.
+Only promoted candidates built from `approved` reviewer metadata enter the manifest. Reviewer YAML
+and structured candidates must agree; merging reviewer changes before the metadata bot finishes
+promotion leaves those documents out of the manifest. Retrieval CI uses an in-memory approved test
+status and never modifies reviewer-owned YAML. The deterministic lexical smoke test requires at
+least 90% top-3 document accuracy and all required facts in the retrieved chunks.
 
 See [the index manifest runbook](./docs/runbooks/index-manifest.md) for lifecycle, version
 replacement, report interpretation, and recovery.
 
 The separately gated `Apply Vector Index` workflow reconciles `manifest-v2` against actual managed
-Qdrant points, embeds only changed chunks with Gemini document semantics, verifies exact post-apply
-state, and runs the same golden questions with query embeddings. It emits `index_done` only after a
-changed apply and retrieval verification both pass. See the
+Qdrant points, embeds only changed chunks through the configured OpenAI-compatible gateway,
+verifies exact post-apply state, and runs the same golden questions with query embeddings. Local
+Qdrant is persistent Docker Compose state managed with `make qdrant-up`. The workflow emits
+`index_done` only after a changed apply and retrieval verification both pass. See the
 [vector index operations runbook](./docs/runbooks/vector-index-operations.md); keep
 `INDEX_APPLY_ENABLED=false` until its non-production UAT is complete.
 

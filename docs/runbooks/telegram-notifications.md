@@ -61,7 +61,7 @@ verified state. Live semantic retrieval runs before event construction, so a ret
 fails the workflow without announcing a knowledge-base update. A no-op reconciliation still runs
 retrieval health verification but does not send a duplicate update message.
 
-Keep `INDEX_APPLY_ENABLED=false` until Gemini and Qdrant credentials, collection bootstrap, initial
+Keep `INDEX_APPLY_ENABLED=false` until gateway and Qdrant credentials, collection bootstrap, initial
 apply, idempotent no-op rerun, and changed/removed chunk tests have passed. See
 [`vector-index-operations.md`](./vector-index-operations.md) for the rollout gate.
 

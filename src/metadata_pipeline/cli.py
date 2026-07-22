@@ -991,10 +991,12 @@ def run_apply_vector_index(
         embedder = None
         index = None
         if settings.enabled:
-            from metadata_pipeline.adapters.embedding.gemini import GeminiEmbedder
+            from metadata_pipeline.adapters.embedding.openai_compatible import (
+                OpenAICompatibleEmbedder,
+            )
             from metadata_pipeline.adapters.index.qdrant import QdrantVectorIndex
 
-            embedder = GeminiEmbedder.from_settings(settings)
+            embedder = OpenAICompatibleEmbedder.from_settings(settings)
             index = QdrantVectorIndex.from_settings(settings)
             _require_vector_collection(settings, index)
         summary = apply_index(
@@ -1038,11 +1040,13 @@ def run_verify_vector_retrieval(*, questions_path: Path, report_path: Path) -> i
         if not settings.enabled:
             print("vector retrieval verification disabled")
             return 0
-        from metadata_pipeline.adapters.embedding.gemini import GeminiEmbedder
+        from metadata_pipeline.adapters.embedding.openai_compatible import (
+            OpenAICompatibleEmbedder,
+        )
         from metadata_pipeline.adapters.index.qdrant import QdrantVectorIndex
         from metadata_pipeline.adapters.index.qdrant_retriever import QdrantRetriever
 
-        embedder = GeminiEmbedder.from_settings(settings)
+        embedder = OpenAICompatibleEmbedder.from_settings(settings)
         index = QdrantVectorIndex.from_settings(settings)
         _require_vector_collection(settings, index)
         report = evaluate_retriever(

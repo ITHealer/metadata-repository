@@ -38,7 +38,7 @@ class QdrantVectorIndex:
     def from_settings(cls, settings: IndexSettings) -> QdrantVectorIndex:
         client = QdrantClient(
             url=settings.qdrant_url,
-            api_key=settings.qdrant_api_key,
+            api_key=settings.qdrant_api_key or None,
             timeout=max(1, int(settings.timeout_seconds)),
         )
         return cls(collection=settings.qdrant_collection, client=client)

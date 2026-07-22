@@ -3,6 +3,8 @@
 from pathlib import Path
 
 WORKFLOW = Path(".github/workflows/apply-index.yml")
+COMPOSE = Path("docker-compose.yml")
+MAKEFILE = Path("Makefile")
 
 
 def test_apply_workflow_is_disabled_by_default_and_main_only() -> None:
@@ -33,8 +35,26 @@ def test_index_done_is_strictly_after_apply_and_retrieval_verification() -> None
 def test_apply_workflow_maps_secrets_directly_and_never_commits_artifacts() -> None:
     content = WORKFLOW.read_text(encoding="utf-8")
 
-    assert "GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}" in content
-    assert "QDRANT_URL: ${{ secrets.QDRANT_URL }}" in content
+    assert "runs-on: [self-hosted, schema-sync]" in content
+    assert "OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}" in content
+    assert "OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}" in content
+    assert "QDRANT_URL: ${{ vars.QDRANT_URL || 'http://localhost:6333' }}" in content
     assert "QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}" in content
+    assert "run: make qdrant-up" in content
     assert "git commit" not in content
     assert "git push" not in content
+
+
+def test_local_qdrant_service_is_pinned_persistent_and_operable() -> None:
+    compose = COMPOSE.read_text(encoding="utf-8")
+    makefile = MAKEFILE.read_text(encoding="utf-8")
+
+    assert "qdrant/qdrant:v1.16.2@sha256:" in compose
+    assert "qdrant_data:/qdrant/storage" in compose
+    assert "${QDRANT_HTTP_PORT:-6333}:6333" in compose
+    assert "qdrant_data:" in compose
+    assert "qdrant-up:" in makefile
+    assert "qdrant-check:" in makefile
+    assert "QDRANT_COMPOSE_PROJECT ?= metadata-vector" in makefile
+    assert "--project-name $(QDRANT_COMPOSE_PROJECT) up -d qdrant" in makefile
+    assert "./scripts/wait_for_qdrant.sh" in makefile
