@@ -7,13 +7,13 @@ owner: unassigned
 reviewer: unassigned
 document_status: needs_review
 index_eligible: false
-schema_hash: 41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a
+schema_hash: 1f74d093a952f602fee4fbafe6f03770d5849ee090886dc5b765e9d28fda58e5
 contract_version: reviewer-v1
 review_guideline_version: reviewer-v1
 transformation_guideline_version: retrieval-v1
 source_schema_path: catalog/commerce_demo/generated/raw/schema.json
 source_review_path: catalog/commerce_demo/review/orders.yml
-source_review_commit: 591312cf9e824bd6ca2ff3634e26ea3664a4a30c
+source_review_commit: 271ebb20148f5bb4ee9d9e4b552b792e2adb2b5e
 generator_mode: live
 generator_model: gpt-oss-120b
 prompt_version: workflow-neutral-narrative-v2
@@ -26,7 +26,7 @@ prompt_version: workflow-neutral-narrative-v2
 
 ## Summary
 
-Order fact at one row per order_id; cancelled orders remain in the table. Grain: Unknown — needs confirmation. Each record includes order_id (UUID), customer_id (UUID, join to customers), created_at and updated_at timestamps (UTC), channel (web, mobile, partner), order_status (pending, paid, shipped, cancelled – allowed values require reviewer confirmation), and total_amount (Decimal(18,2) in VND).
+The Orders table stores a single row per order_id, with columns order_id (stable UUID), customer_id (UUID), created_at and updated_at (UTC timestamps), channel (web, mobile, or partner), order_status (pending, paid, shipped, or cancelled), and total_amount (VND). Cancelled orders remain in the table. Grain and detailed business interpretation are pending confirmation.
 
 ## Grain and purpose
 

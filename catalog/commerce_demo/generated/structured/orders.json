@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "4b9fe4550122144e3ceeedf781793700686ec74f7282fd28994e4c49e6378644",
+  "candidate_hash": "7545ca6956e08062c1a5a6b8fe248d34f1becf80be8da7540ed0a31921cc169c",
   "database": "commerce_demo",
   "document": {
     "aliases": [],
@@ -129,7 +129,7 @@
         "nullable_meaning": "not_applicable",
         "semantic_type": "categorical",
         "sensitivity": "internal",
-        "technical_comment": "Current lifecycle state: pending, paid, shipped, or cancelled",
+        "technical_comment": "Current lifecycle state reviewed by PR-12 UAT",
         "unit": "not_applicable"
       },
       {
@@ -197,7 +197,7 @@
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "591312cf9e824bd6ca2ff3634e26ea3664a4a30c",
+      "source_review_commit": "271ebb20148f5bb4ee9d9e4b552b792e2adb2b5e",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -208,9 +208,9 @@
     "relationships": [],
     "review_guideline_version": "reviewer-v1",
     "reviewer": "unassigned",
-    "schema_hash": "41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a",
+    "schema_hash": "1f74d093a952f602fee4fbafe6f03770d5849ee090886dc5b765e9d28fda58e5",
     "security": [],
-    "summary": "Order fact at one row per order_id; cancelled orders remain in the table. Grain: Unknown — needs confirmation. Each record includes order_id (UUID), customer_id (UUID, join to customers), created_at and updated_at timestamps (UTC), channel (web, mobile, partner), order_status (pending, paid, shipped, cancelled – allowed values require reviewer confirmation), and total_amount (Decimal(18,2) in VND).",
+    "summary": "The Orders table stores a single row per order_id, with columns order_id (stable UUID), customer_id (UUID), created_at and updated_at (UTC timestamps), channel (web, mobile, or partner), order_status (pending, paid, shipped, or cancelled), and total_amount (VND). Cancelled orders remain in the table. Grain and detailed business interpretation are pending confirmation.",
     "table": "orders",
     "transformation_guideline_version": "retrieval-v1"
   },
@@ -218,12 +218,12 @@
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
     "generator_model": "gpt-oss-120b",
     "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
-    "input_hash": "dcc1174f525d0b8a13cd14ae504b67e78e3598ac35139b6a996efb079b7c8c11",
+    "input_hash": "7d418820e6f0bb54af920ecca0de653864dfd88145fc52549bff703035cf4a4d",
     "prompt_version": "workflow-neutral-narrative-v2",
-    "review_content_hash": "cb6e7ad13aa132ff4773a911d3179f2c918b6d9c3a5495ec8c03a5ebef514d46",
-    "schema_hash": "41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a"
+    "review_content_hash": "08f515a68b6cda73a77adf5af91f1d1680114de9cecc38ef078c80e3b45bac01",
+    "schema_hash": "1f74d093a952f602fee4fbafe6f03770d5849ee090886dc5b765e9d28fda58e5"
   },
-  "reviewable_body_hash": "40b128150b075c4bf4a2894878c08cfbc27c8537352d6c1fcbc4c594c8b4c587",
+  "reviewable_body_hash": "b6e05acd828e91c7b0b36522a0421e4e26248693a481c3eb8a7c785b53b47c1a",
   "state": "review",
   "table": "orders"
 }
