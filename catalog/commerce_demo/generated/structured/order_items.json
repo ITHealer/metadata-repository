@@ -1,0 +1,183 @@
+{
+  "artifact_version": "candidate-v1",
+  "candidate_hash": "00ba783b638956e966d97a3fdf649948a2dad5100513f6097a5e0fa7d742f7ac",
+  "database": "commerce_demo",
+  "document": {
+    "aliases": [],
+    "appropriate_use": [
+      "Unknown — needs confirmation"
+    ],
+    "business_evidence": [
+      {
+        "kind": "clickhouse_comment",
+        "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+        "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.comment",
+        "status": "proposed"
+      }
+    ],
+    "business_rules": [],
+    "caveats": [
+      "Business meaning requires domain reviewer confirmation."
+    ],
+    "columns": [
+      {
+        "allowed_values": {},
+        "business_name": "Line Number",
+        "caveats": [],
+        "data_type": "UInt16",
+        "description": "One-based line position within an order",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.line_number",
+            "status": "proposed"
+          }
+        ],
+        "name": "line_number",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "unknown",
+        "sensitivity": "internal",
+        "technical_comment": "One-based line position within an order",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Order Id",
+        "caveats": [],
+        "data_type": "UUID",
+        "description": "Parent order; logical join to orders.order_id",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.order_id",
+            "status": "proposed"
+          }
+        ],
+        "name": "order_id",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Parent order; logical join to orders.order_id",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Product Code",
+        "caveats": [],
+        "data_type": "String",
+        "description": "Synthetic product code captured when the order was placed",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.product_code",
+            "status": "proposed"
+          }
+        ],
+        "name": "product_code",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "identifier",
+        "sensitivity": "internal",
+        "technical_comment": "Synthetic product code captured when the order was placed",
+        "unit": "not_applicable"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Quantity",
+        "caveats": [],
+        "data_type": "UInt16",
+        "description": "Number of product units on this order line",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.quantity",
+            "status": "proposed"
+          }
+        ],
+        "name": "quantity",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "count",
+        "sensitivity": "internal",
+        "technical_comment": "Number of product units on this order line",
+        "unit": "Unknown — needs confirmation"
+      },
+      {
+        "allowed_values": {},
+        "business_name": "Unit Price",
+        "caveats": [],
+        "data_type": "Decimal(18, 2)",
+        "description": "Price per unit in VND when the order was placed",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "catalog/commerce_demo/generated/raw/schema.json#tables.order_items.columns.unit_price",
+            "status": "proposed"
+          }
+        ],
+        "name": "unit_price",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "monetary_amount",
+        "sensitivity": "internal",
+        "technical_comment": "Price per unit in VND when the order was placed",
+        "unit": "VND"
+      }
+    ],
+    "contract_version": "reviewer-v1",
+    "data_quality": [
+      "Data quality expectations require reviewer confirmation."
+    ],
+    "database": "commerce_demo",
+    "description": "Order detail fact at one row per order_id and line_number.",
+    "display_name": "Order Items",
+    "document_id": "commerce_demo.order_items",
+    "document_status": "needs_review",
+    "freshness": "Unknown — needs confirmation",
+    "grain": "Unknown — needs confirmation",
+    "inappropriate_use": [
+      "Unknown — needs confirmation"
+    ],
+    "index_eligible": false,
+    "owner": "unassigned",
+    "provenance": {
+      "generator_mode": "live",
+      "generator_model": "gpt-oss-120b",
+      "prompt_version": "workflow-neutral-narrative-v2",
+      "source_review_commit": "b3cd2b5f5b941e655a403335a8d1ace77a8c77d2",
+      "source_review_path": "catalog/commerce_demo/review/order_items.yml",
+      "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
+    },
+    "purpose": [
+      "Unknown — needs confirmation"
+    ],
+    "qualified_name": "commerce_demo.order_items",
+    "relationships": [],
+    "review_guideline_version": "reviewer-v1",
+    "reviewer": "unassigned",
+    "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db",
+    "security": [],
+    "summary": "The Order Items table records a single fact per order line, keyed by order_id (UUID) and line_number (UInt16). Each entry includes the product_code (String), quantity (UInt16, count), and unit_price (Decimal(18,2) in VND). The table’s grain, freshness, and business semantics are presently unconfirmed and require domain reviewer confirmation.",
+    "table": "order_items",
+    "transformation_guideline_version": "retrieval-v1"
+  },
+  "fingerprint": {
+    "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
+    "generator_model": "gpt-oss-120b",
+    "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
+    "input_hash": "a62596ef9be70f4f5b64a8112234335f6a1c5c78e5631bacc6f6d440769cd31a",
+    "prompt_version": "workflow-neutral-narrative-v2",
+    "review_content_hash": "36746efefab120b4385d789ad603488c22d48a7eec3951a04f9565178ef5708a",
+    "schema_hash": "45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db"
+  },
+  "reviewable_body_hash": "4433826a9d1219a36b320d67b8ad2d9eb9cd1e50aad574e321a732476e648936",
+  "state": "review",
+  "table": "order_items"
+}
