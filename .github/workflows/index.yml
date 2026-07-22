@@ -53,6 +53,7 @@ jobs:
           path: |
             build/index/manifest.json
             build/index/actions.json
+            build/index/chunk-actions.json
             build/index/retrieval-report.json
           if-no-files-found: error
           retention-days: 30

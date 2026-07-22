@@ -6,8 +6,12 @@ import pytest
 
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.application.classify_changes import ChangedPath
-from metadata_pipeline.application.index_changes import map_index_actions, reconcile_index
-from metadata_pipeline.domain.index import IndexActionType
+from metadata_pipeline.application.index_changes import (
+    diff_manifest_chunks,
+    map_index_actions,
+    reconcile_index,
+)
+from metadata_pipeline.domain.index import ChunkActionReason, ChunkActionType, IndexActionType
 from metadata_pipeline.domain.published import Chunk
 from metadata_pipeline.domain.review import DocumentStatus
 from metadata_pipeline.ports.index_store import IndexStoreError
@@ -62,12 +66,15 @@ def test_reconcile_is_idempotent_and_excludes_unapproved_chunks(
     second = reconcile_index(store, approved_chunks + (unapproved,), "1" * 40)
 
     assert first.changed is True
+    assert first.manifest.format_version == "manifest-v2"
+    assert len(first.manifest.manifest_hash) == 64
     assert len(first.manifest.documents) == 3
     assert len(first.upserted_chunk_ids) == len(approved_chunks)
     assert not first.deleted_chunk_ids
     assert second.changed is False
     assert not second.deleted_chunk_ids
     assert not second.upserted_chunk_ids
+    assert {action.operation for action in second.chunk_actions} == {ChunkActionType.SKIP}
     assert "commerce_demo.preview" not in {
         document.document_id for document in first.manifest.documents
     }
@@ -132,3 +139,23 @@ def test_manifest_store_rejects_invalid_existing_json(tmp_path: Path) -> None:
 
     with pytest.raises(IndexStoreError, match="invalid index manifest"):
         ManifestIndexStore(path).load()
+
+
+def test_chunk_diff_reports_created_updated_removed_and_unchanged(
+    approved_chunks: tuple[Chunk, ...],
+) -> None:
+    from metadata_pipeline.application.index_changes import build_index_manifest
+
+    previous = build_index_manifest(approved_chunks[:3], "1" * 40)
+    updated = approved_chunks[1].model_copy(update={"body_hash": "f" * 64})
+    desired = build_index_manifest((updated, approved_chunks[2], approved_chunks[3]), "2" * 40)
+
+    actions = diff_manifest_chunks(previous, desired)
+    reasons = {action.reason for action in actions}
+
+    assert reasons == {
+        ChunkActionReason.CREATED,
+        ChunkActionReason.REMOVED,
+        ChunkActionReason.UNCHANGED,
+        ChunkActionReason.UPDATED,
+    }

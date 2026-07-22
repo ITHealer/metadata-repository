@@ -14,6 +14,7 @@ CHUNK_OUTPUT ?= build/chunks/$(DATABASE).jsonl
 CATALOG_CHUNK_OUTPUT ?= build/chunks/catalog.jsonl
 INDEX_MANIFEST ?= build/index/manifest.json
 INDEX_ACTIONS ?= build/index/actions.json
+INDEX_CHUNK_ACTIONS ?= build/index/chunk-actions.json
 INDEX_BASE ?= HEAD^
 INDEX_HEAD ?= HEAD
 SOURCE_COMMIT ?= $(shell git rev-parse HEAD)
@@ -182,7 +183,8 @@ index-build: catalog-chunks ## Reconcile approved candidate chunks into a determ
 		--manifest $(INDEX_MANIFEST) \
 		--source-commit $(SOURCE_COMMIT) \
 		--base $(INDEX_BASE) --head $(INDEX_HEAD) \
-		--actions-output $(INDEX_ACTIONS)
+		--actions-output $(INDEX_ACTIONS) \
+		--chunk-actions-output $(INDEX_CHUNK_ACTIONS)
 
 retrieval-smoke: ## Run 10 golden questions against an approved in-memory fixture
 	RETRIEVAL_REPORT=$(RETRIEVAL_REPORT) \

@@ -7,6 +7,9 @@ from pathlib import PurePosixPath
 
 from metadata_pipeline.application.classify_changes import ChangedPath
 from metadata_pipeline.domain.index import (
+    ChunkAction,
+    ChunkActionReason,
+    ChunkActionType,
     IndexAction,
     IndexActionType,
     IndexedDocument,
@@ -23,6 +26,7 @@ class IndexUpdate:
     manifest: IndexManifest
     deleted_chunk_ids: tuple[str, ...]
     upserted_chunk_ids: tuple[str, ...]
+    chunk_actions: tuple[ChunkAction, ...]
     changed: bool
 
 
@@ -54,7 +58,8 @@ def reconcile_index(
 ) -> IndexUpdate:
     """Replace the full approved snapshot and report stale deletes before new upserts."""
     previous = store.load()
-    current = _manifest_from_chunks(chunks, source_commit)
+    current = build_index_manifest(chunks, source_commit)
+    chunk_actions = diff_manifest_chunks(previous, current)
     previous_by_id = {document.document_id: document for document in previous.documents}
     current_by_id = {document.document_id: document for document in current.documents}
     deleted: list[str] = []
@@ -70,11 +75,13 @@ def reconcile_index(
         manifest=current,
         deleted_chunk_ids=tuple(sorted(deleted)),
         upserted_chunk_ids=tuple(sorted(upserted)),
+        chunk_actions=chunk_actions,
         changed=changed,
     )
 
 
-def _manifest_from_chunks(chunks: tuple[Chunk, ...], source_commit: str) -> IndexManifest:
+def build_index_manifest(chunks: tuple[Chunk, ...], source_commit: str) -> IndexManifest:
+    """Build one complete approved-only manifest with a stable content hash."""
     grouped: dict[str, list[Chunk]] = {}
     for chunk in chunks:
         if chunk.index_eligible:
@@ -92,7 +99,50 @@ def _manifest_from_chunks(chunks: tuple[Chunk, ...], source_commit: str) -> Inde
                 chunks=ordered,
             )
         )
-    return IndexManifest(source_commit=source_commit, documents=tuple(documents))
+    return IndexManifest.create(source_commit=source_commit, documents=tuple(documents))
+
+
+def diff_manifest_chunks(
+    previous: IndexManifest,
+    desired: IndexManifest,
+) -> tuple[ChunkAction, ...]:
+    """Compare complete manifests by stable chunk ID and body hash."""
+    old = _chunks_by_id(previous)
+    new = _chunks_by_id(desired)
+    actions: list[ChunkAction] = []
+    for chunk_id in sorted(old.keys() | new.keys()):
+        old_hash = old[chunk_id].body_hash if chunk_id in old else None
+        new_hash = new[chunk_id].body_hash if chunk_id in new else None
+        if old_hash is None:
+            operation = ChunkActionType.UPSERT
+            reason = ChunkActionReason.CREATED
+        elif new_hash is None:
+            operation = ChunkActionType.DELETE
+            reason = ChunkActionReason.REMOVED
+        elif old_hash != new_hash:
+            operation = ChunkActionType.UPSERT
+            reason = ChunkActionReason.UPDATED
+        else:
+            operation = ChunkActionType.SKIP
+            reason = ChunkActionReason.UNCHANGED
+        actions.append(
+            ChunkAction(
+                operation=operation,
+                reason=reason,
+                chunk_id=chunk_id,
+                old_hash=old_hash,
+                new_hash=new_hash,
+            )
+        )
+    return tuple(actions)
+
+
+def _chunks_by_id(manifest: IndexManifest) -> dict[str, Chunk]:
+    chunks = {chunk.chunk_id: chunk for document in manifest.documents for chunk in document.chunks}
+    expected_count = sum(len(document.chunks) for document in manifest.documents)
+    if len(chunks) != expected_count:
+        raise ValueError("manifest chunk IDs must be globally unique")
+    return chunks
 
 
 def _action(action_type: IndexActionType, source_path: str) -> IndexAction | None:

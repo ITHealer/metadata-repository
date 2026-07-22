@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
+from metadata_pipeline.domain.hashing import canonical_sha256
 from metadata_pipeline.domain.published import (
     Chunk,
     ChunkType,
@@ -149,28 +151,29 @@ def _chunk(
 ) -> Chunk:
     qualified_name = document.qualified_name
     provenance: Provenance = document.provenance
-    return Chunk(
-        chunk_id=f"{qualified_name}::{chunk_type.value}::{semantic_key}",
-        parent_document_id=f"{qualified_name}::document",
-        semantic_key=semantic_key,
-        chunk_type=chunk_type,
-        database=document.database,
-        table=document.table,
-        qualified_name=qualified_name,
-        document_status=document.document_status,
-        index_eligible=document.index_eligible,
-        schema_hash=document.schema_hash,
-        contract_version=document.contract_version,
-        review_guideline_version=document.review_guideline_version,
-        transformation_guideline_version=document.transformation_guideline_version,
-        source_review_path=provenance.source_review_path,
-        source_review_commit=provenance.source_review_commit,
-        generator_mode=provenance.generator_mode,
-        generator_model=provenance.generator_model,
-        prompt_version=provenance.prompt_version,
-        content=content,
-        evidence=evidence,
-    )
+    payload: dict[str, Any] = {
+        "chunk_id": f"{qualified_name}::{chunk_type.value}::{semantic_key}",
+        "parent_document_id": f"{qualified_name}::document",
+        "semantic_key": semantic_key,
+        "chunk_type": chunk_type,
+        "database": document.database,
+        "table": document.table,
+        "qualified_name": qualified_name,
+        "document_status": document.document_status,
+        "index_eligible": document.index_eligible,
+        "schema_hash": document.schema_hash,
+        "contract_version": document.contract_version,
+        "review_guideline_version": document.review_guideline_version,
+        "transformation_guideline_version": document.transformation_guideline_version,
+        "source_review_path": provenance.source_review_path,
+        "source_review_commit": provenance.source_review_commit,
+        "generator_mode": provenance.generator_mode,
+        "generator_model": provenance.generator_model,
+        "prompt_version": provenance.prompt_version,
+        "content": content,
+        "evidence": evidence,
+    }
+    return Chunk(**payload, body_hash=canonical_sha256(payload))
 
 
 def _semantic_key(value: str) -> str:

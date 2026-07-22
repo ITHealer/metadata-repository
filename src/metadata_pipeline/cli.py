@@ -340,6 +340,7 @@ def build_parser() -> argparse.ArgumentParser:
     index_manifest.add_argument("--base", required=True)
     index_manifest.add_argument("--head", required=True)
     index_manifest.add_argument("--actions-output", type=Path, required=True)
+    index_manifest.add_argument("--chunk-actions-output", type=Path)
     return parser
 
 
@@ -860,6 +861,7 @@ def run_index_manifest(
     base: str,
     head: str,
     actions_output: Path,
+    chunk_actions_output: Path | None = None,
 ) -> int:
     """Build a full approved manifest and report document actions from Git."""
     try:
@@ -874,11 +876,24 @@ def run_index_manifest(
         actions_output,
         json.dumps(action_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     )
+    if chunk_actions_output is not None:
+        chunk_action_payload = [action.model_dump(mode="json") for action in update.chunk_actions]
+        write_text_if_changed(
+            chunk_actions_output,
+            json.dumps(
+                chunk_action_payload,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+        )
     print(
         f"index manifest {'updated' if update.changed else 'unchanged'}: "
         f"{len(update.manifest.documents)} document(s), "
         f"{len(update.deleted_chunk_ids)} delete(s), "
-        f"{len(update.upserted_chunk_ids)} upsert(s), {len(actions)} Git action(s)"
+        f"{len(update.upserted_chunk_ids)} upsert(s), {len(actions)} Git action(s); "
+        f"manifest={update.manifest.manifest_hash}"
     )
     return 0
 
@@ -1234,6 +1249,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.base,
             args.head,
             args.actions_output,
+            args.chunk_actions_output,
         )
 
     parser.print_help()

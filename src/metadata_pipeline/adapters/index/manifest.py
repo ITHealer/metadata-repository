@@ -22,7 +22,7 @@ class ManifestIndexStore:
     def load(self) -> IndexManifest:
         """Load a strict manifest; absence represents an empty previous snapshot."""
         if not self.path.exists():
-            return IndexManifest(source_commit="0000000")
+            return IndexManifest.create(source_commit="0000000")
         try:
             payload = self.path.read_text(encoding="utf-8")
             return IndexManifest.model_validate_json(payload)

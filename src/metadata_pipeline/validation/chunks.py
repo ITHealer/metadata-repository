@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from metadata_pipeline.domain.hashing import canonical_sha256
 from metadata_pipeline.domain.published import Chunk, ChunkType, PublishedDocument
 from metadata_pipeline.validation.review import ValidationIssue
 
@@ -32,6 +33,16 @@ def validate_chunks(
         )
     expected_parent = f"{document.document_id}::document"
     for chunk in chunks:
+        expected_hash = canonical_sha256(chunk.model_dump(mode="json", exclude={"body_hash"}))
+        if chunk.body_hash != expected_hash:
+            issues.append(
+                ValidationIssue(
+                    "invalid_chunk_body_hash",
+                    path,
+                    chunk.chunk_id,
+                    "body_hash does not match index-relevant chunk content",
+                )
+            )
         if chunk.parent_document_id != expected_parent:
             issues.append(
                 ValidationIssue(
