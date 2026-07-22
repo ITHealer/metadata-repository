@@ -6,7 +6,7 @@ database: commerce_demo
 table: order_items
 owner: unassigned
 reviewer: unassigned
-document_status: needs_review
+document_status: approved
 schema_hash: 45e278ec62c4da241bb18fa3f89bfdae58ee4e7eb1f37ea7c41a24d0fef1b1db
 business:
   display_name: Order Items
