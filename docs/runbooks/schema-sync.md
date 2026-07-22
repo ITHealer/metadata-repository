@@ -1,5 +1,46 @@
 # ClickHouse schema synchronization runbook
 
+## PR-11 staged multi-database core
+
+The `metadata scheduled-sync` command is the provider-neutral core for scheduled extraction. It does
+not create a branch, commit, Pull Request, or notification. Those delivery concerns are implemented
+by later workflow PRs around the command's stable JSON report.
+
+Every source must opt in explicitly in `config/databases/<key>/database.yml`:
+
+```yaml
+enabled: true
+scheduled_sync: true
+tbls_dsn_env: TBLS_DSN_URGIFT
+```
+
+Keep the credential itself outside Git. For a local run, export the feature flag and every opted-in
+profile's read-only DSN, then run:
+
+```bash
+export SCHEMA_SYNC_ENABLED=true
+export TBLS_DSN_URGIFT='clickhouse://readonly:...'
+make scheduled-sync SCHEMA_SYNC_RUN_ID=local-20260721
+```
+
+The command performs these safety gates in order:
+
+1. Stop successfully when `SCHEMA_SYNC_ENABLED=false`.
+2. Load all scheduled profiles and resolve every DSN before starting an external process.
+3. Generate and lint every database in `build/schema-sync/staging/<run-id>/` with `tbls --no-deps`.
+4. Enforce the database name and reject every table outside the allowlist; a missing allowlisted
+   table is recorded as deletion drift for manual review.
+5. Refresh reviewer drafts in staging only after every raw snapshot passes.
+6. Publish changed raw and review files only after the complete multi-database preflight succeeds.
+
+Inspect `build/schema-sync/report.json` for the machine-readable outcome and
+`build/schema-sync/pr-body.md` for reviewer-facing impact. Neither artifact contains a DSN. A
+`manual_cleanup_required` outcome means removed schema objects are still preserved in reviewer YAML
+and must be resolved by a domain reviewer.
+
+The staging root is intentionally restricted to the repository's `build/schema-sync/` tree because
+each run directory is replaced before generation. Do not point it at a catalog or source directory.
+
 ## Safe rollout
 
 The workflow is manual-first. Run **Schema Sync** from the Actions tab with `scenario=baseline`.

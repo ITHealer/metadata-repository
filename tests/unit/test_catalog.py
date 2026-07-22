@@ -9,6 +9,7 @@ from metadata_pipeline.application.catalog import (
     CatalogConfigurationError,
     CatalogLayout,
     discover_database_keys,
+    discover_scheduled_database_keys,
     load_catalog_context,
     validate_database_scope,
 )
@@ -102,6 +103,67 @@ def test_database_discovery_can_exclude_disabled_profiles(tmp_path: Path) -> Non
     )
 
     assert discover_database_keys(tmp_path, enabled_only=True) == ("enabled",)
+
+
+def test_discovers_only_enabled_profiles_opted_in_to_scheduled_sync(tmp_path: Path) -> None:
+    profiles = tmp_path / "config/databases"
+    for key, enabled, scheduled in (
+        ("scheduled", True, True),
+        ("manual", True, False),
+        ("disabled", False, False),
+    ):
+        profile_dir = profiles / key
+        profile_dir.mkdir(parents=True)
+        profile_dir.joinpath("database.yml").write_text(
+            f"enabled: {str(enabled).lower()}\n"
+            f"scheduled_sync: {str(scheduled).lower()}\n"
+            f"key: {key}\ndisplay_name: {key}\nclickhouse_database: {key}\n"
+            f"description: Test profile\ntables: {'[events]' if enabled else '[]'}\n"
+            + ("tbls_dsn_env: TBLS_DSN_SCHEDULED\n" if scheduled else ""),
+            encoding="utf-8",
+        )
+        if enabled:
+            profile_dir.joinpath("tbls.yml").write_text(
+                f"name: {key}\n",
+                encoding="utf-8",
+            )
+
+    assert discover_scheduled_database_keys(tmp_path) == ("scheduled",)
+
+
+@pytest.mark.parametrize(
+    ("profile", "message"),
+    (
+        (
+            "enabled: true\nscheduled_sync: true\nkey: example\n"
+            "display_name: Example\nclickhouse_database: example\n"
+            "description: Test\ntables: [events]\n",
+            "requires tbls_dsn_env",
+        ),
+        (
+            "enabled: false\nscheduled_sync: true\ntbls_dsn_env: TBLS_DSN_EXAMPLE\n"
+            "key: example\ndisplay_name: Example\nclickhouse_database: example\n"
+            "description: Test\ntables: []\n",
+            "requires the database profile to be enabled",
+        ),
+        (
+            "enabled: true\nscheduled_sync: true\ntbls_dsn_env: invalid-name\n"
+            "key: example\ndisplay_name: Example\nclickhouse_database: example\n"
+            "description: Test\ntables: [events]\n",
+            "String should match pattern",
+        ),
+    ),
+)
+def test_rejects_unsafe_scheduled_profile_configuration(
+    tmp_path: Path,
+    profile: str,
+    message: str,
+) -> None:
+    path = tmp_path / "database.yml"
+    path.write_text(profile, encoding="utf-8")
+
+    with pytest.raises(DatabaseProfileError, match=message):
+        load_database_profile(path)
 
 
 def test_layout_keeps_build_artifacts_database_scoped(tmp_path: Path) -> None:

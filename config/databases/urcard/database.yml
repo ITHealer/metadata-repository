@@ -1,4 +1,5 @@
 enabled: false
+scheduled_sync: false
 key: urcard
 display_name: UrCard
 clickhouse_database: UrCard

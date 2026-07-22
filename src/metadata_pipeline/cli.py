@@ -23,6 +23,7 @@ from metadata_pipeline.adapters.git.changed_paths import (
 )
 from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.adapters.schema.tbls_json import TblsSchemaSource
+from metadata_pipeline.adapters.schema.tbls_runner import TblsDockerDocumenter
 from metadata_pipeline.application.candidate_state import CandidateStateError
 from metadata_pipeline.application.candidate_summary import (
     CandidateSummaryError,
@@ -59,6 +60,10 @@ from metadata_pipeline.application.review_contract import (
     export_review_json_schema,
     validate_review_directory,
 )
+from metadata_pipeline.application.scheduled_schema_sync import (
+    ScheduledSchemaSyncError,
+    synchronize_scheduled_schemas,
+)
 from metadata_pipeline.application.schema_sync_summary import (
     render_schema_sync_pr_body,
     summarize_schema_change,
@@ -71,9 +76,19 @@ from metadata_pipeline.application.sync_candidates import (
 from metadata_pipeline.io.atomic_text import write_text_if_changed
 from metadata_pipeline.io.candidate_json import CandidateFileError
 from metadata_pipeline.io.chunk_jsonl import load_chunks
+from metadata_pipeline.io.database_profile import DatabaseProfileError
 from metadata_pipeline.io.review_yaml import ReviewFileError
+from metadata_pipeline.io.schema_sync_report_json import (
+    write_schema_sync_pr_body,
+    write_schema_sync_report,
+)
+from metadata_pipeline.io.schema_sync_settings import (
+    SchemaSyncConfigurationError,
+    SchemaSyncSettings,
+)
 from metadata_pipeline.ports.document_generator import DocumentGenerator
 from metadata_pipeline.ports.index_store import IndexStoreError
+from metadata_pipeline.ports.schema_documenter import SchemaDocumenterError
 from metadata_pipeline.ports.schema_source import SchemaSourceError
 from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
 
@@ -213,6 +228,15 @@ def build_parser() -> argparse.ArgumentParser:
     schema_sync_summary.add_argument("--before", type=Path, required=True)
     schema_sync_summary.add_argument("--after", type=Path, required=True)
     schema_sync_summary.add_argument("--output", type=Path, required=True)
+    scheduled_sync = commands.add_parser(
+        "scheduled-sync",
+        help="Stage and synchronize every enabled database opted in to scheduled extraction.",
+    )
+    scheduled_sync.add_argument("--repository-root", type=Path, default=Path("."))
+    scheduled_sync.add_argument("--staging-root", type=Path)
+    scheduled_sync.add_argument("--report", type=Path)
+    scheduled_sync.add_argument("--pr-body", type=Path)
+    scheduled_sync.add_argument("--run-id", default="local")
     index_manifest = commands.add_parser(
         "index-manifest",
         help="Reconcile approved chunks into a versioned manifest and Git action report.",
@@ -565,6 +589,47 @@ def run_schema_sync_summary(before: Path, after: Path, output: Path) -> int:
     return 0
 
 
+def run_scheduled_schema_sync(
+    *,
+    repository_root: Path,
+    staging_root: Path,
+    report_path: Path,
+    pr_body_path: Path,
+    run_id: str,
+) -> int:
+    """Run the staged multi-database use case and persist its non-secret outputs."""
+    root = repository_root.resolve()
+    try:
+        settings = SchemaSyncSettings.from_env()
+        report = synchronize_scheduled_schemas(
+            repository_root=root,
+            staging_root=staging_root,
+            run_id=run_id,
+            settings=settings,
+            documenter=TblsDockerDocumenter(root),
+        )
+        write_schema_sync_report(report_path, report)
+        write_schema_sync_pr_body(pr_body_path, report)
+    except (
+        CatalogConfigurationError,
+        DatabaseProfileError,
+        DraftGenerationError,
+        ReviewFileError,
+        SchemaDocumenterError,
+        SchemaSourceError,
+        SchemaSyncConfigurationError,
+        ScheduledSchemaSyncError,
+    ) as error:
+        print(f"scheduled schema sync failed: {error}", file=sys.stderr)
+        return 1
+    changed_databases = sum(database.has_changes for database in report.databases)
+    print(
+        f"scheduled schema sync {report.outcome.value}: "
+        f"{changed_databases} changed database(s); report={report_path}"
+    )
+    return 0
+
+
 def run_index_manifest(
     chunks_path: Path,
     manifest_path: Path,
@@ -775,6 +840,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_classify_changes(args.base, args.head, args.github_output)
     if args.command == "schema-sync-summary":
         return run_schema_sync_summary(args.before, args.after, args.output)
+    if args.command == "scheduled-sync":
+        root = args.repository_root.resolve()
+        build_root = root / "build" / "schema-sync"
+        return run_scheduled_schema_sync(
+            repository_root=root,
+            staging_root=(args.staging_root or build_root / "staging").resolve(),
+            report_path=(args.report or build_root / "report.json").resolve(),
+            pr_body_path=(args.pr_body or build_root / "pr-body.md").resolve(),
+            run_id=args.run_id,
+        )
     if args.command == "index-manifest":
         return run_index_manifest(
             args.chunks,

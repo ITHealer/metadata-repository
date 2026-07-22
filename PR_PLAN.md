@@ -5,6 +5,9 @@
 **Số PR dự kiến:** 10
 **Critical path:** PR-01 → PR-02 → PR-03 → PR-05 → PR-06 → PR-07 → PR-09 → PR-10
 
+Phase 2 (PR-11–PR-17: scheduled schema sync, Telegram notifications, and VectorDB indexing) is
+planned separately in [PR_PLAN_PHASE_2.md](./PR_PLAN_PHASE_2.md).
+
 ## Implementation status
 
 | PR | Status | Delivered outcome |

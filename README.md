@@ -331,8 +331,8 @@ branch-protection rollout, and recovery steps.
 
 ## Automated schema synchronization
 
-The `Schema Sync` workflow is manual-first and uses only the disposable ClickHouse fixture in this
-MVP. A baseline run exits without creating an empty PR. The `additive_test` UAT scenario adds
+The existing `Schema Sync` workflow is manual-first and uses only the disposable ClickHouse fixture
+in this MVP. A baseline run exits without creating an empty PR. The `additive_test` UAT scenario adds
 `orders.channel` and `order_events`, regenerates tbls output, refreshes reviewer drafts, and opens a
 Draft PR containing a table-level impact summary.
 
@@ -349,6 +349,22 @@ The workflow can commit only `catalog/*/generated/raw/**` and `catalog/*/review/
 `main`. Set `ENABLE_SCHEMA_SYNC=true` only after baseline and additive manual UAT pass. Publishing
 from a changed run also needs `METADATA_BOT_TOKEN`. See the
 [schema sync runbook](./docs/runbooks/schema-sync.md) for rollout and review steps.
+
+PR-11 adds the provider-neutral, staged multi-database core used by the next workflow iteration.
+Each source opts in independently with `enabled: true`, `scheduled_sync: true`, and a
+`tbls_dsn_env` variable name in its database profile. The runtime feature flag defaults to off:
+
+```bash
+export SCHEMA_SYNC_ENABLED=true
+export TBLS_DSN_URGIFT='clickhouse://readonly:...'
+make scheduled-sync SCHEMA_SYNC_RUN_ID=local-$(date +%Y%m%d)
+```
+
+The command resolves every required DSN before starting tbls, generates each database below
+`build/schema-sync/staging/<run-id>/`, and validates all raw snapshots before refreshing reviewer
+drafts or changing `catalog/`. A failure leaves the committed catalog untouched. A successful run
+writes a non-secret JSON report and PR-body Markdown under `build/schema-sync/`; Git branch, commit,
+Pull Request, and notification automation remain outside PR-11.
 
 ## Index manifest and retrieval smoke test
 

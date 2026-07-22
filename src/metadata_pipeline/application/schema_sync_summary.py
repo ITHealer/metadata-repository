@@ -24,6 +24,7 @@ class SchemaSyncSummary:
 def summarize_schema_change(
     before: DatabaseSchema,
     after: DatabaseSchema,
+    database_key: str | None = None,
 ) -> SchemaSyncSummary:
     """Compare provider-neutral catalogs without parsing generated Markdown."""
     before_tables = {table.name: table for table in before.tables}
@@ -42,11 +43,14 @@ def summarize_schema_change(
             modified_names.add(name)
     modified = tuple(sorted(modified_names))
     affected = set((*added, *modified, *deleted))
+    catalog_database = database_key or after.name
     return SchemaSyncSummary(
         added=added,
         modified=modified,
         deleted=deleted,
-        review_files=tuple(f"catalog/{after.name}/review/{name}.yml" for name in sorted(affected)),
+        review_files=tuple(
+            f"catalog/{catalog_database}/review/{name}.yml" for name in sorted(affected)
+        ),
     )
 
 

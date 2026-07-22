@@ -248,3 +248,32 @@ def test_publish_rejects_unknown_selected_table(
     assert exit_code == 1
     assert "unknown_selected_table" in capsys.readouterr().err
     assert not published_dir.exists()
+
+
+def test_scheduled_sync_disabled_writes_a_machine_readable_no_work_report(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SCHEMA_SYNC_ENABLED", "false")
+    report_path = tmp_path / "build/schema-sync/report.json"
+    pr_body_path = tmp_path / "build/schema-sync/pr-body.md"
+
+    exit_code = main(
+        [
+            "scheduled-sync",
+            "--repository-root",
+            str(tmp_path),
+            "--report",
+            str(report_path),
+            "--pr-body",
+            str(pr_body_path),
+            "--run-id",
+            "unit-test",
+        ]
+    )
+
+    assert exit_code == 0
+    assert json.loads(report_path.read_text(encoding="utf-8"))["outcome"] == "disabled"
+    assert "No reviewer file requires changes" in pr_body_path.read_text(encoding="utf-8")
+    assert "scheduled schema sync disabled" in capsys.readouterr().out
