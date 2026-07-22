@@ -84,8 +84,13 @@ def load_catalog_context(database: str, repository_root: Path = Path(".")) -> Ca
     return CatalogContext(profile, layout)
 
 
-def validate_database_scope(profile: DatabaseProfile, schema_path: Path) -> None:
-    """Require raw tbls output to contain exactly the explicitly allowlisted tables."""
+def validate_database_scope(
+    profile: DatabaseProfile,
+    schema_path: Path,
+    *,
+    allow_missing_tables: bool = False,
+) -> None:
+    """Reject out-of-scope tables and optionally treat missing tables as schema drift."""
     try:
         schema = TblsSchemaSource(schema_path).load()
     except SchemaSourceError as error:
@@ -102,7 +107,7 @@ def validate_database_scope(profile: DatabaseProfile, schema_path: Path) -> None
     messages = []
     if unexpected:
         messages.append(f"tables outside allowlist: {', '.join(unexpected)}")
-    if missing:
+    if missing and not allow_missing_tables:
         messages.append(f"allowlisted tables missing from raw schema: {', '.join(missing)}")
     if messages:
         raise CatalogConfigurationError("; ".join(messages))
@@ -126,4 +131,15 @@ def discover_database_keys(
         return keys
     return tuple(
         key for key in keys if load_database_profile(profiles_root / key / "database.yml").enabled
+    )
+
+
+def discover_scheduled_database_keys(repository_root: Path = Path(".")) -> tuple[str, ...]:
+    """Return enabled profiles that explicitly opt in to scheduled extraction."""
+    profiles_root = repository_root.resolve() / "config" / "databases"
+    return tuple(
+        key
+        for key in discover_database_keys(repository_root)
+        if (profile := load_database_profile(profiles_root / key / "database.yml")).enabled
+        and profile.scheduled_sync
     )

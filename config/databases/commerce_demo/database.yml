@@ -1,4 +1,5 @@
 enabled: true
+scheduled_sync: false
 key: commerce_demo
 display_name: Commerce Demo
 clickhouse_database: commerce_demo

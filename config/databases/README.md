@@ -9,6 +9,21 @@ Explicit database-scoped developer commands remain available so onboarding can e
 create reviewer drafts, and validate them before activation. An empty tbls `include` list can be
 interpreted as “no filter” by tools, so never extract until an explicit table allowlist is configured.
 
+Scheduled extraction is a separate opt-in from general catalog enablement. After onboarding has
+passed, set `scheduled_sync: true` and commit only the name of the runtime DSN variable, never its
+value:
+
+```yaml
+enabled: true
+scheduled_sync: true
+tbls_dsn_env: TBLS_DSN_URGIFT
+```
+
+The local or CI runtime supplies `TBLS_DSN_URGIFT` as a secret. `SCHEMA_SYNC_ENABLED=false` disables
+the scheduled-sync command before it resolves any database secret or starts tbls. The first
+implementation runs tbls once per opted-in database, stages and validates every result, then writes
+only supported schema changes. Tables outside the explicit profile allowlist remain out of scope.
+
 To enable a profile, the developer must obtain and verify:
 
 1. The exact ClickHouse database name.

@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import json
-import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated
 from urllib.parse import urlparse
 
-from dotenv import find_dotenv, load_dotenv
 from openai import (
     APIConnectionError,
     APIStatusError,
@@ -31,6 +29,7 @@ from metadata_pipeline.domain.published import (
     PublishedDocument,
 )
 from metadata_pipeline.domain.review import DocumentStatus, StrictModel
+from metadata_pipeline.io.runtime_environment import load_runtime_environment
 from metadata_pipeline.ports.document_generator import (
     DocumentGenerationError,
     PublicationContext,
@@ -126,10 +125,7 @@ class OpenAICompatibleSettings:
 
 def _load_runtime_environment() -> Mapping[str, str]:
     """Load a local dotenv without replacing values supplied by the runtime or CI."""
-    dotenv_path = find_dotenv(usecwd=True)
-    if dotenv_path:
-        load_dotenv(dotenv_path=dotenv_path, override=False)
-    return os.environ
+    return load_runtime_environment()
 
 
 @dataclass(frozen=True)

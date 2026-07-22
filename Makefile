@@ -18,6 +18,9 @@ INDEX_BASE ?= HEAD^
 INDEX_HEAD ?= HEAD
 SOURCE_COMMIT ?= $(shell git rev-parse HEAD)
 RETRIEVAL_REPORT ?= build/index/retrieval-report.json
+SCHEMA_SYNC_RUN_ID ?= local
+SCHEMA_SYNC_REPORT ?= build/schema-sync/report.json
+SCHEMA_SYNC_PR_BODY ?= build/schema-sync/pr-body.md
 GENERATOR_MODE ?= mock
 LIVE_PUBLISHED_DIR ?= build/live/published/$(DATABASE)
 LIVE_CHUNK_OUTPUT ?= build/live/chunks/$(DATABASE).jsonl
@@ -31,7 +34,7 @@ TABLE_ARGS = $(if $(strip $(TABLE)),--table $(strip $(TABLE)),)
 	review-schema review-draft review-validate review-check \
 	publish published-validate chunk-dry-run knowledge-check \
 	index-build retrieval-smoke live-uat catalog-check catalog-check-all \
-	candidate-sync candidate-validate catalog-chunks
+	candidate-sync candidate-validate catalog-chunks scheduled-sync
 
 help: ## Show available development commands
 	@awk 'BEGIN {FS = ":.*## "; printf "Usage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -103,6 +106,13 @@ schema-diff: db-wait ## Compare the live ClickHouse schema with committed raw do
 schema-check: schema-doc schema-lint ## Generate and validate the complete tbls contract
 	RUN_TBLS_INTEGRATION=1 $(VENV)/bin/pytest -m schema_integration \
 		tests/integration/test_tbls_extraction.py
+
+scheduled-sync: ## Stage and synchronize all databases opted in to scheduled extraction
+	./scripts/metadata scheduled-sync \
+		--repository-root . \
+		--run-id $(SCHEMA_SYNC_RUN_ID) \
+		--report $(SCHEMA_SYNC_REPORT) \
+		--pr-body $(SCHEMA_SYNC_PR_BODY)
 
 review-schema: ## Generate JSON Schema from the Pydantic reviewer contract
 	./scripts/metadata export-review-schema \
