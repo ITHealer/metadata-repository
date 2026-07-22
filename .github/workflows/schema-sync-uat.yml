@@ -92,11 +92,13 @@ jobs:
       - name: Detect synchronized source changes
         id: diff
         run: |
-          if [[ -z "$(git status --porcelain -- 'catalog/*/generated/raw' 'catalog/*/review')" ]]; then
+          catalog_status="$(git status --porcelain=v1 --untracked-files=all -- catalog)"
+          if [[ -z "$catalog_status" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Schema is already synchronized."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "$catalog_status"
           fi
 
       - name: Build draft Pull Request description
