@@ -58,11 +58,24 @@ jobs:
 
       - name: Apply selected UAT schema scenario
         env:
-          SCENARIO: ${{ github.event.inputs.scenario || 'baseline' }}
+          SCENARIO: ${{ inputs.scenario }}
         run: ./scripts/apply_schema_sync_fixture.sh "$SCENARIO"
 
       - name: Extract and lint the live schema
         run: make schema-doc schema-lint
+
+      - name: Assert selected UAT schema scenario
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          if [[ "$SCENARIO" == "additive_test" ]]; then
+            rg --fixed-strings --quiet '"name": "channel"' \
+              catalog/commerce_demo/generated/raw/schema.json
+          elif rg --fixed-strings --quiet '"name": "channel"' \
+            catalog/commerce_demo/generated/raw/schema.json; then
+            echo "Baseline unexpectedly contains commerce_demo.orders.channel."
+            exit 1
+          fi
 
       - name: Refresh reviewer drafts and report validation
         id: review
