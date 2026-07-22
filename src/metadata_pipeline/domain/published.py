@@ -159,6 +159,7 @@ class Chunk(StrictModel):
     prompt_version: str = Field(min_length=1)
     content: str = Field(min_length=1)
     evidence: tuple[Evidence, ...] = ()
+    body_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def require_stable_identity(self) -> Chunk:

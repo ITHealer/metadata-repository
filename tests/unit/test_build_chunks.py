@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from metadata_pipeline.application.build_chunks import build_chunks
+from metadata_pipeline.domain.hashing import canonical_sha256
 from metadata_pipeline.domain.published import Chunk, ChunkType, PublishedDocument
 from metadata_pipeline.io.chunk_jsonl import dump_chunks, write_chunks
 from metadata_pipeline.validation.chunks import validate_chunks
@@ -18,6 +19,10 @@ def test_build_chunks_covers_semantic_units_with_stable_ids(
     assert chunks == tuple(sorted(chunks, key=lambda item: item.chunk_id))
     assert sum(chunk.chunk_type is ChunkType.TABLE_OVERVIEW for chunk in chunks) == 1
     assert sum(chunk.chunk_type is ChunkType.COLUMN_GROUP for chunk in chunks) == 6
+    assert all(
+        chunk.body_hash == canonical_sha256(chunk.model_dump(mode="json", exclude={"body_hash"}))
+        for chunk in chunks
+    )
     relation = next(chunk for chunk in chunks if chunk.chunk_type is ChunkType.RELATIONSHIP)
     for value in (
         "orders.customer_id = customers.customer_id",
@@ -40,6 +45,7 @@ def test_chunk_validator_reports_missing_relationship_context(
     )
     issues = validate_chunks(published_document, tuple(chunks), Path("chunks.jsonl"))
     assert "incomplete_relationship_context" in {issue.code for issue in issues}
+    assert "invalid_chunk_body_hash" in {issue.code for issue in issues}
 
 
 def test_chunk_jsonl_is_deterministic_and_atomic(

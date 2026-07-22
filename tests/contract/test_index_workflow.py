@@ -22,6 +22,7 @@ def test_index_workflow_uploads_manifest_actions_and_report() -> None:
 
     assert "build/index/manifest.json" in content
     assert "build/index/actions.json" in content
+    assert "build/index/chunk-actions.json" in content
     assert "build/index/retrieval-report.json" in content
     assert "if-no-files-found: error" in content
     assert "retention-days: 30" in content

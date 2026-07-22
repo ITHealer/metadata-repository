@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -63,10 +65,24 @@ def canonical_sha256(value: object) -> str:
     """Hash JSON-compatible data using one stable canonical representation."""
     if isinstance(value, BaseModel):
         value = value.model_dump(mode="json")
-    canonical = json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    canonical = json.dumps(
+        value,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+        default=_json_value,
+    )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def bytes_sha256(value: bytes) -> str:
     """Hash exact artifact bytes for auditable input fingerprints."""
     return hashlib.sha256(value).hexdigest()
+
+
+def _json_value(value: Any) -> Any:
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    if isinstance(value, Enum):
+        return value.value
+    raise TypeError(f"unsupported canonical hash value: {type(value).__name__}")
