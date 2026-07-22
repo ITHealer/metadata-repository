@@ -84,6 +84,7 @@ def render_telegram_message(event: NotificationEvent) -> str:
             f"Collection: {event.collection}\n"
             f"Documents/chunks: {event.document_count}/{event.chunk_count}\n"
             f"Upserted/deleted: {event.upserted_count}/{event.deleted_count}\n"
+            f"Unchanged: {event.skipped_count}\n"
             f"Manifest: {event.manifest_hash[:12]}\n"
             f"Commit: {commit}\n"
             f"Run: {event.run_url}"

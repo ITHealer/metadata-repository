@@ -45,7 +45,9 @@ each run directory is replaced before generation. Do not point it at a catalog o
 
 `Scheduled Schema Sync` runs every day at 01:17 Asia/Ho_Chi_Minh (`17 18 * * *` in UTC) on a runner
 with both `self-hosted` and `schema-sync` labels. The runner must provide Git, GitHub CLI, Docker with
-Compose, Python 3, outbound GitHub access, and network reach to every scheduled ClickHouse source.
+Compose, `uv` with a managed Python 3.11 installation, outbound GitHub access, and network reach to
+every scheduled ClickHouse source. macOS self-hosted runners intentionally avoid `setup-python`
+because its downloaded binaries require the privileged fixed path `/Users/runner/hostedtoolcache`.
 
 Configure:
 

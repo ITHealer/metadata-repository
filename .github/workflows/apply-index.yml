@@ -1,0 +1,113 @@
+name: Apply Vector Index
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - catalog/*/generated/published/**
+      - catalog/*/generated/structured/**
+  workflow_dispatch:
+    inputs:
+      bootstrap_collection:
+        description: Create the configured collection only when absent
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apply-vector-index
+  cancel-in-progress: false
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  apply:
+    name: apply-and-verify
+    if: vars.INDEX_APPLY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    env:
+      INDEX_APPLY_ENABLED: "true"
+      EMBEDDING_PROVIDER: ${{ vars.EMBEDDING_PROVIDER || 'gemini' }}
+      EMBEDDING_MODEL: ${{ vars.EMBEDDING_MODEL || 'gemini-embedding-001' }}
+      EMBEDDING_DIMENSION: ${{ vars.EMBEDDING_DIMENSION || '768' }}
+      QDRANT_COLLECTION: ${{ vars.QDRANT_COLLECTION || 'metadata__gemini_embedding_001__768' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+      TELEGRAM_NOTIFICATIONS_ENABLED: ${{ vars.TELEGRAM_NOTIFICATIONS_ENABLED || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: make install
+
+      - name: Build complete approved-only desired state
+        run: |
+          make index-build \
+            INDEX_BASE=HEAD^ \
+            INDEX_HEAD=HEAD \
+            SOURCE_COMMIT="$GITHUB_SHA"
+
+      - name: Bootstrap collection when explicitly requested
+        if: github.event_name == 'workflow_dispatch' && inputs.bootstrap_collection
+        run: make index-bootstrap
+
+      - name: Apply and verify actual VectorDB state
+        id: apply
+        run: |
+          ./scripts/metadata apply-index \
+            --manifest build/index/manifest.json \
+            --summary build/index/apply-summary.json \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Verify live semantic retrieval
+        run: make vector-retrieval
+
+      - name: Build verified index_done event
+        if: >-
+          steps.apply.outputs.changed == 'true' &&
+          env.TELEGRAM_NOTIFICATIONS_ENABLED == 'true'
+        run: |
+          ./scripts/metadata build-index-done-notification \
+            --summary build/index/apply-summary.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --branch "$GITHUB_REF_NAME" \
+            --commit "$GITHUB_SHA" \
+            --workflow "$GITHUB_WORKFLOW" \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --output build/index/index-done-notification.json
+
+      - name: Notify knowledge-base update through Telegram
+        if: >-
+          steps.apply.outputs.changed == 'true' &&
+          env.TELEGRAM_NOTIFICATIONS_ENABLED == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+        run: ./scripts/metadata notify --event-file build/index/index-done-notification.json
+
+      - name: Upload apply and retrieval evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vector-index-apply-${{ github.sha }}
+          path: |
+            build/index/manifest.json
+            build/index/chunk-actions.json
+            build/index/apply-summary.json
+            build/index/vector-retrieval-report.json
+          if-no-files-found: error
+          retention-days: 30

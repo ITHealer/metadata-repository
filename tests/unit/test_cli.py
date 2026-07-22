@@ -11,7 +11,9 @@ import pytest
 import yaml
 
 from metadata_pipeline import __version__
+from metadata_pipeline.adapters.index.manifest import ManifestIndexStore
 from metadata_pipeline.cli import main
+from metadata_pipeline.domain.index import IndexManifest
 from metadata_pipeline.domain.schema_sync import (
     DatabaseSchemaSyncReport,
     ScheduledSchemaSyncReport,
@@ -21,6 +23,8 @@ from metadata_pipeline.domain.schema_sync_pr import (
     SchemaSyncPullRequest,
     SchemaSyncPullRequestState,
 )
+from metadata_pipeline.domain.vector_apply import ApplyOutcome, VectorApplySummary
+from metadata_pipeline.io.apply_summary_json import write_apply_summary
 from metadata_pipeline.io.schema_sync_pr_state_json import write_schema_sync_pr_state
 from metadata_pipeline.io.schema_sync_report_json import write_schema_sync_report
 
@@ -547,3 +551,80 @@ def test_cli_builds_job_failed_event_from_job_name_file(
     assert payload["event_id"] == "job_failed:123:2:failure"
     assert payload["failed_jobs"] == ["Lint; echo not-shell", "Unit tests"]
     assert "job_failed event written" in capsys.readouterr().out
+
+
+def test_cli_disabled_vector_apply_writes_a_non_mutating_summary(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    ManifestIndexStore(manifest_path).save(IndexManifest.create(source_commit="a" * 40))
+    summary_path = tmp_path / "apply-summary.json"
+    monkeypatch.setenv("INDEX_APPLY_ENABLED", "false")
+
+    assert (
+        main(
+            [
+                "apply-index",
+                "--manifest",
+                str(manifest_path),
+                "--summary",
+                str(summary_path),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert payload["outcome"] == "disabled"
+    assert payload["verified"] is False
+    assert "vector index apply disabled" in capsys.readouterr().out
+
+
+def test_cli_builds_index_done_only_from_verified_changed_apply(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    summary_path = tmp_path / "apply-summary.json"
+    write_apply_summary(
+        summary_path,
+        VectorApplySummary(
+            outcome=ApplyOutcome.APPLIED,
+            collection="metadata__gemini_embedding_001__768",
+            manifest_hash="b" * 64,
+            document_count=3,
+            chunk_count=22,
+            upserted_count=2,
+            deleted_count=1,
+            skipped_count=20,
+            verified=True,
+        ),
+    )
+    output = tmp_path / "index-done.json"
+
+    assert (
+        main(
+            [
+                "build-index-done-notification",
+                "--summary",
+                str(summary_path),
+                "--repository",
+                "acme/metadata",
+                "--branch",
+                "main",
+                "--commit",
+                "c" * 40,
+                "--workflow",
+                "Apply Vector Index",
+                "--run-url",
+                "https://github.example/runs/9",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["event_type"] == "index_done"
+    assert payload["skipped_count"] == 20
+    assert "index_done event written" in capsys.readouterr().out

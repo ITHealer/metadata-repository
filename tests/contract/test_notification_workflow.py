@@ -16,6 +16,7 @@ def test_failure_notifier_monitors_only_explicit_metadata_workflows() -> None:
         "Schema Sync UAT",
         "Metadata PR",
         "Index Manifest",
+        "Apply Vector Index",
         "Quality",
         "Live LLM UAT",
     ):

@@ -33,6 +33,8 @@ from metadata_pipeline.adapters.schema.tbls_json import (
     parse_tbls_schema_text,
 )
 from metadata_pipeline.adapters.schema.tbls_runner import TblsDockerDocumenter
+from metadata_pipeline.application.apply_index import apply_index
+from metadata_pipeline.application.bootstrap_vector_index import bootstrap_vector_index
 from metadata_pipeline.application.candidate_state import CandidateStateError
 from metadata_pipeline.application.candidate_summary import (
     CandidateSummaryError,
@@ -65,6 +67,11 @@ from metadata_pipeline.application.publish_metadata import (
     validate_published_directory,
     write_chunk_artifact,
 )
+from metadata_pipeline.application.retrieval_evaluation import (
+    evaluate_retriever,
+    load_golden_questions,
+    write_retrieval_report,
+)
 from metadata_pipeline.application.review_contract import (
     export_review_json_schema,
     validate_review_directory,
@@ -91,13 +98,24 @@ from metadata_pipeline.application.sync_candidates import (
     prepare_candidate_sync,
     write_candidate_sync,
 )
-from metadata_pipeline.domain.notification import JobFailedNotification, PrReviewNotification
+from metadata_pipeline.domain.notification import (
+    IndexDoneNotification,
+    JobFailedNotification,
+    PrReviewNotification,
+)
 from metadata_pipeline.domain.schema_sync import ScheduledSchemaSyncReport
 from metadata_pipeline.domain.schema_sync_pr import SchemaSyncPullRequestState
+from metadata_pipeline.domain.vector_apply import ApplyOutcome
+from metadata_pipeline.io.apply_summary_json import (
+    ApplySummaryError,
+    load_apply_summary,
+    write_apply_summary,
+)
 from metadata_pipeline.io.atomic_text import write_text_if_changed
 from metadata_pipeline.io.candidate_json import CandidateFileError
 from metadata_pipeline.io.chunk_jsonl import load_chunks
 from metadata_pipeline.io.database_profile import DatabaseProfileError
+from metadata_pipeline.io.index_settings import IndexConfigurationError, IndexSettings
 from metadata_pipeline.io.notification_json import (
     NotificationEventError,
     load_notification_event,
@@ -124,10 +142,12 @@ from metadata_pipeline.io.schema_sync_settings import (
     SchemaSyncSettings,
 )
 from metadata_pipeline.ports.document_generator import DocumentGenerator
+from metadata_pipeline.ports.embedder import EmbeddingError
 from metadata_pipeline.ports.index_store import IndexStoreError
 from metadata_pipeline.ports.notifier import NotificationDeliveryError
 from metadata_pipeline.ports.schema_documenter import SchemaDocumenterError
 from metadata_pipeline.ports.schema_source import DatabaseSchema, SchemaSourceError
+from metadata_pipeline.ports.vector_index import VectorIndex, VectorIndexError
 from metadata_pipeline.validation.review import IssueSeverity, ValidationIssue
 
 MINIMUM_PYTHON = (3, 9)
@@ -341,6 +361,34 @@ def build_parser() -> argparse.ArgumentParser:
     index_manifest.add_argument("--head", required=True)
     index_manifest.add_argument("--actions-output", type=Path, required=True)
     index_manifest.add_argument("--chunk-actions-output", type=Path)
+    commands.add_parser(
+        "bootstrap-vector-index",
+        help="Create the configured vector collection only when it is absent.",
+    )
+    apply_vector_index = commands.add_parser(
+        "apply-index",
+        help="Reconcile a complete desired manifest against actual VectorDB state.",
+    )
+    apply_vector_index.add_argument("--manifest", type=Path, required=True)
+    apply_vector_index.add_argument("--summary", type=Path, required=True)
+    apply_vector_index.add_argument("--github-output", type=Path)
+    verify_vector_retrieval = commands.add_parser(
+        "verify-vector-retrieval",
+        help="Run golden questions against the configured live vector collection.",
+    )
+    verify_vector_retrieval.add_argument("--questions", type=Path, required=True)
+    verify_vector_retrieval.add_argument("--report", type=Path, required=True)
+    build_index_done = commands.add_parser(
+        "build-index-done-notification",
+        help="Build index_done only from a verified, changed apply summary.",
+    )
+    build_index_done.add_argument("--summary", type=Path, required=True)
+    build_index_done.add_argument("--repository", required=True)
+    build_index_done.add_argument("--branch", required=True)
+    build_index_done.add_argument("--commit", required=True)
+    build_index_done.add_argument("--workflow", required=True)
+    build_index_done.add_argument("--run-url", required=True)
+    build_index_done.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -898,6 +946,170 @@ def run_index_manifest(
     return 0
 
 
+def run_bootstrap_vector_index() -> int:
+    """Explicitly create or validate the configured collection."""
+    try:
+        settings = IndexSettings.from_env()
+        if not settings.enabled:
+            print("vector index bootstrap disabled")
+            return 0
+        from metadata_pipeline.adapters.index.qdrant import QdrantVectorIndex
+
+        index = QdrantVectorIndex.from_settings(settings)
+        outcome = bootstrap_vector_index(settings, index)
+    except (IndexConfigurationError, VectorIndexError, ValueError) as error:
+        print(f"vector index bootstrap failed: {error}", file=sys.stderr)
+        return 1
+    print(f"vector index bootstrap {outcome.value}: {settings.qdrant_collection}")
+    return 0
+
+
+def run_apply_vector_index(
+    *,
+    manifest_path: Path,
+    summary_path: Path,
+    github_output: Path | None,
+) -> int:
+    """Apply desired state and persist a summary only after verification."""
+    try:
+        if not manifest_path.is_file():
+            raise ValueError(f"required index manifest not found: {manifest_path}")
+        manifest = ManifestIndexStore(manifest_path).load()
+        settings = IndexSettings.from_env()
+        embedder = None
+        index = None
+        if settings.enabled:
+            from metadata_pipeline.adapters.embedding.gemini import GeminiEmbedder
+            from metadata_pipeline.adapters.index.qdrant import QdrantVectorIndex
+
+            embedder = GeminiEmbedder.from_settings(settings)
+            index = QdrantVectorIndex.from_settings(settings)
+            _require_vector_collection(settings, index)
+        summary = apply_index(
+            manifest=manifest,
+            settings=settings,
+            embedder=embedder,
+            index=index,
+        )
+        write_apply_summary(summary_path, summary)
+        _append_github_outputs(
+            github_output,
+            {
+                "outcome": summary.outcome.value,
+                "changed": str(summary.outcome is ApplyOutcome.APPLIED).lower(),
+                "verified": str(summary.verified).lower(),
+                "manifest_hash": summary.manifest_hash,
+            },
+        )
+    except (
+        EmbeddingError,
+        IndexConfigurationError,
+        IndexStoreError,
+        OSError,
+        ValueError,
+        VectorIndexError,
+    ) as error:
+        print(f"vector index apply failed: {error}", file=sys.stderr)
+        return 1
+    print(
+        f"vector index apply {summary.outcome.value}: "
+        f"{summary.upserted_count} upsert(s), {summary.deleted_count} delete(s), "
+        f"{summary.skipped_count} unchanged; verified={str(summary.verified).lower()}"
+    )
+    return 0
+
+
+def run_verify_vector_retrieval(*, questions_path: Path, report_path: Path) -> int:
+    """Run the existing golden gate through live query embeddings and Qdrant."""
+    try:
+        settings = IndexSettings.from_env()
+        if not settings.enabled:
+            print("vector retrieval verification disabled")
+            return 0
+        from metadata_pipeline.adapters.embedding.gemini import GeminiEmbedder
+        from metadata_pipeline.adapters.index.qdrant import QdrantVectorIndex
+        from metadata_pipeline.adapters.index.qdrant_retriever import QdrantRetriever
+
+        embedder = GeminiEmbedder.from_settings(settings)
+        index = QdrantVectorIndex.from_settings(settings)
+        _require_vector_collection(settings, index)
+        report = evaluate_retriever(
+            QdrantRetriever(embedder, index),
+            load_golden_questions(questions_path),
+            top_k=settings.retrieval_top_k,
+            minimum_document_hit_rate=settings.minimum_document_hit_rate,
+        )
+        write_retrieval_report(report_path, report)
+        if not report.passed:
+            print(
+                f"vector retrieval verification failed: hit_rate={report.document_hit_rate:.3f}",
+                file=sys.stderr,
+            )
+            return 1
+    except (
+        EmbeddingError,
+        IndexConfigurationError,
+        OSError,
+        ValueError,
+        VectorIndexError,
+    ) as error:
+        print(f"vector retrieval verification failed: {error}", file=sys.stderr)
+        return 1
+    print(
+        f"vector retrieval verification passed: {report.document_hits}/"
+        f"{report.total_questions} document hit(s)"
+    )
+    return 0
+
+
+def run_build_index_done_notification(
+    *,
+    summary_path: Path,
+    repository: str,
+    branch: str,
+    commit: str,
+    workflow: str,
+    run_url: str,
+    output: Path,
+) -> int:
+    """Create index_done only from a changed, post-apply verified summary."""
+    try:
+        summary = load_apply_summary(summary_path)
+        if summary.outcome is not ApplyOutcome.APPLIED or not summary.verified:
+            raise ValueError("index_done requires a changed and verified vector apply")
+        event = IndexDoneNotification(
+            event_id=f"index_done:{summary.collection}:{summary.manifest_hash}",
+            repository=repository,
+            branch=branch,
+            commit=commit,
+            workflow=workflow,
+            run_url=run_url,
+            collection=summary.collection,
+            manifest_hash=summary.manifest_hash,
+            document_count=summary.document_count,
+            chunk_count=summary.chunk_count,
+            upserted_count=summary.upserted_count,
+            deleted_count=summary.deleted_count,
+            skipped_count=summary.skipped_count,
+        )
+        write_notification_event(output, event)
+    except (ApplySummaryError, OSError, ValueError) as error:
+        print(f"index_done event build failed: {error}", file=sys.stderr)
+        return 1
+    print(f"index_done event written: {output}; id={event.event_id}")
+    return 0
+
+
+def _require_vector_collection(settings: IndexSettings, index: VectorIndex) -> None:
+    info = index.collection_info()
+    if info is None:
+        raise VectorIndexError("configured collection is absent; run bootstrap-vector-index first")
+    if info.dimension != settings.embedding_dimension or info.distance.lower() != "cosine":
+        raise VectorIndexError(
+            "configured collection does not match embedding dimension and cosine distance"
+        )
+
+
 def run_build_pr_review_notification(
     *,
     report_path: Path,
@@ -1250,6 +1462,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.head,
             args.actions_output,
             args.chunk_actions_output,
+        )
+    if args.command == "bootstrap-vector-index":
+        return run_bootstrap_vector_index()
+    if args.command == "apply-index":
+        return run_apply_vector_index(
+            manifest_path=args.manifest,
+            summary_path=args.summary,
+            github_output=args.github_output,
+        )
+    if args.command == "verify-vector-retrieval":
+        return run_verify_vector_retrieval(
+            questions_path=args.questions,
+            report_path=args.report,
+        )
+    if args.command == "build-index-done-notification":
+        return run_build_index_done_notification(
+            summary_path=args.summary,
+            repository=args.repository,
+            branch=args.branch,
+            commit=args.commit,
+            workflow=args.workflow,
+            run_url=args.run_url,
+            output=args.output,
         )
 
     parser.print_help()

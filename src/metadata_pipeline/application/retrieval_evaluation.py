@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Protocol
 
 import yaml
 from pydantic import TypeAdapter, ValidationError
@@ -13,11 +14,20 @@ from metadata_pipeline.domain.published import Chunk
 from metadata_pipeline.domain.retrieval import (
     GoldenQuestion,
     QuestionResult,
+    RetrievalHit,
     RetrievalReport,
 )
 from metadata_pipeline.io.atomic_text import write_text_if_changed
 
 _QUESTION_LIST = TypeAdapter(tuple[GoldenQuestion, ...])
+
+
+class Retriever(Protocol):
+    """Minimal search boundary shared by lexical and live vector evaluation."""
+
+    def search(self, question: str, top_k: int = 3) -> tuple[RetrievalHit, ...]:
+        """Return ranked retrieval hits."""
+        ...
 
 
 def load_golden_questions(path: Path) -> tuple[GoldenQuestion, ...]:
@@ -47,7 +57,28 @@ def evaluate_retrieval(
         raise ValueError("top_k must be at least 1")
     if not 0 <= minimum_document_hit_rate <= 1:
         raise ValueError("minimum_document_hit_rate must be between 0 and 1")
-    retriever = LexicalRetriever(chunks)
+    return evaluate_retriever(
+        LexicalRetriever(chunks),
+        questions,
+        top_k=top_k,
+        minimum_document_hit_rate=minimum_document_hit_rate,
+    )
+
+
+def evaluate_retriever(
+    retriever: Retriever,
+    questions: tuple[GoldenQuestion, ...],
+    *,
+    top_k: int = 3,
+    minimum_document_hit_rate: float = 0.9,
+) -> RetrievalReport:
+    """Apply the same golden-question gate to any retrieval adapter."""
+    if not questions:
+        raise ValueError("at least one golden question is required")
+    if top_k < 1:
+        raise ValueError("top_k must be at least 1")
+    if not 0 <= minimum_document_hit_rate <= 1:
+        raise ValueError("minimum_document_hit_rate must be between 0 and 1")
     results: list[QuestionResult] = []
     document_hits = 0
     for question in questions:

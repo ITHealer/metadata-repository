@@ -48,6 +48,7 @@ class IndexDoneNotification(NotificationBase):
     chunk_count: int = Field(ge=0)
     upserted_count: int = Field(ge=0)
     deleted_count: int = Field(ge=0)
+    skipped_count: int = Field(ge=0)
 
 
 class JobFailedNotification(NotificationBase):

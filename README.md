@@ -392,6 +392,13 @@ chunks.
 See [the index manifest runbook](./docs/runbooks/index-manifest.md) for lifecycle, version
 replacement, report interpretation, and recovery.
 
+The separately gated `Apply Vector Index` workflow reconciles `manifest-v2` against actual managed
+Qdrant points, embeds only changed chunks with Gemini document semantics, verifies exact post-apply
+state, and runs the same golden questions with query embeddings. It emits `index_done` only after a
+changed apply and retrieval verification both pass. See the
+[vector index operations runbook](./docs/runbooks/vector-index-operations.md); keep
+`INDEX_APPLY_ENABLED=false` until its non-production UAT is complete.
+
 ## GitHub setup
 
 The local repository can be developed and verified without a remote. To publish it while keeping
