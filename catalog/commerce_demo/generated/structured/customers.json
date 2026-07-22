@@ -141,19 +141,19 @@
     "description": "Customer dimension at one row per customer; contains synthetic PII-like fields.",
     "display_name": "Customers",
     "document_id": "commerce_demo.customers",
-    "document_status": "needs_review",
+    "document_status": "approved",
     "freshness": "Unknown — needs confirmation",
     "grain": "Unknown — needs confirmation",
     "inappropriate_use": [
       "Unknown — needs confirmation"
     ],
-    "index_eligible": false,
+    "index_eligible": true,
     "owner": "unassigned",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "b3cd2b5f5b941e655a403335a8d1ace77a8c77d2",
+      "source_review_commit": "64d36bd78bc4a66bee8f61ccb113a255b26982c5",
       "source_review_path": "catalog/commerce_demo/review/customers.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -180,6 +180,6 @@
     "schema_hash": "b6d19bdd84422c798d5c173b01e4e52337d37c830346cad16a4e79319a8c07dc"
   },
   "reviewable_body_hash": "d4c4df8d885eb7219d4ff4d0c231f57c99cd6305b41f8c04160ccac3872f89fb",
-  "state": "review",
+  "state": "promoted",
   "table": "customers"
 }
