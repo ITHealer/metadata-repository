@@ -10,8 +10,10 @@ def test_apply_workflow_is_disabled_by_default_and_main_only() -> None:
 
     assert content.startswith("name: Apply Vector Index\n")
     assert "      - main" in content
-    assert "if: vars.INDEX_APPLY_ENABLED == 'true'" in content
-    assert 'INDEX_APPLY_ENABLED: "true"' in content
+    assert "vars.INDEX_APPLY_ENABLED == 'true' ||" in content
+    assert "github.event_name == 'workflow_dispatch' && inputs.force_run" in content
+    assert "INDEX_APPLY_ENABLED: ${{ vars.INDEX_APPLY_ENABLED == 'true'" in content
+    assert "force_run:" in content
     assert "bootstrap_collection:" in content
     assert "inputs.bootstrap_collection" in content
     assert "pull_request:" not in content

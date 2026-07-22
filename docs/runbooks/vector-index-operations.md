@@ -58,6 +58,11 @@ zero Qdrant mutation calls, a successful retrieval health check, and no duplicat
 Test one changed approved chunk and one removed approved chunk before production enablement. A failed
 upsert must occur before deletion, leave the workflow failed, and become idempotently retriable.
 
+Manual dispatch supports `force_run=true`, so live UAT can execute while the repository-wide
+`INDEX_APPLY_ENABLED` variable remains false. Follow the complete initial/no-op/change/removal and
+reviewer-to-index procedure in
+[`phase-2-production-validation.md`](./phase-2-production-validation.md).
+
 ## Rollback and recovery
 
 - Immediate stop: set `INDEX_APPLY_ENABLED=false`.
