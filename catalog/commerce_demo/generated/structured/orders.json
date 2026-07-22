@@ -1,6 +1,6 @@
 {
   "artifact_version": "candidate-v1",
-  "candidate_hash": "9928bb5e9ae414465a6f8da2b4a65b9ef21f69bb514b9f60cea4fbd4f9d810be",
+  "candidate_hash": "4b9fe4550122144e3ceeedf781793700686ec74f7282fd28994e4c49e6378644",
   "database": "commerce_demo",
   "document": {
     "aliases": [],
@@ -20,6 +20,28 @@
       "Business meaning requires domain reviewer confirmation."
     ],
     "columns": [
+      {
+        "allowed_values": {},
+        "business_name": "Channel",
+        "caveats": [],
+        "data_type": "LowCardinality(String)",
+        "description": "Order acquisition channel: web, mobile, or partner",
+        "evidence": [
+          {
+            "kind": "clickhouse_comment",
+            "note": "Generated from the ClickHouse comment; domain confirmation is required.",
+            "reference": "build/schema-sync/staging/live-create-additive/commerce_demo/raw/schema.json#tables.orders.columns.channel",
+            "status": "proposed"
+          }
+        ],
+        "name": "channel",
+        "nullable": false,
+        "nullable_meaning": "not_applicable",
+        "semantic_type": "unknown",
+        "sensitivity": "internal",
+        "technical_comment": "Order acquisition channel: web, mobile, or partner",
+        "unit": "not_applicable"
+      },
       {
         "allowed_values": {},
         "business_name": "Created At",
@@ -163,19 +185,19 @@
     "description": "Order fact at one row per order_id; cancelled orders remain in the table.",
     "display_name": "Orders",
     "document_id": "commerce_demo.orders",
-    "document_status": "approved",
+    "document_status": "needs_review",
     "freshness": "Unknown — needs confirmation",
     "grain": "Unknown — needs confirmation",
     "inappropriate_use": [
       "Unknown — needs confirmation"
     ],
-    "index_eligible": true,
+    "index_eligible": false,
     "owner": "unassigned",
     "provenance": {
       "generator_mode": "live",
       "generator_model": "gpt-oss-120b",
       "prompt_version": "workflow-neutral-narrative-v2",
-      "source_review_commit": "bf1a1253b23629c6053e1cd42797bbbc6dcccd00",
+      "source_review_commit": "591312cf9e824bd6ca2ff3634e26ea3664a4a30c",
       "source_review_path": "catalog/commerce_demo/review/orders.yml",
       "source_schema_path": "catalog/commerce_demo/generated/raw/schema.json"
     },
@@ -186,9 +208,9 @@
     "relationships": [],
     "review_guideline_version": "reviewer-v1",
     "reviewer": "unassigned",
-    "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06",
+    "schema_hash": "41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a",
     "security": [],
-    "summary": "Each row in the Orders table represents a single order identified by order_id. It includes UTC timestamps for when the order was created (created_at) and last updated (updated_at), the customer_id of the purchaser, the current order_status (pending, paid, shipped, or cancelled), and the total_amount in VND after discounts. Cancelled orders remain in the table. All columns are non‑nullable and have internal sensitivity. Grain, freshness, and appropriate use are not confirmed.",
+    "summary": "Order fact at one row per order_id; cancelled orders remain in the table. Grain: Unknown — needs confirmation. Each record includes order_id (UUID), customer_id (UUID, join to customers), created_at and updated_at timestamps (UTC), channel (web, mobile, partner), order_status (pending, paid, shipped, cancelled – allowed values require reviewer confirmation), and total_amount (Decimal(18,2) in VND).",
     "table": "orders",
     "transformation_guideline_version": "retrieval-v1"
   },
@@ -196,12 +218,12 @@
     "contract_hash": "a4cf81a6a5c38dc532dbb11d8a34608ae39bbe3934d507c126034d9eb17becf4",
     "generator_model": "gpt-oss-120b",
     "guideline_hash": "8f5c83d4d0ac432bf6278a80ae90ca82c4137953bfbfa277f147a2d6e7c5caed",
-    "input_hash": "b9fc3d5f9ea93742a10ffdbe3c5e839cecd5c7363e94d07f17a317515fbc7903",
+    "input_hash": "dcc1174f525d0b8a13cd14ae504b67e78e3598ac35139b6a996efb079b7c8c11",
     "prompt_version": "workflow-neutral-narrative-v2",
-    "review_content_hash": "1ead3d8683991636a9e56cee0f7a95766fa48c8ad3cf99b35f9fe8492732f6f1",
-    "schema_hash": "35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06"
+    "review_content_hash": "cb6e7ad13aa132ff4773a911d3179f2c918b6d9c3a5495ec8c03a5ebef514d46",
+    "schema_hash": "41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a"
   },
-  "reviewable_body_hash": "d6e5aa123c8a145543a886ec521ee9f9455896d1a4752ebcbc11c3c2789382cd",
-  "state": "promoted",
+  "reviewable_body_hash": "40b128150b075c4bf4a2894878c08cfbc27c8537352d6c1fcbc4c594c8b4c587",
+  "state": "review",
   "table": "orders"
 }
