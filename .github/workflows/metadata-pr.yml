@@ -90,7 +90,7 @@ jobs:
         if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate' || steps.decision.outputs.mode == 'validate-migration'
         run: |
           make catalog-check-all
-          for database in $(./scripts/metadata list-databases); do
+          for database in $(./scripts/metadata list-databases --ready-only); do
             make review-validate DATABASE="$database"
           done
 
@@ -104,14 +104,14 @@ jobs:
           OPENAI_PROMPT_VERSION: ${{ vars.OPENAI_PROMPT_VERSION }}
           GENERATOR_MODE: ${{ vars.METADATA_GENERATOR_MODE || 'live' }}
         run: |
-          for database in $(./scripts/metadata list-databases); do
+          for database in $(./scripts/metadata list-databases --ready-only); do
             make candidate-sync DATABASE="$database" GENERATOR_MODE="$GENERATOR_MODE"
           done
 
       - name: Validate existing candidates without LLM access
         if: steps.decision.outputs.mode == 'generate' || steps.decision.outputs.mode == 'validate' || steps.decision.outputs.mode == 'validate-migration'
         run: |
-          for database in $(./scripts/metadata list-databases); do
+          for database in $(./scripts/metadata list-databases --ready-only); do
             make candidate-validate DATABASE="$database"
           done
           make retrieval-smoke
@@ -172,7 +172,7 @@ jobs:
             echo "- Unrelated changes: \`${PR_UNRELATED:-0}\`"
           } >> "$GITHUB_STEP_SUMMARY"
           repository_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$(git rev-parse HEAD)"
-          for database in $(./scripts/metadata list-databases); do
+          for database in $(./scripts/metadata list-databases --ready-only); do
             ./scripts/metadata candidate-summary \
               --database "$database" \
               --repository-url "$repository_url" >> "$GITHUB_STEP_SUMMARY" || true

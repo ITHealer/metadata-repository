@@ -131,7 +131,7 @@ review-validate: ## Validate reviewer YAML against the raw tbls schema
 		--database $(DATABASE)
 
 review-check: review-schema ## Generate the contract and validate every enabled database
-	@for database in $$(./scripts/metadata list-databases); do \
+	@for database in $$(./scripts/metadata list-databases --ready-only); do \
 		$(MAKE) review-validate DATABASE="$$database"; \
 	done
 

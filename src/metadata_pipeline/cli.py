@@ -44,6 +44,7 @@ from metadata_pipeline.application.catalog import (
     CatalogConfigurationError,
     CatalogContext,
     discover_database_keys,
+    discover_ready_database_keys,
     load_catalog_context,
     validate_database_scope,
 )
@@ -193,6 +194,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     list_databases.add_argument("--repository-root", type=Path, default=Path("."))
     list_databases.add_argument("--include-disabled", action="store_true")
+    list_databases.add_argument(
+        "--ready-only",
+        action="store_true",
+        help="Print only enabled databases whose raw schema bootstrap is complete.",
+    )
     export_schema = commands.add_parser(
         "export-review-schema",
         help="Generate JSON Schema from the Pydantic reviewer contract.",
@@ -450,6 +456,12 @@ def run_catalog_check(context: CatalogContext, schema_path: Path) -> int:
     """Validate one database boundary and print a concise operator result."""
     if not context.profile.enabled and not schema_path.is_file():
         print(f"catalog validation skipped: {context.profile.key} (onboarding disabled)")
+        return 0
+    if context.profile.scheduled_sync and not schema_path.is_file():
+        print(
+            f"catalog validation pending: {context.profile.key} "
+            "(scheduled bootstrap has not produced schema.json)"
+        )
         return 0
     try:
         validate_database_scope(context.profile, schema_path)
@@ -1276,9 +1288,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 0
     if args.command == "list-databases":
-        for database in discover_database_keys(
-            args.repository_root, enabled_only=not args.include_disabled
-        ):
+        database_keys = (
+            discover_ready_database_keys(args.repository_root)
+            if args.ready_only
+            else discover_database_keys(
+                args.repository_root,
+                enabled_only=not args.include_disabled,
+            )
+        )
+        for database in database_keys:
             print(database)
         return 0
     if args.command == "catalog-check":

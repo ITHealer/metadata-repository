@@ -9,6 +9,7 @@ from metadata_pipeline.application.catalog import (
     CatalogConfigurationError,
     CatalogLayout,
     discover_database_keys,
+    discover_ready_database_keys,
     discover_scheduled_database_keys,
     load_catalog_context,
     validate_database_scope,
@@ -129,6 +130,31 @@ def test_discovers_only_enabled_profiles_opted_in_to_scheduled_sync(tmp_path: Pa
             )
 
     assert discover_scheduled_database_keys(tmp_path) == ("scheduled",)
+
+
+def test_scheduled_profile_is_not_automation_ready_until_schema_bootstrap(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    profile_dir = tmp_path / "config/databases/scheduled"
+    profile_dir.mkdir(parents=True)
+    profile_dir.joinpath("database.yml").write_text(
+        "enabled: true\nscheduled_sync: true\ntbls_dsn_env: TBLS_DSN_SCHEDULED\n"
+        "key: scheduled\ndisplay_name: Scheduled\nclickhouse_database: scheduled\n"
+        "description: Scheduled bootstrap profile\ntables: [events]\n",
+        encoding="utf-8",
+    )
+    profile_dir.joinpath("tbls.yml").write_text("name: scheduled\n", encoding="utf-8")
+    context = load_catalog_context("scheduled", tmp_path)
+
+    assert discover_scheduled_database_keys(tmp_path) == ("scheduled",)
+    assert discover_ready_database_keys(tmp_path) == ()
+    assert run_catalog_check(context, context.layout.schema_path) == 0
+    assert "scheduled bootstrap has not produced schema.json" in capsys.readouterr().out
+
+    context.layout.raw_dir.mkdir(parents=True)
+    copy2(ROOT / "tests/fixtures/commerce_demo/schema.json", context.layout.schema_path)
+    assert discover_ready_database_keys(tmp_path) == ("scheduled",)
 
 
 @pytest.mark.parametrize(

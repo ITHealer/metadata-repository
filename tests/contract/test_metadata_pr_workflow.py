@@ -29,6 +29,7 @@ def test_workflow_guards_bot_output_and_fork_secrets() -> None:
     assert 'unexpected="$(git status --porcelain' in content
     assert "make candidate-sync" in content
     assert "make candidate-validate" in content
+    assert content.count("list-databases --ready-only") == 4
     assert "secrets.OPENAI_API_KEY" in content
     assert "vars.OPENAI_MODEL" in content
     structured_pathspec = ":(glob)catalog/*/generated/structured/**"

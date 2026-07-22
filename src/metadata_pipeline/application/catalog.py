@@ -143,3 +143,13 @@ def discover_scheduled_database_keys(repository_root: Path = Path(".")) -> tuple
         if (profile := load_database_profile(profiles_root / key / "database.yml")).enabled
         and profile.scheduled_sync
     )
+
+
+def discover_ready_database_keys(repository_root: Path = Path(".")) -> tuple[str, ...]:
+    """Return enabled databases whose scheduled bootstrap has produced a raw schema."""
+    root = repository_root.resolve()
+    return tuple(
+        key
+        for key in discover_database_keys(root, enabled_only=True)
+        if CatalogLayout(root, key).schema_path.is_file()
+    )
