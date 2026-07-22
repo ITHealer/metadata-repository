@@ -10,7 +10,7 @@ Deterministic ClickHouse schema for the metadata review demo
 | ---- | ------- | ------- | ---- |
 | [customers](customers.md) | 5 | Customer dimension at one row per customer; contains synthetic PII-like fields. | MergeTree |
 | [order_items](order_items.md) | 5 | Order detail fact at one row per order_id and line_number. | MergeTree |
-| [orders](orders.md) | 6 | Order fact at one row per order_id; cancelled orders remain in the table. | MergeTree |
+| [orders](orders.md) | 7 | Order fact at one row per order_id; cancelled orders remain in the table. | MergeTree |
 
 ## Relations
 
@@ -35,6 +35,7 @@ erDiagram
   Decimal_18__2_ unit_price "Price per unit in VND when the order was placed"
 }
 "orders" {
+  LowCardinality_String_ channel "Order acquisition channel: web, mobile, or partner"
   DateTime created_at "UTC timestamp when the order was created"
   UUID customer_id "Customer that placed the order; logical join to customers.customer_id"
   UUID order_id "Stable identifier for one order"

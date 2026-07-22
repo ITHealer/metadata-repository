@@ -2,7 +2,7 @@
 
 ## Description
 
-Customer dimension at one row per customer; contains synthetic PII-like fields. khi dùng cần lưu ý điểm này
+Customer dimension at one row per customer; contains synthetic PII-like fields.
 
 <details>
 <summary><strong>Table Definition</strong></summary>
@@ -45,6 +45,7 @@ erDiagram
   LowCardinality_String_ segment "Business segment: retail, premium, or enterprise"
 }
 "orders" {
+  LowCardinality_String_ channel "Order acquisition channel: web, mobile, or partner"
   DateTime created_at "UTC timestamp when the order was created"
   UUID customer_id "Customer that placed the order; logical join to customers.customer_id"
   UUID order_id "Stable identifier for one order"

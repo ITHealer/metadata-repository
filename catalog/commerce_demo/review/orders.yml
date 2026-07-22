@@ -6,8 +6,8 @@ database: commerce_demo
 table: orders
 owner: unassigned
 reviewer: unassigned
-document_status: approved
-schema_hash: 35f5ee5a72b251a7e6269c5714f98dab9952db4f0dcf14c98cc11250c6f81f06
+document_status: needs_review
+schema_hash: 41ca371d39d0a55aa7640bf7b05255a6ed92a685d0380321a7a9083dd4bff65a
 business:
   display_name: Orders
   description: Order fact at one row per order_id; cancelled orders remain in the table.
@@ -111,6 +111,20 @@ columns:
     evidence:
       - kind: clickhouse_comment
         reference: catalog/commerce_demo/generated/raw/schema.json#tables.orders.columns.updated_at
+        status: proposed
+        note: Generated from the ClickHouse comment; domain confirmation is required.
+  channel:
+    business_name: Channel
+    description: 'Order acquisition channel: web, mobile, or partner'
+    semantic_type: unknown
+    unit: not_applicable
+    nullable_meaning: not_applicable
+    sensitivity: internal
+    allowed_values: {}
+    caveats: []
+    evidence:
+      - kind: clickhouse_comment
+        reference: build/schema-sync/staging/live-create-additive/commerce_demo/raw/schema.json#tables.orders.columns.channel
         status: proposed
         note: Generated from the ClickHouse comment; domain confirmation is required.
 relationships: []
