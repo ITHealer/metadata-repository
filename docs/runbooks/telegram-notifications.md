@@ -3,7 +3,8 @@
 ## Scope and safety boundary
 
 The notification core supports three versioned events: `pr_review`, `index_done`, and `job_failed`.
-Only `pr_review` is connected to a workflow in PR-13. `index_done` must remain unconnected until a
+`pr_review` and centralized `job_failed` delivery are connected. `index_done` must remain
+unconnected until a
 later workflow has both applied the VectorDB update and passed retrieval verification; building the
 current manifest alone is not a knowledge-base update.
 
@@ -44,6 +45,17 @@ It searches PR comments for this marker:
 An existing marker skips delivery. A new marker is written only after Telegram returns success, so
 a failed send remains retryable. A delivery failure leaves the already-pushed schema commit and PR
 intact but makes the Actions job visibly fail.
+
+## `job_failed` routing
+
+`Metadata Failure Notification` listens only for completed runs of the explicit metadata workflow
+allowlist. It sends an alert for `failure`, `timed_out`, or `cancelled`, and ignores successful or
+skipped runs. The listener has only Actions/content read permissions, checks out notification code
+from `main`, and never downloads code, cache, or artifacts from the failed run. It reads failed job
+names through the Actions API and validates them as event data.
+
+The notifier workflow intentionally does not monitor itself. If Telegram delivery fails, inspect
+its failed Actions run and rely on GitHub Actions UI/email until the channel is restored.
 
 ## Recovery and rotation
 

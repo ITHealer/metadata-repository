@@ -91,7 +91,7 @@ from metadata_pipeline.application.sync_candidates import (
     prepare_candidate_sync,
     write_candidate_sync,
 )
-from metadata_pipeline.domain.notification import PrReviewNotification
+from metadata_pipeline.domain.notification import JobFailedNotification, PrReviewNotification
 from metadata_pipeline.domain.schema_sync import ScheduledSchemaSyncReport
 from metadata_pipeline.domain.schema_sync_pr import SchemaSyncPullRequestState
 from metadata_pipeline.io.atomic_text import write_text_if_changed
@@ -308,6 +308,23 @@ def build_parser() -> argparse.ArgumentParser:
     build_pr_review_notification.add_argument("--workflow", required=True)
     build_pr_review_notification.add_argument("--run-url", required=True)
     build_pr_review_notification.add_argument("--output", type=Path, required=True)
+    build_job_failed_notification = commands.add_parser(
+        "build-job-failed-notification",
+        help="Build a validated job_failed event from trusted workflow-run context.",
+    )
+    build_job_failed_notification.add_argument("--run-id", required=True)
+    build_job_failed_notification.add_argument("--attempt", type=int, required=True)
+    build_job_failed_notification.add_argument(
+        "--conclusion", choices=("failure", "timed_out", "cancelled"), required=True
+    )
+    build_job_failed_notification.add_argument("--failed-jobs-file", type=Path, required=True)
+    build_job_failed_notification.add_argument("--actor", required=True)
+    build_job_failed_notification.add_argument("--repository", required=True)
+    build_job_failed_notification.add_argument("--branch", required=True)
+    build_job_failed_notification.add_argument("--commit", required=True)
+    build_job_failed_notification.add_argument("--workflow", required=True)
+    build_job_failed_notification.add_argument("--run-url", required=True)
+    build_job_failed_notification.add_argument("--output", type=Path, required=True)
     notify = commands.add_parser(
         "notify",
         help="Deliver one validated notification event through the configured provider.",
@@ -930,6 +947,51 @@ def run_notify(event_file: Path) -> int:
     return 0
 
 
+def run_build_job_failed_notification(
+    *,
+    run_id: str,
+    attempt: int,
+    conclusion: Literal["failure", "timed_out", "cancelled"],
+    failed_jobs_file: Path,
+    actor: str,
+    repository: str,
+    branch: str,
+    commit: str,
+    workflow: str,
+    run_url: str,
+    output: Path,
+) -> int:
+    """Build a failure event while treating Actions job names strictly as file data."""
+    try:
+        failed_jobs = tuple(
+            sorted(
+                {
+                    line.strip()
+                    for line in failed_jobs_file.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                }
+            )
+        )
+        event = JobFailedNotification(
+            event_id=f"job_failed:{run_id}:{attempt}:{conclusion}",
+            repository=repository,
+            branch=branch,
+            commit=commit,
+            workflow=workflow,
+            run_url=run_url,
+            conclusion=conclusion,
+            actor=actor,
+            attempt=attempt,
+            failed_jobs=failed_jobs,
+        )
+        write_notification_event(output, event)
+    except (OSError, ValueError) as error:
+        print(f"job_failed event build failed: {error}", file=sys.stderr)
+        return 1
+    print(f"job_failed event written: {output}; id={event.event_id}")
+    return 0
+
+
 def _generator(mode: str) -> DeterministicDocumentGenerator | OpenAICompatibleDocumentGenerator:
     if mode == "live":
         return OpenAICompatibleDocumentGenerator.from_settings(OpenAICompatibleSettings.from_env())
@@ -1150,6 +1212,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "notify":
         return run_notify(args.event_file)
+    if args.command == "build-job-failed-notification":
+        return run_build_job_failed_notification(
+            run_id=args.run_id,
+            attempt=args.attempt,
+            conclusion=args.conclusion,
+            failed_jobs_file=args.failed_jobs_file,
+            actor=args.actor,
+            repository=args.repository,
+            branch=args.branch,
+            commit=args.commit,
+            workflow=args.workflow,
+            run_url=args.run_url,
+            output=args.output,
+        )
     if args.command == "index-manifest":
         return run_index_manifest(
             args.chunks,

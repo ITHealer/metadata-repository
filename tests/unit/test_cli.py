@@ -504,3 +504,46 @@ def test_cli_builds_pr_review_event_and_disabled_delivery_is_a_noop(
     monkeypatch.setenv("TELEGRAM_NOTIFICATIONS_ENABLED", "false")
     assert main(["notify", "--event-file", str(event_path)]) == 0
     assert "notification disabled: pr_review" in capsys.readouterr().out
+
+
+def test_cli_builds_job_failed_event_from_job_name_file(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    failed_jobs = tmp_path / "failed-jobs.txt"
+    failed_jobs.write_text("Unit tests\nLint; echo not-shell\nUnit tests\n", encoding="utf-8")
+    output = tmp_path / "job-failed.json"
+
+    exit_code = main(
+        [
+            "build-job-failed-notification",
+            "--run-id",
+            "123",
+            "--attempt",
+            "2",
+            "--conclusion",
+            "failure",
+            "--failed-jobs-file",
+            str(failed_jobs),
+            "--actor",
+            "octocat",
+            "--repository",
+            "acme/metadata",
+            "--branch",
+            "feature/test",
+            "--commit",
+            "b" * 40,
+            "--workflow",
+            "Quality",
+            "--run-url",
+            "https://github.example/runs/123",
+            "--output",
+            str(output),
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["event_id"] == "job_failed:123:2:failure"
+    assert payload["failed_jobs"] == ["Lint; echo not-shell", "Unit tests"]
+    assert "job_failed event written" in capsys.readouterr().out
